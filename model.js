@@ -3,6 +3,10 @@
  *
  * Every V is a multiple of what output would be without further AI: real output
  * relative to a world where AI stays at its end-2026 level and use.
+ * GDP paths (2026 = 1) add trend growth to both worlds:
+ *   gdpNoAI = (1 + g)^t,  gdp = V_macro · (1 + g)^t,
+ * with g = 2.0%/yr, the current average for advanced economies
+ * (IMF WEO Oct 2026: 2.0% in 2025, 2.1% in 2026, 1.8% in 2027).
  *
  * Sector bottleneck / slop / weak-link equation with a dynamic loop
  * (quarterly steps, reported yearly), adoption lag, capability breadth,
@@ -45,7 +49,7 @@
   function defaultState() {
     return {
       mode: 'dynamic', years: 15, startYear: 2026,
-      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200,
+      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0,
       Tstatic: 20, Wcore: 60, fragility: 5,
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
       adopt0: 30, adoptSpeed: 25, aiNow: 2,
@@ -262,7 +266,8 @@
       const hazard = X.hmax * hill0(T, X.Trisk);
       if (k % steps === 0) {
         const Vexp = snap.Vmacro * (1 - (1 - surv) * X.loss);
-        rows.push(Object.assign({ t: k / steps, year: start + k / steps, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
+        const trend = Math.pow(1 + (state.trendGrowth != null ? state.trendGrowth : 2) / 100, k / steps);
+        rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpNoAI: trend, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
       }
       if (k === total) break;
       // update to the next quarter (all from current-step values)

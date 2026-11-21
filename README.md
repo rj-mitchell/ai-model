@@ -6,7 +6,7 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 ## What the numbers measure
 
-Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. It is not a GDP forecast.
+Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. GDP paths (2026 = 1) add trend growth from everything except AI to both worlds: `GDP = V_macro × 1.02^t` with AI and `1.02^t` without further AI, using 2.0%/yr, the current advanced-economy average (IMF WEO, October 2026).
 
 ## Sector level
 
