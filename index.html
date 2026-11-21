@@ -19,6 +19,7 @@
   --grid: #e7ebf0;
   --accent: #2a78d6;
   --accent-ink: #ffffff;
+  --ext: #6250d6;
   --good: #17793a;
   --warn: #a65a00;
   --crit: #c22f2f;
@@ -32,7 +33,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1116; --panel: #161a21; --sunk: #1c212a; --ink: #edf0f5; --ink-2: #b2bbc8; --muted: #8590a0;
-    --line: #29303b; --grid: #20262f; --accent: #3987e5; --accent-ink: #ffffff;
+    --line: #29303b; --grid: #20262f; --accent: #3987e5; --accent-ink: #ffffff; --ext: #9d93f0;
     --good: #3fb965; --warn: #e3a03a; --crit: #f06a6a;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
     --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
@@ -41,7 +42,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #0e1116; --panel: #161a21; --sunk: #1c212a; --ink: #edf0f5; --ink-2: #b2bbc8; --muted: #8590a0;
-  --line: #29303b; --grid: #20262f; --accent: #3987e5; --accent-ink: #ffffff;
+  --line: #29303b; --grid: #20262f; --accent: #3987e5; --accent-ink: #ffffff; --ext: #9d93f0;
   --good: #3fb965; --warn: #e3a03a; --crit: #f06a6a;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
   --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
@@ -89,10 +90,17 @@ button, input, select { font: inherit; color: inherit; }
 .main { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
-.rail { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
-@media (max-width: 900px) { .rail { position: static; } }
+.rail { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 900px) { .rail { position: static; max-height: none; overflow: visible; } }
 .group { display: flex; flex-direction: column; gap: 14px; }
-.group + .group { border-top: 1px solid var(--line); padding-top: 16px; }
+.group + .group { border-top: 1px solid var(--line); padding-top: 14px; }
+details.group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+details.group > summary::-webkit-details-marker { display: none; }
+details.group > summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); font-size: 15px; }
+details.group[open] > summary::after { content: "−"; }
+.group-body { display: flex; flex-direction: column; gap: 14px; padding-top: 12px; }
+.group-body > .hint { font-size: 12px; color: var(--muted); }
+#controls { display: flex; flex-direction: column; gap: 14px; }
 
 /* sliders */
 .ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; }
@@ -112,7 +120,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* results */
 .results { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 700px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .kpi .v { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 3vw, 30px); line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -191,6 +199,9 @@ tr:last-child td { border-bottom: 0; }
 .key dt { font-family: var(--font-mono); color: var(--ink); }
 .key dd { margin: 0; color: var(--ink-2); }
 .foot { color: var(--muted); font-size: 12px; max-width: 80ch; }
+.limits { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink-2); max-width: 90ch; }
+.limits b { color: var(--ink); }
+.ext-mark { color: var(--ext); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -217,9 +228,7 @@ tr:last-child td { border-bottom: 0; }
         </div>
         <div class="presets" id="presets"></div>
       </div>
-      <div class="group" id="dyn-controls"></div>
-      <div class="group" id="static-controls"></div>
-      <div class="group" id="econ-controls"></div>
+      <div id="controls"></div>
     </aside>
 
     <section class="results" aria-label="Results">
@@ -257,6 +266,21 @@ tr:last-child td { border-bottom: 0; }
         <div class="legend" id="c4-legend"></div>
         <div class="chart" id="c4"></div>
       </div>
+
+      <div class="two">
+        <div class="panel chart-card" id="c5-card">
+          <div class="chart-head"><h2>Share of spending</h2></div>
+          <p class="eq-note" id="c5-sub"></p>
+          <div class="legend" id="c5-legend"></div>
+          <div class="chart" id="c5"></div>
+        </div>
+        <div class="panel chart-card" id="c6-card">
+          <div class="chart-head"><h2>Automation and risk</h2></div>
+          <p class="eq-note" id="c6-sub"></p>
+          <div class="legend" id="c6-legend"></div>
+          <div class="chart" id="c6"></div>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -285,42 +309,59 @@ tr:last-child td { border-bottom: 0; }
   </section>
 
   <section class="panel" aria-label="The equations" style="display:flex;flex-direction:column;gap:18px">
-    <h2>The equations</h2>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h2>The equations</h2>
+      <p class="eq-note">Black terms are Gemini's original equation. <span class="ext-mark">Highlighted terms</span> are the extensions. The note under each equation gives the value that switches each one off, and the <b>Gemini original</b> setting switches them all off at once.</p>
+    </div>
     <div class="eqs">
       <div class="eq-block">
         <h3>1 · Sector level: net real economic value</h3>
-        <div class="eq">\[\epsilon_i(T)=(1-f_i)(1-g_i(T)) \qquad S_i(T)=\frac{1}{\epsilon_i(T)+\dfrac{1-\epsilon_i(T)}{T_{\text{eff}}}}\]</div>
-        <div class="eq">\[V_i(T)=\frac{1+p_i\big(S_i(T)-1\big)}{1+\big(\eta_i\ln T_{\text{eff}}+\gamma_i\ln T\big)\,S_i(T)}\]</div>
-        <p class="eq-note"><b>Deployment rule.</b> Private workflows use \(T_{\text{eff}}=\min(T,T^*)\): firms stop scaling usage at their Slop Peak \(T^*\), found here as the usage level that maximises \(V_i\). Open-intake commons use \(T_{\text{eff}}=T\), because senders push verification costs onto receivers.</p>
+        <div class="eq">\[\color{#7464e0}{f_i(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta}} \qquad \epsilon_i=(1-f_i)(1-g_i)\]</div>
+        <div class="eq">\[S_i=\frac{1}{\epsilon_i+\dfrac{1-\epsilon_i}{T_{\text{eff}}}} \qquad V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\eta_i\color{#7464e0}{T^{-\delta_\eta}}\ln T_{\text{eff}}+\gamma_i\color{#7464e0}{T^{-\delta_\gamma}}\ln T\big)\,S_i}\]</div>
+        <p class="eq-note">Native fit rises with capability toward a ceiling (\(\beta=0\) keeps it fixed). Review burden falls as AI gets more reliable (\(\delta_\eta=0\) off), and defensive AI offsets external attack (\(\delta_\gamma=0\) off). <b>Deployment rule:</b> Private sectors use \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); commons use \(T_{\text{eff}}=T\). Native fit is capped at 95% and redesign at 90%.</p>
       </div>
       <div class="eq-block">
-        <h3>2 · Macro level: two-tier aggregation</h3>
+        <h3>2 · Macro level: Core, Flex and new products</h3>
         <div class="eq">\[V_{\text{core}}=\Big(\sum_{i\in\text{Core}}\tilde w_i V_i^{\rho}\Big)^{1/\rho} \qquad V_{\text{flex}}=\sum_{j\in\text{Flex}}\tilde w_j V_j\]</div>
-        <div class="eq">\[V_{\text{macro}}(T)=V_{\text{core}}^{\,W_{\text{core}}}\,\big(W_{\text{core}}V_{\text{core}}+W_{\text{flex}}V_{\text{flex}}\big)^{W_{\text{flex}}}\]</div>
-        <p class="eq-note">At baseline (\(T=1\), \(g_i=0\)) every sector and the macro economy equal exactly 1.0.</p>
+        <div class="eq">\[\color{#7464e0}{D=\min(1,V_{\text{core}})^{\kappa}} \qquad V_{\text{macro}}=\color{#7464e0}{\Big(W_{\text{core}}V_{\text{core}}^{\rho_m}+W_{\text{flex}}\big(D\,V_{\text{flex}}\big)^{\rho_m}\Big)^{1/\rho_m}+D\,n_t}\]</div>
+        <p class="eq-note">Original: \(V_{\text{macro}}=V_{\text{core}}^{W_{\text{core}}}(W_{\text{core}}V_{\text{core}}+W_{\text{flex}}V_{\text{flex}})^{W_{\text{flex}}}\), which gives Core 84% of the influence at a 60/40 split. The extended form gives Core exactly \(W_{\text{core}}\). \(\rho_m<0\) makes Core and Flex complements, so spending shifts toward the slower tier (the Baumol effect). \(D\) scales Flex down only when Core is below baseline. \(n_t\) is AI-native products. A tier with no sectors is left out.</p>
       </div>
       <div class="eq-block">
         <h3>3 · Dynamic loop: tech power</h3>
-        <div class="eq">\[T_{t+1}=T_t\left[1+\frac{r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})}{1+T_t/T_{\text{half}}}\right]\]</div>
-        <p class="eq-note">Baseline progress \(r_0\), boosted by the AI R&amp;D sector's own value (recursive self-improvement, strength \(\phi\)) and braked when Core infrastructure falls below baseline. Diminishing returns halve growth at \(T_{\text{half}}\) and keep slowing it beyond, without ever stopping it. Starts from \(T_0=1\) at end-2026.</p>
+        <div class="eq">\[T_{t+1}=T_t\left[1+r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\,\color{#7464e0}{V_{\text{macro},t}^{\psi}}\;\frac{\color{#7464e0}{1+1/T_{\text{half}}}}{1+T_t/T_{\text{half}}}\right]\]</div>
+        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth exactly \(r_0\). Investment feedback \(\psi\) lets a richer economy fund more compute (\(\psi=0\) off). <b>Setback:</b> in the chosen year, \(T\) is multiplied by \((1-\text{size})\), with a floor of 1.</p>
       </div>
       <div class="eq-block">
-        <h3>4 · Dynamic loop: S-curve redesign</h3>
-        <div class="eq">\[g_i^*(T_t)=\frac{g_{i,\max}}{1+\big(T_{\text{crit},i}/T_t\big)^{k}} \qquad g_{i,t+1}=g_{i,t}+\alpha_i\big(g_i^*(T_t)-g_{i,t}\big)\]</div>
-        <p class="eq-note">Each sector has a smooth target level of redesign that rises with \(T\) and reaches half its ceiling at \(T_{\text{crit},i}\) (steepness \(k=2.5\)). Actual redesign chases that target with institutional lag \(\alpha_i\), starting from \(g_{i,0}=0\). Early adopters move slowly, adoption is fastest around \(T_{\text{crit},i}\), then it rounds off toward \(g_{i,\max}\).</p>
+        <h3>4 · Dynamic loop: redesign, new products, risk</h3>
+        <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{k}}-g_{i,t}\Big)\]</div>
+        <div class="eq">\[\color{#7464e0}{n_{t+1}=n_t+s\big(N_{\max}H(T_t,T_{\text{new}})-n_t\big)}\]</div>
+        <div class="eq">\[\color{#7464e0}{\text{survival}_{t+1}=\text{survival}_t\big(1-h_{\max}H(T_t,T_{\text{risk}})\big)}\]</div>
+        <p class="eq-note">\(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\). The risk-adjusted economy is \(V_{\text{macro}}\,\big(1-(1-\text{survival})\times\text{loss}\big)\).</p>
       </div>
     </div>
     <dl class="key">
       <dt>T</dt><dd>Useful AI work: verified work per £ on the compressible slice of a job, as a multiple of end-2026 (1×). Not raw tokens.</dd>
-      <dt>f<sub>i</sub></dt><dd>Native fit: share of the existing workflow AI compresses out of the box.</dd>
+      <dt>f<sub>i</sub></dt><dd>Native fit: share of the workflow AI can compress. Extended: starts at f₀ and rises toward f_max as capability broadens.</dd>
       <dt>g<sub>i</sub></dt><dd>Gustafson redesign: share of the remaining bottleneck removed by re-architecting the workflow (capped at 90%).</dd>
       <dt>p<sub>i</sub></dt><dd>Real wealth share: 1 means the speedup creates wealth, 0 means a zero-sum Red Queen arms race.</dd>
-      <dt>η<sub>i</sub></dt><dd>Internal slop tax: review and verification drag from the sector's own AI use (slider 0–10 maps to 0–0.5).</dd>
-      <dt>γ<sub>i</sub></dt><dd>Ambient slop exposure: external spam, fraud and synthetic load (slider 0–10 maps to 0–0.5; 0 if air-gapped).</dd>
-      <dt>ρ</dt><dd>Core complementarity: ρ = 1 − fragility. ρ = −4 is the Jones–Tonetti weak-link case.</dd>
-      <dt>w̃, W</dt><dd>Sector weights within each tier (normalised), and the Core / Flex split of the economy.</dd>
+      <dt>η<sub>i</sub>, γ<sub>i</sub></dt><dd>Internal slop and ambient exposure (slider 0–10 maps to 0–0.5).</dd>
+      <dt>ρ, ρ<sub>m</sub></dt><dd>Complementarity inside Core (ρ = 1 − fragility), and between Core and Flex (ρ<sub>m</sub> = 1 − complementarity).</dd>
+      <dt>w̃, W</dt><dd>Sector weights within each tier (normalised), and the Core / Flex split of the 2026 economy.</dd>
     </dl>
-    <p class="foot">Built from the "final final equation" and the dynamic update loop (Option B soft slowdown and S-curve redesign) in the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a>. The sector presets are that conversation's six-sector example economy. Slider conversions follow its bounded slider spec. Your settings are saved in this browser.</p>
+  </section>
+
+  <section class="panel" aria-label="Known limitations" style="display:flex;flex-direction:column;gap:12px">
+    <h2>What this model still can't tell you</h2>
+    <ul class="limits">
+      <li><b>It is not calibrated.</b> About 80 inputs are judgement calls, and the results depend mostly on native fit, the wealth share and the slop settings. Use the uncertainty band, and treat results as scenarios, not forecasts.</li>
+      <li><b>Jobs and wages are not modelled.</b> "Tasks automated" measures how much work AI handles. Whether that means lost jobs, higher wages or shorter hours depends on a labour market this model doesn't contain. Adding one would double the number of unanchored inputs.</li>
+      <li><b>Catastrophic risk is an overlay you set.</b> It discounts the economy but doesn't feed back into AI progress, and the yearly hazard rising with T is an assumption, not a finding.</li>
+      <li><b>Red Queen sectors lose from every speedup.</b> When a sector's real-wealth share p is below a/(1 + a), where a is its slop term (η ln T_eff + γ ln T), anything that makes it faster lowers its value. This is Gemini's intended arms-race logic, but it is a strong claim. The sector status flags when a sector is in this regime.</li>
+      <li><b>New products, breadth and defence are the most speculative extensions.</b> They have the least evidence behind them and push results up. Setting them to zero gives a deliberately conservative extended model.</li>
+      <li><b>Strong complementarity reintroduces a version of the "SEO collapse" problem.</b> With high Core–Flex complementarity, a collapse of the whole Flex tier drags the economy down. A single Flex sector collapsing still doesn't, because sectors inside Flex are averaged normally.</li>
+      <li><b>Each run is annual and deterministic.</b> Shocks other than the single setback, business cycles and policy responses are not represented.</li>
+    </ul>
+    <p class="foot">Built from the "final final equation" and the dynamic update loop (Option B soft slowdown and S-curve redesign) in the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a>, with extensions from a stress test of that model. The sector presets are the conversation's six-sector example economy. Your settings are saved in this browser.</p>
   </section>
 </div>
 

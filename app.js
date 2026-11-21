@@ -1,31 +1,37 @@
-/* AI Transformation Model — UI layer. Depends on model.js (window.AIModel). */
+/* AI Transformation Model — UI layer (v3). Depends on model.js (window.AIModel). */
 (function () {
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v2';
+  const STORE_KEY = 'ai-transformation-model:v3';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
-  // UI units: f, p, g, gmax in %; eta, gamma on 0–10 (÷20); Tcrit in ×; alpha in %/yr.
-  function sec(name, tier, weight, f, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd) {
-    return { name, tier, weight, f, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd };
+  // UI units: f, fmax, p, g, gmax in %; eta, gamma on 0–10 (÷20); Tcrit in ×; alpha in %/yr.
+  function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd) {
+    return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd };
   }
   function defaultSectors() {
     return [
-      sec('Energy & Grid', 'core', 35, 20, 100, 0.2, 0.2, 20, 20, 10, 15, 'private'),
-      sec('Healthcare', 'core', 35, 25, 95, 1.0, 0.4, 35, 35, 15, 10, 'private'),
-      sec('Banking & Payments', 'core', 30, 60, 70, 0.8, 1.0, 50, 50, 5, 15, 'private'),
-      sec('Software & R&D', 'flex', 40, 70, 90, 0.4, 0.2, 60, 60, 3, 20, 'private', true),
-      sec('Corporate Law', 'flex', 30, 60, 15, 2.0, 2.0, 40, 40, 5, 15, 'commons'),
-      sec('Ad-Tech & Media', 'flex', 30, 80, 10, 3.0, 3.0, 50, 50, 3, 20, 'commons'),
+      sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private'),
+      sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private'),
+      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 5, 15, 'private'),
+      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 3, 20, 'private', true),
+      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 5, 15, 'commons'),
+      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 3, 20, 'commons'),
     ];
   }
   function defaultState() {
     return {
-      mode: 'dynamic', years: 15, startYear: 2026,
+      mode: 'dynamic', model: 'extended', years: 15, startYear: 2026,
       r0: 25, phi: 0.4, Thalf: 15, slopLearning: 0,
       Tstatic: 20, Wcore: 60, fragility: 5,
+      // extensions (each has a neutral value that switches it off)
+      beta: 0.1, dEta: 0.1, dGamma: 0.1, psi: 0.25, cfx: 1.5, kappa: 1,
+      Nmax: 10, Tnew: 10, newSpeed: 15,
+      hmax: 0, Trisk: 30, loss: 100,
+      setbackYear: 0, setbackSize: 0,
+      spread: 25, runs: 150,
       sectors: defaultSectors(), sel: 3, preset: 'dyn-base',
     };
   }
@@ -35,14 +41,17 @@
     dynamic: [
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
+      { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { model: 'extended', r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, psi: 0.8, Nmax: 50, Tnew: 15, years: 25 }); return s; } },
       { id: 'dyn-cyber', label: 'Cyber-slop on Banking', apply: (s) => { s.sectors[2].gamma = 10; return s; } },
+      { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { model: 'extended', setbackYear: 2030, setbackSize: 60 }) },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { slopLearning: 10 }) },
+      { id: 'dyn-risk', label: 'High catastrophe risk', apply: (s) => Object.assign(s, { model: 'extended', hmax: 5, Trisk: 20, loss: 100 }) },
     ],
     static: [
-      { id: 'st-r1', label: 'Round 1 · Near-term 4×', apply: (s) => { s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
-      { id: 'st-r2', label: 'Round 2 · Redesign wave 20×', apply: (s) => { s.Tstatic = 20; return s; } },
-      { id: 'st-r3', label: 'Round 3 · Cyber-slop shock', apply: (s) => { s.Tstatic = 20; s.sectors[2].gamma = 10; return s; } },
+      { id: 'st-r1', label: 'Gemini Round 1 · 4×', apply: (s) => { s.model = 'original'; s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
+      { id: 'st-r2', label: 'Gemini Round 2 · 20×', apply: (s) => { s.model = 'original'; s.Tstatic = 20; return s; } },
+      { id: 'st-r3', label: 'Gemini Round 3 · cyber shock', apply: (s) => { s.model = 'original'; s.Tstatic = 20; s.sectors[2].gamma = 10; return s; } },
     ],
   };
 
@@ -60,16 +69,19 @@
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
 
   // ---------------- Formatting ----------------
-  const fx = (v, d = 2) => (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(d)) + '×';
-  const f2 = (v) => v.toFixed(2);
+  const fx = (v, d = 2) => (!Number.isFinite(v) ? '–' : v >= 1e5 ? v.toExponential(1).replace('e+', 'e') + '×' : v >= 100 ? v.toFixed(0) + '×' : v >= 10 ? v.toFixed(1) + '×' : v.toFixed(d) + '×');
+  const f2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : '–');
   const pct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(0) + '%';
+  const pc = (v, d = 0) => (v * 100).toFixed(d) + '%';
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const seriesColor = (i) => css('--s' + ((i % 8) + 1));
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const isExt = () => state.model !== 'original';
 
   // ---------------- Control builders ----------------
+  function touched() { state.preset = null; markPresets(); update(); }
+
   function slider(o) {
-    // o: {id, label, sym, min, max, step, get, set, fmt, hint, log}
     const wrap = document.createElement('div');
     wrap.className = 'ctl';
     const toPos = (v) => (o.log ? Math.round(Math.log10(v) * 100) : v);
@@ -90,14 +102,13 @@
       if (o.log) v = Number(v.toPrecision(3));
       o.set(v);
       out.textContent = o.fmt(o.get());
-      state.preset = null;
-      markPresets();
-      update();
+      if (o.after) o.after();
+      touched();
     });
     return wrap;
   }
 
-  function segmented(id, options, get, set) {
+  function segmented(id, options, get, set, after) {
     const d = document.createElement('div');
     d.className = 'seg small';
     d.setAttribute('role', 'group');
@@ -110,34 +121,110 @@
       b.addEventListener('click', () => {
         set(val);
         d.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', String(options[i][0] === val)));
-        state.preset = null; markPresets();
-        update();
+        if (after) after();
+        touched();
       });
       d.appendChild(b);
     });
     return d;
   }
 
+  function group(parent, title, open, note) {
+    const det = document.createElement('details');
+    det.className = 'group';
+    if (open) det.open = true;
+    det.innerHTML = `<summary><h3>${title}</h3></summary>`;
+    const body = document.createElement('div');
+    body.className = 'group-body';
+    if (note) body.innerHTML = `<p class="hint">${note}</p>`;
+    det.appendChild(body);
+    parent.appendChild(det);
+    return body;
+  }
+
   function buildGlobalControls() {
-    const dyn = $('dyn-controls');
-    dyn.innerHTML = '<h3>AI progress over time</h3>';
-    dyn.append(
-      slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 30, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
-      slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Annual growth in useful AI work before any R&D feedback.' }),
-      slider({ id: 'g-phi', label: 'AI R&D feedback', sym: 'φ', min: 0, max: 1, step: 0.05, get: () => state.phi, set: (v) => (state.phi = v), fmt: (v) => v.toFixed(2), hint: '0 = no recursive self-improvement · 0.5 = modest · 1 = strong.' }),
-      slider({ id: 'g-thalf', label: 'Diminishing returns midpoint', sym: 'T_half', min: 5, max: 50, step: 1, get: () => state.Thalf, set: (v) => (state.Thalf = v), fmt: (v) => `${v}×`, hint: 'The level of useful AI work where data, energy and algorithmic drag halve annual progress. Growth slows past it but never stops.' }),
-      slider({ id: 'g-learn', label: 'Slop learning', min: 0, max: 20, step: 1, get: () => state.slopLearning, set: (v) => (state.slopLearning = v), fmt: (v) => (v ? `−${v}%/yr` : 'off'), hint: 'Optional: η and γ decay each year as institutions learn to filter slop.' })
-    );
-    const st = $('static-controls');
-    st.innerHTML = '<h3>Snapshot</h3>';
-    st.append(
-      slider({ id: 'g-T', label: 'Useful AI work vs end-2026', sym: 'T', min: 1, max: 100, log: true, get: () => state.Tstatic, set: (v) => (state.Tstatic = v), fmt: (v) => fx(v), hint: '1× = end-2026 baseline · 10× = ten times the verified work per £ · 100× = transformative.' })
-    );
-    const ec = $('econ-controls');
-    ec.innerHTML = '<h3>Economy structure</h3>';
+    const dyn = state.mode === 'dynamic', ext = isExt();
+    const host = $('controls');
+    host.innerHTML = '';
+    const OFF = 'Switched off: you are using the Gemini original equation.';
+
+    const eq = group(host, 'Equation set', true);
+    eq.append(segmented('g-model', [['extended', 'Extended'], ['original', 'Gemini original']], () => state.model, (v) => (state.model = v), rebuildAll));
+    const note = document.createElement('p');
+    note.className = 'hint';
+    note.textContent = ext ? 'Gemini\'s equation plus the stress-test fixes. Set any extension to its neutral value to switch it off.' : 'Exactly the equation and dynamic loop from the Gemini conversation.';
+    eq.append(note);
+
+    if (dyn) {
+      const g = group(host, 'AI progress over time', true);
+      g.append(
+        slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 60, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
+        slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: ext ? 'Annual growth in useful AI work in year one, before feedbacks.' : 'Annual growth in useful AI work before feedbacks (year one is slightly lower in the original drag term).' }),
+        slider({ id: 'g-phi', label: 'AI R&D feedback', sym: 'φ', min: 0, max: 1, step: 0.05, get: () => state.phi, set: (v) => (state.phi = v), fmt: (v) => v.toFixed(2), hint: '0 = no recursive self-improvement · 0.5 = modest · 1 = strong.' }),
+        slider({ id: 'g-thalf', label: 'Diminishing returns midpoint', sym: 'T_half', min: 5, max: 50, step: 1, get: () => state.Thalf, set: (v) => (state.Thalf = v), fmt: (v) => `${v}×`, hint: 'Where data, energy and algorithmic drag halve annual progress. Growth slows past it but never stops.' }),
+        slider({ id: 'g-learn', label: 'Slop learning', min: 0, max: 20, step: 1, get: () => state.slopLearning, set: (v) => (state.slopLearning = v), fmt: (v) => (v ? `−${v}%/yr` : 'off'), hint: 'η and γ decay each year as institutions learn to filter slop, independent of AI capability.' })
+      );
+    } else {
+      const g = group(host, 'Snapshot', true);
+      g.append(slider({ id: 'g-T', label: 'Useful AI work vs end-2026', sym: 'T', min: 1, max: 100, log: true, get: () => state.Tstatic, set: (v) => (state.Tstatic = v), fmt: (v) => fx(v), hint: '1× = end-2026 baseline · 10× = ten times the verified work per £ · 100× = transformative.' }));
+    }
+
+    const ec = group(host, 'Economy structure', true);
     ec.append(
-      slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%` }),
+      slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: ext ? 'In the extended equation this is the true weight: Core carries this share of any change in the total.' : 'Caution: in the original formula Core\'s real influence is larger than this (84% at 60/40).' }),
       slider({ id: 'g-frag', label: 'Core weak-link fragility', sym: 'ρ = 1 − x', min: 0, max: 10, step: 0.5, get: () => state.fragility, set: (v) => (state.fragility = v), fmt: (v) => `${v.toFixed(1)} · ρ = ${(1 - v).toFixed(1)}`, hint: '0 = normal average · 5 = Jones–Tonetti weak links · 10 = extreme O-ring.' })
+    );
+    if (ext) {
+      ec.append(
+        slider({ id: 'g-cfx', label: 'Core–Flex complementarity', sym: 'ρ_m = 1 − x', min: 0, max: 3, step: 0.1, get: () => state.cfx, set: (v) => (state.cfx = v), fmt: (v) => `${v.toFixed(1)} · σ = ${(1 / v).toFixed(2).replace('Infinity', '∞')}`, hint: '0 = Core and Flex are substitutes · 1 = constant spending shares · above 1 = Baumol effect: spending shifts to the slower tier and the slow tier limits growth.' }),
+        slider({ id: 'g-kappa', label: 'Flex dependence on Core', sym: 'κ', min: 0, max: 2, step: 0.1, get: () => state.kappa, set: (v) => (state.kappa = v), fmt: (v) => v.toFixed(1), hint: 'When Core falls below baseline, Flex output is scaled by V_core^κ (no power, no payments, no Flex). Has no effect while Core ≥ 1.' })
+      );
+    }
+
+    const cap = group(host, 'Capability and slop', ext, ext ? '' : OFF);
+    if (ext) {
+      cap.append(
+        slider({ id: 'g-beta', label: 'Capability breadth', sym: 'β', min: 0, max: 1, step: 0.05, get: () => state.beta, set: (v) => (state.beta = v), fmt: (v) => v.toFixed(2), hint: 'How fast better AI expands native fit f toward each sector\'s ceiling f_max. 0 = fixed (original).' }),
+        slider({ id: 'g-deta', label: 'Verification keeps pace', sym: 'δ_η', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => v.toFixed(2), hint: 'More reliable AI needs less human review: internal slop scales with T^−δ. 0 = original.' }),
+        slider({ id: 'g-dgamma', label: 'Defensive AI', sym: 'δ_γ', min: 0, max: 1, step: 0.05, get: () => state.dGamma, set: (v) => (state.dGamma = v), fmt: (v) => v.toFixed(2), hint: 'Filters and fraud detection improve with AI too: ambient slop scales with T^−δ. 0 = original (attack grows forever).' })
+      );
+    }
+
+    if (dyn) {
+      const fb = group(host, 'Feedbacks and shocks', ext, ext ? '' : OFF);
+      if (ext) {
+        fb.append(
+          slider({ id: 'g-psi', label: 'Investment feedback', sym: 'ψ', min: 0, max: 1, step: 0.05, get: () => state.psi, set: (v) => (state.psi = v), fmt: (v) => v.toFixed(2), hint: 'A richer economy funds more compute: growth × V_macro^ψ. 0 = original.' }),
+          slider({ id: 'g-sby', label: 'AI setback year', min: 2027, max: 2086, step: 1, get: () => state.setbackYear || 2030, set: (v) => (state.setbackYear = v), fmt: (v) => (state.setbackSize ? String(v) : `${v} (off)`) }),
+          slider({ id: 'g-sbs', label: 'Setback size', min: 0, max: 90, step: 5, get: () => state.setbackSize, set: (v) => { state.setbackSize = v; if (v && !state.setbackYear) state.setbackYear = 2030; }, fmt: (v) => (v ? `T falls ${v}%` : 'none'), hint: 'Regulation, a compute crunch or an AI winter. Useful AI work drops once, then the loop resumes.', after: () => { const o = $('g-sby-out'); if (o) o.textContent = state.setbackSize ? String(state.setbackYear) : `${state.setbackYear} (off)`; } })
+        );
+      }
+    }
+
+    const np = group(host, 'New AI-native products', false, ext ? '' : OFF);
+    if (ext) {
+      np.append(
+        slider({ id: 'g-nmax', label: 'Mature size', sym: 'N_max', min: 0, max: 100, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}% of 2026 economy`, hint: 'Value from goods and services that do not exist today. Pure judgement: there is no data for this.' }),
+        slider({ id: 'g-tnew', label: 'Midpoint', sym: 'T_new', min: 2, max: 50, step: 1, get: () => state.Tnew, set: (v) => (state.Tnew = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the new sector reaches half its mature size.' })
+      );
+      if (dyn) np.append(slider({ id: 'g-nspeed', label: 'Build-out speed', min: 5, max: 30, step: 1, get: () => state.newSpeed, set: (v) => (state.newSpeed = v), fmt: (v) => `${v}% of gap/yr` }));
+    }
+
+    if (dyn) {
+      const rk = group(host, 'Catastrophic risk', false, ext ? 'Off by default: there is no agreed number. Set your own.' : OFF);
+      if (ext) {
+        rk.append(
+          slider({ id: 'g-hmax', label: 'Annual risk at maturity', sym: 'h_max', min: 0, max: 20, step: 0.1, get: () => state.hmax, set: (v) => (state.hmax = v), fmt: (v) => (v ? `${v.toFixed(1)}%/yr` : 'off'), hint: 'Yearly chance of a catastrophe once AI is far past the midpoint below.' }),
+          slider({ id: 'g-trisk', label: 'Risk midpoint', sym: 'T_risk', min: 2, max: 100, step: 1, get: () => state.Trisk, set: (v) => (state.Trisk = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the yearly risk reaches half its maximum.' }),
+          slider({ id: 'g-loss', label: 'Value lost in a catastrophe', min: 10, max: 100, step: 5, get: () => state.loss, set: (v) => (state.loss = v), fmt: (v) => `${v}%`, hint: '100% = everything lost. Used for the risk-adjusted value.' })
+        );
+      }
+    }
+
+    const un = group(host, 'Uncertainty', false);
+    un.append(
+      slider({ id: 'g-spread', label: 'Parameter uncertainty', min: 0, max: 60, step: 5, get: () => state.spread, set: (v) => (state.spread = v), fmt: (v) => (v ? `±${v}% (1σ)` : 'off'), hint: 'Every sector setting and AI dial is randomly varied by this much in each run. The shaded band shows the middle 80% of outcomes.' }),
+      slider({ id: 'g-runs', label: 'Simulation runs', min: 50, max: 400, step: 50, get: () => state.runs, set: (v) => (state.runs = v), fmt: (v) => String(v) })
     );
   }
 
@@ -153,6 +240,7 @@
       b.addEventListener('click', () => {
         const base = defaultState();
         base.mode = state.mode;
+        base.model = state.mode === 'dynamic' ? state.model : 'extended';
         base.sel = Math.min(state.sel, 5);
         state = p.apply(base);
         state.preset = p.id;
@@ -188,20 +276,19 @@
     const s = state.sectors[state.sel];
     const ed = $('sector-edit');
     ed.innerHTML = '';
-    const dyn = state.mode === 'dynamic';
-    const refresh = () => { buildSectorTabs(); };
+    const dyn = state.mode === 'dynamic', ext = isExt();
 
     const nameF = document.createElement('div');
     nameF.className = 'field';
     nameF.innerHTML = '<label for="s-name">Sector name</label><input class="text-in" id="s-name" maxlength="40">';
     const nameIn = nameF.querySelector('input');
     nameIn.value = s.name;
-    nameIn.addEventListener('input', () => { s.name = nameIn.value || 'Sector'; refresh(); update(); });
+    nameIn.addEventListener('input', () => { s.name = nameIn.value || 'Sector'; buildSectorTabs(); update(); });
 
     const tierF = document.createElement('div');
     tierF.className = 'field';
     tierF.innerHTML = '<span class="lab">Tier</span>';
-    tierF.append(segmented('s-tier', [['core', 'Core · weak link'], ['flex', 'Flex · substitutable']], () => s.tier, (v) => { s.tier = v; refresh(); }));
+    tierF.append(segmented('s-tier', [['core', 'Core · weak link'], ['flex', 'Flex · substitutable']], () => s.tier, (v) => { s.tier = v; }, buildSectorTabs));
 
     const depF = document.createElement('div');
     depF.className = 'field';
@@ -210,8 +297,11 @@
 
     ed.append(nameF, tierF, depF);
     ed.append(
-      slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative importance. Normalised within Core or Flex.' }),
-      slider({ id: 's-f', label: 'Native workflow fit', sym: 'f', min: 0, max: 100, step: 1, get: () => s.f, set: (v) => (s.f = v), fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work.' }),
+      slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size in 2026. Normalised within Core or Flex.' }),
+      slider({ id: 's-f', label: ext ? 'Native workflow fit today' : 'Native workflow fit', sym: ext ? 'f₀' : 'f', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
+    );
+    if (ext) ed.append(slider({ id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
+    ed.append(
       slider({ id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum (HFT, SEO) · 100% = pure wealth creation.' }),
       slider({ id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/20', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} · η ${(v / 20).toFixed(3)}`, hint: '0 = auto-verified (compilers) · 2 = heavy review · 10 = unverifiable chaos.' }),
       slider({ id: 's-gamma', label: 'External spam / cyber exposure', sym: 'γ = x/20', min: 0, max: 10, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} · γ ${(v / 20).toFixed(3)}`, hint: '0 = air-gapped · 2 = exposed · 10 = public inbox or active attack.' })
@@ -219,7 +309,7 @@
     if (dyn) {
       ed.append(
         slider({ id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck a full redesign can remove. Physical sectors ≲ 50%.' }),
-        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 2, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the sector\'s redesign target reaches half its ceiling. Adoption is fastest around here.' }),
+        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 2, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the redesign target reaches half its ceiling. Adoption is fastest around here.' }),
         slider({ id: 's-alpha', label: 'Institutional catch-up speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast actual redesign closes the gap to its current target each year.' })
       );
       const rdF = document.createElement('div');
@@ -227,23 +317,16 @@
       rdF.innerHTML = `<span class="lab">AI R&amp;D feedback</span><label class="check"><input type="checkbox" id="s-rd"> This sector drives AI progress (V<sub>R&amp;D</sub>)</label>`;
       const cb = rdF.querySelector('input');
       cb.checked = !!s.rd;
-      cb.addEventListener('change', () => {
-        state.sectors.forEach((x) => (x.rd = false));
-        s.rd = cb.checked;
-        state.preset = null; markPresets();
-        update();
-      });
+      cb.addEventListener('change', () => { state.sectors.forEach((x) => (x.rd = false)); s.rd = cb.checked; touched(); });
       ed.append(rdF);
     } else {
-      ed.append(
-        slider({ id: 's-g', label: 'Workflow redesign', sym: 'g', min: 0, max: 90, step: 1, get: () => s.g, set: (v) => (s.g = v), fmt: (v) => `${v}%`, hint: '0% = legacy process · 50% = major re-wire · 90% = hard cap.' })
-      );
+      ed.append(slider({ id: 's-g', label: 'Workflow redesign', sym: 'g', min: 0, max: 90, step: 1, get: () => s.g, set: (v) => (s.g = v), fmt: (v) => `${v}%`, hint: '0% = legacy process · 50% = major re-wire · 90% = hard cap.' }));
     }
   }
 
   $('add-sector').addEventListener('click', () => {
     if (state.sectors.length >= MAX_SECTORS) return;
-    state.sectors.push(sec('New sector', 'flex', 20, 50, 80, 1, 1, 30, 30, 5, 15, 'private'));
+    state.sectors.push(sec('New sector', 'flex', 20, 50, 80, 80, 1, 1, 30, 30, 5, 15, 'private'));
     state.sel = state.sectors.length - 1;
     state.preset = null;
     rebuildAll();
@@ -259,16 +342,11 @@
     const mode = state.mode;
     state = defaultState();
     state.mode = mode;
-    state.preset = mode === 'dynamic' ? 'dyn-base' : 'st-r2';
+    state.preset = mode === 'dynamic' ? 'dyn-base' : null;
     rebuildAll();
   });
 
-  // ---------------- Mode ----------------
-  function setMode(m) {
-    state.mode = m;
-    state.preset = null; // keep the user's sectors; clear the preset highlight
-    rebuildAll();
-  }
+  function setMode(m) { state.mode = m; state.preset = null; rebuildAll(); }
   $('mode-dynamic').addEventListener('click', () => setMode('dynamic'));
   $('mode-static').addEventListener('click', () => setMode('static'));
 
@@ -285,22 +363,25 @@
   }
   function logTicks(lo, hi) {
     const c = [];
-    for (let e = 0; e <= 8; e++) [1, 2, 5].forEach((m) => c.push(m * Math.pow(10, e)));
-    const t = c.filter((v) => v >= lo * 0.999 && v <= hi * 1.001);
+    for (let e = 0; e <= 12; e++) [1, 2, 5].forEach((m) => c.push(m * Math.pow(10, e)));
+    let t = c.filter((v) => v >= lo * 0.999 && v <= hi * 1.001);
+    if (t.length > 7) t = t.filter((v) => /^1/.test(String(v)));
     return t.length >= 2 ? t : [lo, hi];
   }
+  const tickFmtX = (v) => (v >= 1e4 ? '1e' + Math.round(Math.log10(v)) : String(v)) + '×';
 
   /**
    * lineChart(el, opts)
-   * opts: { xs: number[], series: [{name, color, ys, width, dash, label}], xLog, yLog, xFmt, yFmt, tipX, yFloor, baseline, height, marker, directLabels, onHoverFmt }
+   * opts: { xs, series: [{name, color, ys, width, dash, label}], band: {lo, hi, color, name}, xLog, yLog, xFmt, yFmt,
+   *         tipX, tipExtra, yFloor, yCeil, baseline, baselineLabel, height, marker, markerLabel, directLabels, aria }
    */
   function lineChart(el, o) {
     const W = Math.max(280, el.clientWidth || 600);
     const H = o.height || 260;
-    const m = { l: 44, r: o.directLabels ? 112 : 14, t: 10, b: 28 };
+    const m = { l: 48, r: o.directLabels ? 112 : 14, t: 10, b: 28 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const xs = o.xs;
-    const allY = o.series.flatMap((s) => s.ys).filter(Number.isFinite);
+    const allY = o.series.flatMap((s) => s.ys).concat(o.band ? o.band.lo.concat(o.band.hi) : []).filter(Number.isFinite);
     let ylo = Math.min(...allY, o.baseline ?? Infinity), yhi = Math.max(...allY, o.baseline ?? -Infinity);
     if (o.yFloor != null) ylo = Math.min(ylo, o.yFloor);
     let yt;
@@ -313,11 +394,13 @@
       yt = niceTicks(ylo - pad, yhi + pad, 5);
       ylo = Math.min(ylo - pad * 0.5, yt[0]); yhi = Math.max(yhi + pad * 0.5, yt[yt.length - 1]);
       if (o.yFloor != null && ylo < o.yFloor) ylo = o.yFloor;
+      if (o.yCeil != null && yhi > o.yCeil) yhi = o.yCeil;
       yt = yt.filter((v) => v >= ylo - 1e-9 && v <= yhi + 1e-9);
     }
     const xlo = xs[0], xhi = xs[xs.length - 1];
     const X = o.xLog ? (v) => m.l + (Math.log(v) - Math.log(xlo)) / (Math.log(xhi) - Math.log(xlo)) * iw : (v) => m.l + (v - xlo) / (xhi - xlo || 1) * iw;
-    const Y = o.yLog ? (v) => m.t + ih - (Math.log(v) - Math.log(ylo)) / (Math.log(yhi) - Math.log(ylo)) * ih : (v) => m.t + ih - (v - ylo) / (yhi - ylo || 1) * ih;
+    const Yr = o.yLog ? (v) => m.t + ih - (Math.log(v) - Math.log(ylo)) / (Math.log(yhi) - Math.log(ylo)) * ih : (v) => m.t + ih - (v - ylo) / (yhi - ylo || 1) * ih;
+    const Y = (v) => Yr(o.yLog ? Math.max(ylo, v) : v);
     const xt = o.xLog ? logTicks(xlo, xhi) : niceTicks(xlo, xhi, Math.max(3, Math.min(8, Math.floor(iw / 70))));
 
     const grid = css('--grid'), muted = css('--muted'), ink2 = css('--ink-2'), surface = css('--panel'), ink = css('--ink');
@@ -326,9 +409,14 @@
       s += `<line x1="${m.l}" x2="${m.l + iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="${grid}" stroke-width="1"/>`;
       s += `<text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="${muted}" font-family="var(--font-mono)">${o.yFmt(v)}</text>`;
     });
+    if (o.band) {
+      const up = o.band.hi.map((y, i) => `${i ? 'L' : 'M'}${X(xs[i]).toFixed(1)},${Y(y).toFixed(1)}`).join('');
+      const dn = o.band.lo.map((y, i) => [X(xs[i]).toFixed(1), Y(y).toFixed(1)]).reverse().map(([a, b]) => `L${a},${b}`).join('');
+      s += `<path d="${up}${dn}Z" fill="${o.band.color}" opacity="0.16"/>`;
+    }
     if (o.baseline != null && o.baseline >= ylo && o.baseline <= yhi) {
       s += `<line x1="${m.l}" x2="${m.l + iw}" y1="${Y(o.baseline)}" y2="${Y(o.baseline)}" stroke="${ink2}" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>`;
-      s += `<text x="${m.l + iw}" y="${Y(o.baseline) - 5}" text-anchor="end" font-size="10.5" fill="${muted}">${o.baselineLabel || 'baseline'}</text>`;
+      s += `<text x="${m.l + iw - 4}" y="${Y(o.baseline) + 14}" text-anchor="end" font-size="10.5" fill="${muted}">${o.baselineLabel || 'baseline'}</text>`;
     }
     xt.forEach((v) => {
       s += `<text x="${X(v)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="${muted}" font-family="var(--font-mono)">${o.xFmt(v)}</text>`;
@@ -339,17 +427,15 @@
       s += `<line x1="${mx}" x2="${mx}" y1="${m.t}" y2="${m.t + ih}" stroke="${ink}" stroke-width="1.5" opacity="0.6"/>`;
       s += `<text x="${mx + 5}" y="${m.t + 12}" font-size="11" fill="${ink2}">${o.markerLabel || ''}</text>`;
     }
-    // series (draw thinner ones first so emphasised lines sit on top)
     const order = o.series.map((_, i) => i).sort((a, b) => (o.series[a].width || 2) - (o.series[b].width || 2));
     order.forEach((k) => {
       const se = o.series[k];
-      const d = se.ys.map((y, i) => `${i ? 'L' : 'M'}${X(xs[i]).toFixed(1)},${Y(Math.max(o.yLog ? ylo : -Infinity, y)).toFixed(1)}`).join('');
+      const d = se.ys.map((y, i) => `${i ? 'L' : 'M'}${X(xs[i]).toFixed(1)},${Y(y).toFixed(1)}`).join('');
       s += `<path d="${d}" fill="none" stroke="${surface}" stroke-width="${(se.width || 2) + 2}" stroke-linejoin="round" stroke-linecap="round"/>`;
       s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.width || 2}" stroke-linejoin="round" stroke-linecap="round" ${se.dash ? `stroke-dasharray="${se.dash}"` : ''}/>`;
       const ly = se.ys[se.ys.length - 1];
       s += `<circle cx="${X(xs[xs.length - 1])}" cy="${Y(ly)}" r="3.5" fill="${se.color}" stroke="${surface}" stroke-width="2"/>`;
     });
-    // direct labels at line ends (de-collided)
     if (o.directLabels) {
       const labs = o.series.map((se) => ({ y: Y(se.ys[se.ys.length - 1]), t: `${se.label || se.name} ${o.yFmt(se.ys[se.ys.length - 1], true)}` }));
       const idx = labs.map((_, i) => i).sort((a, b) => labs[a].y - labs[b].y);
@@ -376,8 +462,10 @@
       hover.style.display = '';
       hx.setAttribute('x1', cx); hx.setAttribute('x2', cx);
       dots.forEach((dt) => { const se = o.series[dt.dataset.k]; dt.setAttribute('cx', cx); dt.setAttribute('cy', Y(se.ys[best])); });
-      const rows = o.series.map((se, k) => ({ se, v: se.ys[best], k })).sort((a, b) => b.v - a.v);
-      tip.innerHTML = `<div class="h">${o.tipX(xs[best], best)}</div>` + rows.map(({ se, v }) => `<div class="r"><i style="background:${se.color}"></i><span>${esc(se.name)}</span><b>${o.yFmt(v, true)}</b></div>`).join('') + (o.tipExtra ? o.tipExtra(best) : '');
+      const rows = o.series.map((se) => ({ se, v: se.ys[best] })).sort((a, b) => b.v - a.v);
+      tip.innerHTML = `<div class="h">${o.tipX(xs[best], best)}</div>` + rows.map(({ se, v }) => `<div class="r"><i style="background:${se.color}"></i><span>${esc(se.name)}</span><b>${o.yFmt(v, true)}</b></div>`).join('') +
+        (o.band ? `<div class="r"><i style="background:${o.band.color};opacity:.35;height:8px"></i><span>${esc(o.band.name || '10–90% range')}</span><b>${o.yFmt(o.band.lo[best], true)}–${o.yFmt(o.band.hi[best], true)}</b></div>` : '') +
+        (o.tipExtra ? o.tipExtra(best) : '');
       tip.style.display = 'block';
       const scale = r.width / W;
       const tw = tip.offsetWidth;
@@ -400,7 +488,7 @@
     const hi = Math.max(1.2, ...rows.map((r) => Math.max(r.V, r.S))) * 1.05;
     const X = (v) => m.l + (v / hi) * iw;
     const ticks = niceTicks(0, hi, Math.max(3, Math.floor(iw / 70)));
-    const grid = css('--grid'), muted = css('--muted'), ink = css('--ink'), ink2 = css('--ink-2'), surface = css('--panel');
+    const grid = css('--grid'), muted = css('--muted'), ink = css('--ink'), ink2 = css('--ink-2');
     let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Sector net value and clean speedup">`;
     ticks.forEach((v) => {
       s += `<line x1="${X(v)}" x2="${X(v)}" y1="${m.t}" y2="${H - m.b}" stroke="${grid}"/>`;
@@ -410,7 +498,7 @@
       const y = m.t + i * rowH + 7, h = rowH - 14;
       const name = r.name.length > 22 ? r.name.slice(0, 21) + '…' : r.name;
       s += `<text x="${m.l - 10}" y="${y + h / 2 + 4}" text-anchor="end" font-size="12" fill="${ink2}">${esc(name)}</text>`;
-      const x0 = X(0), x1 = X(r.V), w = Math.max(2, x1 - x0);
+      const x0 = X(0), x1 = X(r.V), w = Math.max(4, x1 - x0);
       s += `<path d="M${x0},${y} h${w - 4} a4,4 0 0 1 4,4 v${h - 8} a4,4 0 0 1 -4,4 h${-(w - 4)} z" fill="${r.color}"><title>${esc(r.name)}: net ${f2(r.V)}×, clean speedup ${f2(r.S)}×</title></path>`;
       s += `<line x1="${X(r.S)}" x2="${X(r.S)}" y1="${y - 3}" y2="${y + h + 3}" stroke="${ink}" stroke-width="2"/>`;
       s += `<text x="${Math.max(x1, X(r.S)) + 8}" y="${y + h / 2 + 4}" font-size="11.5" fill="${ink}" font-family="var(--font-mono)">${f2(r.V)}×</text>`;
@@ -421,8 +509,29 @@
   }
 
   function legend(el, items) {
-    el.innerHTML = items.map((it) => `<span><i class="${it.dash ? 'dash' : ''}" style="${it.dash ? `color:${it.color}` : `background:${it.color}`}"></i>${esc(it.name)}</span>`).join('');
+    el.innerHTML = items.map((it) => it.band
+      ? `<span><i style="background:${it.color};opacity:.35;height:10px;width:14px"></i>${esc(it.name)}</span>`
+      : `<span><i class="${it.dash ? 'dash' : ''}" style="${it.dash ? `color:${it.color}` : `background:${it.color}`}"></i>${esc(it.name)}</span>`).join('');
   }
+
+  // ---------------- Monte Carlo (debounced, cached) ----------------
+  let mcCache = { key: null, data: null }, mcTimer = 0;
+  function mcKey() { const s = Object.assign({}, state); delete s.sel; delete s.preset; return JSON.stringify(s); }
+  function scheduleMC() {
+    clearTimeout(mcTimer);
+    if (!state.spread) return;
+    const key = mcKey();
+    if (mcCache.key === key) return;
+    mcTimer = setTimeout(() => {
+      const runs = Math.round(state.runs), spread = state.spread / 100;
+      const data = state.mode === 'dynamic'
+        ? M.monteCarlo(state, runs, spread, 20261121)
+        : M.monteCarloSnapshot(state, state.Tstatic, runs, spread, 20261121);
+      mcCache = { key, data };
+      render();
+    }, 220);
+  }
+  function currentMC() { return state.spread && mcCache.key === mcKey() ? mcCache.data : null; }
 
   // ---------------- Rendering ----------------
   let lastRows = null, lastSnap = null;
@@ -432,22 +541,32 @@
   }
 
   function renderDynamic() {
+    const ext = isExt();
     const rows = M.simulate(state);
     lastRows = rows; lastSnap = null;
+    const mc = currentMC();
     const xs = rows.map((r) => r.year);
     const last = rows[rows.length - 1];
     const startY = state.startYear;
     const peak = rows.reduce((a, r) => (r.Vmacro > a.Vmacro ? r : a), rows[0]);
     const yrFmt = (v) => String(Math.round(v));
+    const L = rows.length - 1;
+    const risk = ext && state.hmax > 0;
 
     // KPIs
     const best = last.sectors.map((s, i) => ({ s, i })).sort((a, b) => b.s.V - a.s.V);
     const worst = best[best.length - 1];
+    const range = mc ? `80% range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])}` : (state.spread ? 'running uncertainty…' : `${pct(last.Vmacro - 1)} vs ${startY}`);
+    const annual = Math.pow(last.Vmacro, 1 / Math.max(1, last.t)) - 1;
     $('kpis').innerHTML =
-      kpi(`Economy in ${last.year}`, fx(last.Vmacro), `${pct(last.Vmacro - 1)} real output vs ${startY}`, last.Vmacro >= 1 ? 'good' : 'bad') +
-      kpi(`Useful AI work ${last.year}`, fx(last.T), `growth now ${(last.growth * 100).toFixed(1)}%/yr · half-speed at ${state.Thalf}×`) +
-      kpi('Core infrastructure', fx(last.Vcore), last.Vcore < 1 ? 'Below baseline: braking AI progress' : 'Above baseline: no brake', last.Vcore >= 1 ? 'good' : 'bad') +
-      kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad');
+      kpi(`Economy in ${last.year}`, fx(last.Vmacro), `${(annual * 100).toFixed(1)}%/yr extra growth · ${range}`, last.Vmacro >= 1 ? 'good' : 'bad') +
+      kpi(`Useful AI work ${last.year}`, fx(last.T), `growth now ${(last.growth * 100).toFixed(1)}%/yr`) +
+      kpi('Core infrastructure', fx(last.Vcore), !last.hasC ? 'No Core sectors' : last.Vcore < 1 ? 'Below baseline: braking AI and Flex' : 'Above baseline: no brake', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
+      kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
+      kpi('Tasks automated', pc(last.automation), `spending-weighted share of work AI handles · ${pc(rows[0].automation)} in ${startY}`) +
+      (risk
+        ? kpi(`Catastrophe by ${last.year}`, pc(last.pCat, 1), `risk-adjusted economy ${fx(last.Vexp)}`, last.pCat > 0.1 ? 'bad' : '')
+        : kpi('New AI-native products', ext ? pc(last.newShare) : '–', ext ? `of the economy in ${last.year}` : 'Off in Gemini original'));
 
     // Chart 1: macro
     const c = [css('--s1'), css('--s2'), css('--s3')];
@@ -455,28 +574,31 @@
       { name: 'Total economy', label: 'Total', color: c[0], ys: rows.map((r) => r.Vmacro), width: 3 },
       { name: 'Core sectors', label: 'Core', color: c[1], ys: rows.map((r) => r.Vcore), width: 2 },
       { name: 'Flex sectors', label: 'Flex', color: c[2], ys: rows.map((r) => r.Vflex), width: 2 },
-    ];
+    ].filter((se) => se.ys.every(Number.isFinite));
+    if (risk) ser.push({ name: 'Risk-adjusted total', label: 'Risk-adj.', color: css('--s8'), ys: rows.map((r) => r.Vexp), width: 2, dash: '5 4' });
+    const band = mc ? { lo: mc.Vmacro.p10, hi: mc.Vmacro.p90, color: c[0], name: 'Total, 80% range' } : null;
     $('c1-title').textContent = 'Economy-wide value over time';
     $('c1-sub').textContent = peak.year !== last.year ? `Peaks at ${fx(peak.Vmacro)} in ${peak.year}` : `Real output index, ${startY} = 1.0`;
-    legend($('c1-legend'), ser);
+    legend($('c1-legend'), ser.concat(band ? [{ name: 'Total, 80% range', color: c[0], band: true }] : []));
     lineChart($('c1'), {
-      xs, series: ser, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
+      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
       tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 300, directLabels: true, aria: 'Macro, core and flex value over time',
     });
 
     // Chart 2: T over time (log)
     $('c2-title').textContent = 'Useful AI work, T';
     $('c2-sub').textContent = 'Multiple of end-2026 verified work per £ (log scale). Growth slows as Core weakens and as T passes the diminishing-returns midpoint.';
-    $('c2-legend').innerHTML = '';
+    const tBand = mc ? { lo: mc.T.p10, hi: mc.T.p90, color: css('--s7'), name: '80% range' } : null;
+    legend($('c2-legend'), tBand ? [{ name: 'Useful AI work', color: css('--s7') }, { name: '80% range', color: css('--s7'), band: true }] : []);
     lineChart($('c2'), {
-      xs, series: [{ name: 'Useful AI work', color: css('--s7'), ys: rows.map((r) => r.T), width: 2.5 }],
-      yLog: true, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v + '×'),
+      xs, series: [{ name: 'Useful AI work', color: css('--s7'), ys: rows.map((r) => r.T), width: 2.5 }], band: tBand,
+      yLog: true, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : tickFmtX(v)),
       tipX: (x) => String(x), height: 240, aria: 'Tech power T over time',
-      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div><div class="r"><i></i><span>Diminishing returns</span><b>${f2(rows[i].drag)}</b></div>`,
+      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div><div class="r"><i></i><span>Diminishing returns</span><b>${f2(rows[i].drag)}</b></div>` + (ext ? `<div class="r"><i></i><span>Investment boost</span><b>${f2(rows[i].invest)}</b></div>` : ''),
     });
 
     // Chart 3: sector V
-    const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].V), width: i === state.sel ? 3 : 2, dash: s.tier === 'flex' ? '' : '' }));
+    const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].V), width: i === state.sel ? 3 : 2 }));
     $('c3-title').textContent = 'Sector net value, Vᵢ';
     $('c3-sub').textContent = 'Each sector after bottlenecks, Red Queen losses and slop. Below 1.0 means AI made the sector worse off.';
     legend($('c3-legend'), sser);
@@ -486,27 +608,50 @@
     $('c4-card').hidden = false;
     const gser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].g * 100), width: i === state.sel ? 3 : 2 }));
     legend($('c4-legend'), gser);
-    lineChart($('c4'), {
-      xs, series: gser, xFmt: yrFmt, yFmt: (v) => Math.round(v) + '%', yFloor: 0, tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 220, aria: 'Workflow redesign over time',
-    });
+    lineChart($('c4'), { xs, series: gser, xFmt: yrFmt, yFmt: (v) => Math.round(v) + '%', yFloor: 0, tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 220, aria: 'Workflow redesign over time' });
+
+    // Chart 5: spending shares (Baumol)
+    $('c5-card').hidden = false;
+    const shser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.shares[i] * 100), width: i === state.sel ? 3 : 2 }));
+    if (ext && state.Nmax > 0) shser.push({ name: 'AI-native products', color: css('--s7'), ys: rows.map((r) => r.newShare * 100), width: 2, dash: '5 4' });
+    $('c5-sub').textContent = ext
+      ? 'Share of total spending. When sectors are complements, spending shifts toward the ones AI speeds up least (the Baumol effect).'
+      : 'Approximate shares under the original formula, which has no explicit price or spending mechanism.';
+    legend($('c5-legend'), shser);
+    lineChart($('c5'), { xs, series: shser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, tipX: (x) => String(x), height: 240, aria: 'Spending shares over time' });
+
+    // Chart 6: automation and risk
+    $('c6-card').hidden = false;
+    const aser = [{ name: 'Tasks automated (economy)', color: css('--s1'), ys: rows.map((r) => r.automation * 100), width: 2.5 }];
+    state.sectors.forEach((s, i) => { if (i === state.sel) aser.push({ name: `Tasks automated: ${s.name}`, color: seriesColor(i), ys: rows.map((r) => (1 - r.sectors[i].eps) * 100), width: 2, dash: '2 3' }); });
+    if (risk) aser.push({ name: 'Chance of catastrophe so far', color: css('--s8'), ys: rows.map((r) => r.pCat * 100), width: 2.5 });
+    $('c6-sub').textContent = risk
+      ? 'Automated share is the share of work time AI handles (1 − εᵢ). Catastrophe line is the cumulative probability from your risk settings.'
+      : 'Share of work time AI handles (1 − εᵢ), weighted by spending. This is a task measure, not a forecast of jobs or wages.';
+    legend($('c6-legend'), aser);
+    lineChart($('c6'), { xs, series: aser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, yCeil: 100, tipX: (x) => String(x), height: 240, aria: 'Automation and catastrophe risk over time' });
 
     sectorStatus(last, `in ${last.year}`);
     renderTableDynamic(rows);
   }
 
   function renderStatic() {
+    const ext = isExt();
     const T = state.Tstatic;
     const snap = M.snapshot(state, T, null, 0);
     lastSnap = snap; lastRows = null;
+    const mc = currentMC();
     const best = snap.sectors.map((s, i) => ({ s, i })).sort((a, b) => b.s.V - a.s.V);
     const worst = best[best.length - 1];
+    const range = mc ? `80% range ${fx(mc.p10)}–${fx(mc.p90)}` : (state.spread ? 'running uncertainty…' : 'real output vs baseline');
     $('kpis').innerHTML =
-      kpi('Total economy', fx(snap.Vmacro), `${pct(snap.Vmacro - 1)} real output vs baseline`, snap.Vmacro >= 1 ? 'good' : 'bad') +
-      kpi('Core sectors', fx(snap.Vcore), `weak-link average, ρ = ${(1 - state.fragility).toFixed(1)}`, snap.Vcore >= 1 ? 'good' : 'bad') +
-      kpi('Flex sectors', fx(snap.Vflex), 'weighted average', snap.Vflex >= 1 ? 'good' : 'bad') +
-      kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad');
+      kpi('Total economy', fx(snap.Vmacro), `${pct(snap.Vmacro - 1)} · ${range}`, snap.Vmacro >= 1 ? 'good' : 'bad') +
+      kpi('Core sectors', fx(snap.Vcore), snap.hasC ? `weak-link average, ρ = ${(1 - state.fragility).toFixed(1)}` : 'No Core sectors', !snap.hasC || snap.Vcore >= 1 ? 'good' : 'bad') +
+      kpi('Flex sectors', fx(snap.Vflex), snap.hasF ? 'weighted average' : 'No Flex sectors', !snap.hasF || snap.Vflex >= 1 ? 'good' : 'bad') +
+      kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
+      kpi('Tasks automated', pc(snap.automation), 'spending-weighted share of work AI handles') +
+      kpi('New AI-native products', ext ? pc(snap.newShare) : '–', ext ? 'share of the economy at this T' : 'Off in Gemini original');
 
-    // Chart 1: V vs T sweep
     const pts = M.sweep(state, 1, 100, 120);
     const xs = pts.map((p) => p.T);
     const c = [css('--s1'), css('--s2'), css('--s3')];
@@ -514,7 +659,7 @@
       { name: 'Total economy', label: 'Total', color: c[0], ys: pts.map((p) => p.Vmacro), width: 3 },
       { name: 'Core sectors', label: 'Core', color: c[1], ys: pts.map((p) => p.Vcore), width: 2 },
       { name: 'Flex sectors', label: 'Flex', color: c[2], ys: pts.map((p) => p.Vflex), width: 2 },
-    ];
+    ].filter((se) => se.ys.every(Number.isFinite));
     const pk = pts.reduce((a, p) => (p.Vmacro > a.Vmacro ? p : a), pts[0]);
     $('c1-title').textContent = 'Economy-wide value across tech power';
     $('c1-sub').textContent = pk.T < 99 ? `Economy peaks at ${fx(pk.Vmacro)} when T ≈ ${fx(pk.T)}` : 'Holding these sector settings fixed';
@@ -524,19 +669,16 @@
       marker: T, markerLabel: `now ${fx(T)}`, tipX: (x) => `T = ${fx(x)}`, height: 300, aria: 'Macro value as a function of T',
     });
 
-    // Chart 2: sector bars
     $('c2-title').textContent = 'Sector net value at ' + fx(T);
     $('c2-sub').textContent = 'Bar = net value Vᵢ. Black tick = clean speedup Sᵢ before Red Queen losses and slop. Dashed line = baseline 1.0.';
     $('c2-legend').innerHTML = '';
     barChart($('c2'), snap.sectors.map((s, i) => ({ name: state.sectors[i].name, V: s.V, S: s.S, color: seriesColor(i) })));
 
-    // Chart 3: each sector's V across T
     const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: [], width: i === state.sel ? 3 : 2 }));
     const sx = [];
     for (let k = 0; k <= 80; k++) {
       const t = Math.pow(100, k / 80); sx.push(t);
-      const sn = M.snapshot(state, t, null, 0);
-      sn.sectors.forEach((o, i) => sser[i].ys.push(o.V));
+      M.snapshot(state, t, null, 0).sectors.forEach((o, i) => sser[i].ys.push(o.V));
     }
     $('c3-title').textContent = 'Sector value across tech power';
     $('c3-sub').textContent = 'Private sectors flatten at their Slop Peak. Commons sectors keep scaling and can fall below 1.0.';
@@ -544,6 +686,8 @@
     lineChart($('c3'), { xs: sx, series: sser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1, marker: T, tipX: (x) => `T = ${fx(x)}`, height: 240, aria: 'Sector values across T' });
 
     $('c4-card').hidden = true;
+    $('c5-card').hidden = true;
+    $('c6-card').hidden = true;
     sectorStatus(snap, `at ${fx(T)}`);
     renderTableStatic(snap);
   }
@@ -553,57 +697,68 @@
     const cfg = state.sectors[state.sel];
     if (!s) { $('sector-status').innerHTML = ''; return; }
     const pills = [];
-    pills.push(`<span class="pill info">${when}: V = ${f2(s.V)}× · clean speedup S = ${f2(s.S)}× · bottleneck ε = ${f2(s.eps)}</span>`);
+    pills.push(`<span class="pill info">${when}: V = ${f2(s.V)}× · clean speedup S = ${f2(s.S)}× · native fit ${pc(s.f)} · bottleneck ε = ${f2(s.eps)}</span>`);
     if (s.capped) pills.push(`<span class="pill warn">Capped at Slop Peak T* ≈ ${fx(s.Tstar)}</span>`);
     else if (cfg.deploy === 'commons' && s.Tstar < snap.T - 1e-6) pills.push(`<span class="pill crit">Past its Slop Peak (T* ≈ ${fx(s.Tstar)}), no cap in commons</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);
     else if (s.V >= 2) pills.push(`<span class="pill good">More than doubled</span>`);
+    const P = M.sectorParams(cfg, 0, 0);
+    if (P.p < 0.5) {
+      const X = M.globalsFor(state);
+      const eta = P.eta * Math.pow(snap.T, -X.dEta), gamma = P.gamma * Math.pow(snap.T, -X.dGamma);
+      const a = eta * Math.log(s.Teff) + gamma * Math.log(snap.T);
+      if (P.p <= a * (1 - P.p)) pills.push(`<span class="pill warn">Arms-race regime: any further speedup lowers this sector's value</span>`);
+    }
     $('sector-status').innerHTML = pills.join('');
   }
 
   function cls(v) { return v < 1 ? 'lo' : ''; }
   function renderTableDynamic(rows) {
+    const ext = isExt(), risk = ext && state.hmax > 0;
     $('tbl-title').textContent = 'Year by year';
     const names = state.sectors.map((s) => esc(s.name));
-    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th><th>V macro</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th>' + (ext ? '<th>New products</th>' : '') + '<th>V macro</th>' + (risk ? '<th>P(catastrophe)</th><th>Risk-adj.</th>' : '') + '<th>Automated</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
     rows.forEach((r) => {
-      h += `<tr><td>${r.year}</td><td>${f2(r.T)}</td><td>${(r.growth * 100).toFixed(1)}%</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td>` + r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
+      h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td>${(r.growth * 100).toFixed(1)}%</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
+        (ext ? `<td>${f2(r.newGoods)}</td>` : '') + `<td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td>` +
+        (risk ? `<td>${pc(r.pCat, 1)}</td><td class="${cls(r.Vexp)}">${f2(r.Vexp)}</td>` : '') + `<td>${pc(r.automation)}</td>` +
+        r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
     });
     $('tbl').innerHTML = h + '</tbody>';
   }
   function renderTableStatic(snap) {
     $('tbl-title').textContent = 'Sector detail at ' + fx(snap.T);
-    let h = '<thead><tr><th>Sector</th><th>Tier</th><th>Weight</th><th>Deploy</th><th>ε</th><th>S (clean)</th><th>T eff</th><th>Slop Peak T*</th><th>V (net)</th></tr></thead><tbody>';
+    let h = '<thead><tr><th>Sector</th><th>Tier</th><th>Weight</th><th>Spending share</th><th>Deploy</th><th>Native fit</th><th>ε</th><th>S (clean)</th><th>T eff</th><th>Slop Peak T*</th><th>V (net)</th></tr></thead><tbody>';
     snap.sectors.forEach((s, i) => {
       const c = state.sectors[i];
-      h += `<tr><td class="txt">${esc(c.name)}</td><td class="txt">${c.tier}</td><td>${f2(snap.weights[i] || 0)}</td><td class="txt">${c.deploy}</td><td>${f2(s.eps)}</td><td>${f2(s.S)}</td><td>${f2(s.Teff)}</td><td>${s.Tstar >= snap.T - 1e-6 ? '≥ ' + f2(snap.T) : f2(s.Tstar)}</td><td class="${cls(s.V)}"><b>${f2(s.V)}</b></td></tr>`;
+      h += `<tr><td class="txt">${esc(c.name)}</td><td class="txt">${c.tier}</td><td>${f2(snap.weights[i] || 0)}</td><td>${pc(snap.shares[i], 1)}</td><td class="txt">${c.deploy}</td><td>${pc(s.f)}</td><td>${f2(s.eps)}</td><td>${f2(s.S)}</td><td>${f2(s.Teff)}</td><td>${s.Tstar >= snap.T - 1e-6 ? '≥ ' + f2(snap.T) : f2(s.Tstar)}</td><td class="${cls(s.V)}"><b>${f2(s.V)}</b></td></tr>`;
     });
-    h += `<tr><td class="txt"><b>Core</b></td><td></td><td>${(state.Wcore / 100).toFixed(2)}</td><td></td><td></td><td></td><td></td><td></td><td class="${cls(snap.Vcore)}"><b>${f2(snap.Vcore)}</b></td></tr>`;
-    h += `<tr><td class="txt"><b>Flex</b></td><td></td><td>${(1 - state.Wcore / 100).toFixed(2)}</td><td></td><td></td><td></td><td></td><td></td><td class="${cls(snap.Vflex)}"><b>${f2(snap.Vflex)}</b></td></tr>`;
-    h += `<tr><td class="txt"><b>Total economy</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="${cls(snap.Vmacro)}"><b>${f2(snap.Vmacro)}</b></td></tr>`;
+    const blank = '<td></td>'.repeat(8);
+    if (snap.hasC) h += `<tr><td class="txt"><b>Core</b></td><td></td>${blank}<td class="${cls(snap.Vcore)}"><b>${f2(snap.Vcore)}</b></td></tr>`;
+    if (snap.hasF) h += `<tr><td class="txt"><b>Flex</b></td><td></td>${blank}<td class="${cls(snap.Vflex)}"><b>${f2(snap.Vflex)}</b></td></tr>`;
+    if (isExt()) h += `<tr><td class="txt"><b>AI-native products</b></td><td></td><td></td><td>${pc(snap.newShare, 1)}</td>${'<td></td>'.repeat(6)}<td>+${f2(snap.newGoods)}</td></tr>`;
+    h += `<tr><td class="txt"><b>Total economy</b></td><td></td>${blank}<td class="${cls(snap.Vmacro)}"><b>${f2(snap.Vmacro)}</b></td></tr>`;
     $('tbl').innerHTML = h + '</tbody>';
   }
 
   function toCSV() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+    const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
     if (lastRows) {
-      const head = ['year', 'T', 'growth', 'V_core', 'V_flex', 'V_macro'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `g ${s.name}`]));
-      const lines = lastRows.map((r) => [r.year, r.T, r.growth, r.Vcore, r.Vflex, r.Vmacro].concat(r.sectors.flatMap((s) => [s.V, s.g])).map((v) => (typeof v === 'number' ? +v.toFixed(5) : v)).join(','));
+      const head = ['year', 'T', 'growth', 'V_core', 'V_flex', 'new_products', 'V_macro', 'P_catastrophe', 'V_risk_adjusted', 'automated_share'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `g ${s.name}`, `share ${s.name}`]));
+      const lines = lastRows.map((r) => [r.year, r.T, r.growth, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.pCat, r.Vexp, r.automation].concat(r.sectors.flatMap((s, i) => [s.V, s.g, r.shares[i]])).map(n).join(','));
       return [head.map(q).join(',')].concat(lines).join('\n');
     }
     const s = lastSnap;
-    const head = ['sector', 'tier', 'weight', 'deploy', 'eps', 'S', 'T_eff', 'T_star', 'V'];
-    const lines = s.sectors.map((o, i) => [q(state.sectors[i].name), state.sectors[i].tier, +(s.weights[i] || 0).toFixed(4), state.sectors[i].deploy, +o.eps.toFixed(5), +o.S.toFixed(5), +o.Teff.toFixed(5), +o.Tstar.toFixed(5), +o.V.toFixed(5)].join(','));
-    lines.push(`"Core",,,,,,,,${s.Vcore.toFixed(5)}`, `"Flex",,,,,,,,${s.Vflex.toFixed(5)}`, `"Macro",,,,,,,,${s.Vmacro.toFixed(5)}`);
+    const head = ['sector', 'tier', 'weight', 'spending_share', 'deploy', 'native_fit', 'eps', 'S', 'T_eff', 'T_star', 'V'];
+    const lines = s.sectors.map((o, i) => [q(state.sectors[i].name), state.sectors[i].tier, n(s.weights[i] || 0), n(s.shares[i]), state.sectors[i].deploy, n(o.f), n(o.eps), n(o.S), n(o.Teff), n(o.Tstar), n(o.V)].join(','));
+    lines.push(`"Core",,,,,,,,,,${n(s.Vcore)}`, `"Flex",,,,,,,,,,${n(s.Vflex)}`, `"New products",,,${n(s.newShare)},,,,,,,${n(s.newGoods)}`, `"Macro",,,,,,,,,,${n(s.Vmacro)}`);
     return [head.join(',')].concat(lines).join('\n');
   }
   $('copy-csv').addEventListener('click', () => {
     const text = toCSV();
     const btn = $('copy-csv');
     const done = (msg) => { btn.textContent = msg; setTimeout(() => (btn.textContent = 'Copy as CSV'), 1600); };
-    try {
-      navigator.clipboard.writeText(text).then(() => done('Copied'), () => fallback());
-    } catch (e) { fallback(); }
     function fallback() {
       const ta = document.createElement('textarea');
       ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
@@ -611,16 +766,15 @@
       try { document.execCommand('copy'); done('Copied'); } catch (e) { done('Copy failed'); }
       ta.remove();
     }
+    try { navigator.clipboard.writeText(text).then(() => done('Copied'), fallback); } catch (e) { fallback(); }
   });
 
   // ---------------- Orchestration ----------------
   let raf = 0;
+  function render() { if (state.mode === 'dynamic') renderDynamic(); else renderStatic(); }
   function update() {
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => {
-      if (state.mode === 'dynamic') renderDynamic(); else renderStatic();
-      save();
-    });
+    raf = requestAnimationFrame(() => { render(); save(); scheduleMC(); });
   }
 
   function rebuildAll() {
@@ -628,19 +782,17 @@
     $('mode-dynamic').setAttribute('aria-pressed', String(dyn));
     $('mode-static').setAttribute('aria-pressed', String(!dyn));
     if (state.sel >= state.sectors.length) state.sel = 0;
+    document.body.dataset.model = state.model;
     buildGlobalControls();
-    $('dyn-controls').hidden = !dyn;
-    $('static-controls').hidden = dyn;
     $('lede').innerHTML = dyn
-      ? 'Each year the static equation gives a snapshot of every sector and the whole economy. Two update rules then feed that snapshot back into next year\'s useful AI work <span class="mono">T</span> and each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span>. Move the dials to see whether the economy compounds, stalls, or drowns in slop.'
-      : 'The static equation with tech power <span class="mono">T</span> as a scenario dial. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
+      ? 'Each year the snapshot equation values every sector and the whole economy. Update rules then feed that snapshot back into next year\'s useful AI work <span class="mono">T</span>, each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span> and, in the extended equation, investment, new products and risk.'
+      : 'The snapshot equation with tech power <span class="mono">T</span> as a dial. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
     buildPresets();
     buildSectorTabs();
     buildSectorEditor();
     update();
   }
 
-  // Re-render on resize and theme changes
   let lastW = 0;
   new ResizeObserver(() => {
     const w = document.querySelector('.results').clientWidth;
