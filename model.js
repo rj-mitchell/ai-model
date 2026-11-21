@@ -36,8 +36,8 @@
   function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd, basis) {
     return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd, basis: basis || '' };
   }
-  // A simplified economy of six illustrative sectors. Each stands in for a broad part of the
-  // economy. Defaults are drawn from published evidence where it exists (see SOURCES and each
+  // A simplified economy of six broad sectors that together cover the whole US economy (BEA 2025
+  // value added), each between 13.5% and 20% of GDP. Defaults are drawn from published evidence where it exists (see SOURCES and each
   // sector's `evidence`), rounded, and otherwise anchored judgement. They are not measurements.
   //
   // Review burden (eta) and external exposure (gamma) are scored 0–10 from sector evidence; the
@@ -86,84 +86,84 @@
 
   function defaultSectors() {
     return [
-      Object.assign(sec('Energy & Grid', 'core', 55, 25, 55, 90, 3, 4, 30, 30, 5, 8, 'private', false,
-        'Stands in for physical infrastructure: utilities, energy, construction, manufacturing and transport (about 20% of US GDP). Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
-        weight: e(50, 60, 'high', ['bea'], 'Physical infrastructure is 55% of the three Core groups by 2025 value added.'),
-        f: e(12, 36, 'medium', ['eloundou'], 'Exposure β 0.24–0.30 for physical sectors (0.31–0.36 for utilities alone).'),
-        fmax: e(40, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.39–0.48, plus robotics for some physical tasks.'),
+      Object.assign(sec('Physical production & energy', 'core', 25, 25, 55, 90, 3, 4, 30, 30, 5, 8, 'private', false,
+        'Manufacturing, construction, utilities, mining and agriculture: 17.5% of US GDP. Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
+        weight: e(25, 28, 'high', ['bea'], 'Value added 17.5% of GDP, 26% of the four Core sectors.'),
+        f: e(24, 29, 'medium', ['eloundou'], 'Exposure β 0.24 (human raters) to 0.29 (GPT-4 raters), weighted by 2023 hours.'),
+        fmax: e(40, 65, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.38–0.48, plus robotics for some physical tasks.'),
         p: e(80, 100, 'medium', [], 'Judgement: cheaper physical output is mostly real wealth; some rent-seeking in regulated utilities.'),
-        eta: e(2, 5, 'low', ['workslop'], 'No direct study. Simulation and physics checks help, but work is safety-critical.'),
-        gamma: e(3, 6, 'medium', ['cisa'], 'Targeted state and criminal attacks on grids; operational systems are partly segmented.'),
+        eta: e(2, 5, 'low', ['workslop'], 'No direct study. Simulation and physics checks help, but much work is safety-critical.'),
+        gamma: e(3, 6, 'medium', ['cisa'], 'Targeted state and criminal attacks on grids and plants; operational systems are partly segmented.'),
         gmax: e(15, 45, 'low', ['eia', 'david'], 'Physical assets limit how far workflows can be redesigned.'),
         Tcrit: e(2, 15, 'low', ['david'], 'Judgement anchored on slow historical reorganisation of physical industries.'),
         alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; full redesign is slower.'),
       } }),
-      Object.assign(sec('Healthcare', 'core', 20, 30, 60, 75, 5, 6, 40, 40, 4, 10, 'private', false,
-        'Stands in for health care and social assistance (about 7.5% of US GDP). Much of the work is hands-on or relational; mistakes are costly, so outputs need expert review.'), { evidence: {
-        weight: e(20, 25, 'high', ['bea'], 'Health care and social assistance is 21% of the three Core groups by 2025 value added.'),
-        f: e(15, 35, 'medium', ['eloundou'], 'Exposure β 0.32–0.35; hands-on care pulls it down.'),
-        fmax: e(48, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.48–0.57; about 70% of caregiving tasks still need hands-on abilities.'),
-        p: e(60, 90, 'medium', ['shrank'], 'Clinical gains are real; billing and coding between payers and providers is an arms race.'),
-        eta: e(4, 7, 'medium', ['scribe'], 'Ambient-scribe notes need clinician review; omissions and errors occur in a minority of notes.'),
-        gamma: e(5, 8, 'medium', ['ibm'], 'Costliest sector for data breaches for 14 years running.'),
-        gmax: e(25, 60, 'low', ['onc'], 'Judgement; regulation and liability limit redesign.'),
-        Tcrit: e(2, 10, 'low', ['onc'], 'Judgement: redesign waits for more reliable AI.'),
-        alpha: e(6, 20, 'medium', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians about 8%.'),
+      Object.assign(sec('Trade & logistics', 'core', 25, 30, 60, 80, 3, 5, 45, 45, 3, 12, 'private', false,
+        'Wholesale, retail, transport and warehousing: 15.5% of US GDP. Supply chains everything else depends on; already digitised and partly automated, but much of the work is physical.'), { evidence: {
+        weight: e(20, 25, 'high', ['bea'], 'Value added 15.5% of GDP, 23% of the four Core sectors.'),
+        f: e(31, 35, 'medium', ['eloundou'], 'Exposure β 0.31–0.35, weighted by 2023 hours.'),
+        fmax: e(47, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.47–0.55, plus warehouse and vehicle automation.'),
+        p: e(65, 95, 'low', [], 'Judgement: logistics efficiency is real value; some retail competition is business-stealing.'),
+        eta: e(2, 4, 'low', [], 'Judgement: mostly low-stakes, checkable work (inventory, routing, orders).'),
+        gamma: e(4, 7, 'medium', ['imperva'], 'Retail and e-commerce are heavy targets for bots, account takeover and fraud.'),
+        gmax: e(30, 60, 'low', ['metrsurvey'], 'Judgement: logistics is digitised and has reorganised quickly before (e-commerce).'),
+        Tcrit: e(1.5, 8, 'low', [], 'Judgement.'),
+        alpha: e(8, 20, 'low', [], 'Judgement: competitive, lightly regulated, but with large physical networks.'),
       } }),
-      Object.assign(sec('Banking & Payments', 'core', 25, 50, 85, 50, 4, 7, 50, 50, 2, 8, 'private', false,
-        'Stands in for finance and insurance (about 9% of US GDP). Mostly information work, a prime target for fraud, and part of the activity is competitive trading rather than new wealth.'), { evidence: {
-        weight: e(20, 25, 'high', ['bea'], 'Finance and insurance is 24% of the three Core groups by 2025 value added.'),
-        f: e(20, 56, 'medium', ['eloundou'], 'Exposure β 0.51–0.56.'),
-        fmax: e(78, 93, 'medium', ['eloundou'], 'Exposure with LLM software 0.78–0.93: almost entirely information work.'),
+      Object.assign(sec('Health, education & government', 'core', 30, 35, 60, 70, 5, 6, 35, 35, 5, 8, 'private', false,
+        'Health care, social assistance, education and government: 19.7% of US GDP. People-facing and rule-bound; mistakes are costly, outputs need expert review, and institutions change slowly.'), { evidence: {
+        weight: e(28, 32, 'high', ['bea'], 'Value added 19.7% of GDP, 30% of the four Core sectors.'),
+        f: e(34, 37, 'medium', ['eloundou'], 'Exposure β 0.34–0.37, weighted by 2023 hours.'),
+        fmax: e(52, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.52–0.61; much caregiving and teaching stays hands-on.'),
+        p: e(50, 85, 'low-medium', ['shrank'], 'Clinical and educational gains are real; billing, coding and compliance contests are arms races.'),
+        eta: e(4, 7, 'medium', ['scribe'], 'Clinical and administrative outputs need expert review; errors occur in a minority of AI-drafted notes.'),
+        gamma: e(5, 8, 'medium', ['ibm'], 'Healthcare is the costliest sector for data breaches; public bodies are frequent ransomware targets.'),
+        gmax: e(20, 55, 'low', ['onc'], 'Regulation, liability and public procurement limit redesign.'),
+        Tcrit: e(2, 12, 'low', ['onc'], 'Judgement: redesign waits for more reliable AI.'),
+        alpha: e(5, 15, 'medium-low', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians and public bodies slower.'),
+      } }),
+      Object.assign(sec('Finance & business services', 'core', 20, 40, 75, 50, 4, 7, 50, 50, 2, 10, 'private', false,
+        'Finance and insurance, management of companies and administrative support: 13.5% of US GDP. Mostly information work and a prime target for fraud; part of the activity is trading and competition rather than new wealth.'), { evidence: {
+        weight: e(18, 22, 'high', ['bea'], 'Value added 13.5% of GDP, 20% of the four Core sectors.'),
+        f: e(40, 44, 'medium', ['eloundou'], 'Exposure β 0.40–0.44, weighted by 2023 hours.'),
+        fmax: e(61, 85, 'medium', ['eloundou'], 'Exposure with LLM software 0.61–0.72; finance alone 0.78–0.93.'),
         p: e(35, 65, 'medium', ['philippon', 'budish'], 'Unit cost of finance has not fallen despite IT; trading races absorb gains.'),
-        eta: e(3, 6, 'medium-low', ['boe'], 'Regulators require human oversight: only 2% of AI use cases are fully autonomous.'),
+        eta: e(3, 6, 'medium-low', ['boe'], 'Regulators require human oversight: only 2% of AI uses in UK finance are fully autonomous.'),
         gamma: e(6, 9, 'medium-high', ['ic3', 'deloitte', 'ibm'], 'Main target of AI-enabled fraud and deepfakes.'),
         gmax: e(30, 70, 'low', ['bcgcloud'], 'Judgement; legacy core systems limit redesign.'),
         Tcrit: e(1, 5, 'low', ['bcgcloud'], 'Judgement: much of the redesign is justified by today\'s AI.'),
         alpha: e(5, 15, 'low', ['bcgcloud'], 'Core systems move slowly: most banks run at most 15% of core workloads in the cloud after 15 years.'),
       } }),
-      Object.assign(sec('Software & R&D', 'flex', 70, 55, 90, 80, 2, 5, 70, 70, 1, 25, 'private', true,
-        'Stands in for software, information and professional and scientific services (about 11% of US GDP). Digital, partly self-checking work, already being reorganised around AI, and its output feeds AI progress.'), { evidence: {
-        weight: e(60, 80, 'medium', ['bea'], 'Literal share is 79% of the Flex groups; shaded down because Law and Ad-Tech stand for broader activity.'),
-        f: e(35, 62, 'medium-high', ['eloundou'], 'Exposure β 0.49–0.62.'),
-        fmax: e(78, 94, 'medium', ['eloundou'], 'Exposure with LLM software 0.78–0.90.'),
-        p: e(65, 95, 'medium-high', ['bsv'], 'Social returns to R&D are at least twice private returns.'),
-        eta: e(1, 4, 'medium', ['metr', 'dora'], 'Code is partly auto-verified, but AI raises delivery instability and trust is low.'),
-        gamma: e(3, 6, 'low-medium', ['ibm'], 'Supply-chain and AI-driven attacks are rising.'),
-        gmax: e(50, 90, 'medium', ['metrsurvey'], 'Teams are already re-architecting around agents.'),
-        Tcrit: e(0.5, 2, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the redesign.'),
-        alpha: e(15, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving, lightly regulated, but systems lag behind tools.'),
+      Object.assign(sec('Knowledge & professional services', 'flex', 40, 50, 85, 70, 3, 6, 65, 65, 1, 22, 'private', true,
+        'Software, information, media, R&D, consulting, legal and advertising: 13.7% of US GDP. Digital work AI suits best, already being reorganised, and its output feeds AI progress; legal and advertising add arms races and review burden.'), { evidence: {
+        weight: e(35, 45, 'high', ['bea'], 'Value added 13.7% of GDP, 41% of the two Flex sectors.'),
+        f: e(47, 54, 'medium-high', ['eloundou'], 'Exposure β 0.47–0.54, weighted by 2023 hours.'),
+        fmax: e(74, 90, 'medium', ['eloundou'], 'Exposure with LLM software 0.74–0.86.'),
+        p: e(55, 85, 'medium', ['bsv', 'rand', 'sht'], 'Software and R&D are strongly positive-sum; legal and advertising (about a fifth of hours) are largely zero-sum.'),
+        eta: e(2, 5, 'medium', ['metr', 'dora', 'hai'], 'Code is partly auto-verified; legal AI hallucinates 17–34% of the time.'),
+        gamma: e(4, 8, 'medium', ['ibm', 'gptzero'], 'Supply-chain attacks on software; media and platforms flooded with synthetic content.'),
+        gmax: e(45, 85, 'medium', ['metrsurvey'], 'Teams are already re-architecting around agents.'),
+        Tcrit: e(0.5, 3, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the redesign.'),
+        alpha: e(12, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving and lightly regulated, but systems lag behind tools.'),
       } }),
-      Object.assign(sec('Corporate Law', 'flex', 15, 45, 85, 30, 7, 4, 40, 40, 3, 10, 'commons', false,
-        'Stands in for legal and other adversarial services (legal alone is 1.4% of US GDP). Text work AI can do, but much of it is a contest between sides, and errors are costly to catch.'), { evidence: {
-        weight: e(10, 25, 'low-medium', ['bea'], 'Literal share is 10% of the Flex groups; raised because it stands in for compliance and other adversarial work.'),
-        f: e(15, 50, 'medium', ['eloundou'], 'Exposure β 0.48–0.49, though the LLM-alone share is low (0.12–0.16).'),
-        fmax: e(80, 86, 'medium', ['eloundou'], 'Exposure with LLM software 0.80–0.86.'),
-        p: e(15, 50, 'low-medium', ['rand', 'msv'], 'Litigation is largely a transfer; transactional work that secures property rights is real value.'),
-        eta: e(5, 8, 'medium-high', ['hai', 'charlotin'], 'Legal AI tools hallucinate 17–34% of the time; over 2,300 court cases involve AI errors.'),
-        gamma: e(3, 6, 'low', ['ic3'], 'Judgement: courts act as gatekeepers; exposure is mainly fraud attempts.'),
-        gmax: e(20, 60, 'low', ['hai'], 'Judgement; partnership structures and court rules slow change.'),
-        Tcrit: e(1.5, 8, 'low', ['hai'], 'Redesign waits for more reliable AI.'),
-        alpha: e(5, 15, 'low', [], 'Judgement.'),
-      } }),
-      Object.assign(sec('Ad-Tech & Media', 'flex', 15, 50, 85, 30, 3, 9, 60, 60, 1, 20, 'commons', false,
-        'Stands in for advertising, media and other competition for attention (advertising and traditional media alone are 1.5% of US GDP). Digital and fast-moving, but largely zero-sum and flooded with bots and synthetic content.'), { evidence: {
-        weight: e(10, 20, 'low-medium', ['bea'], 'Literal share is 11% of the Flex groups; raised because marketing spending is about 8% of company revenue.'),
-        f: e(20, 52, 'medium', ['eloundou'], 'Exposure β 0.47–0.52.'),
-        fmax: e(71, 90, 'medium', ['eloundou'], 'Exposure with LLM software 0.71–0.90.'),
-        p: e(15, 50, 'low-medium', ['sht'], 'Most advertising is business-stealing; over 80% of brands over-invest.'),
-        eta: e(1, 5, 'low', [], 'Judgement: creative output is low-stakes and A/B tested, but the metrics are polluted by bots.'),
-        gamma: e(8, 10, 'medium-high', ['imperva', 'gptzero'], 'Over half of web traffic is automated and about half of new articles are AI-generated.'),
-        gmax: e(40, 80, 'low-medium', ['gptzero'], 'Production is already being reorganised around AI.'),
-        Tcrit: e(0.5, 3, 'low-medium', ['gptzero'], 'Today\'s AI already justifies most of the redesign.'),
-        alpha: e(10, 30, 'low-medium', [], 'Judgement: light regulation, digital-native firms.'),
+      Object.assign(sec('Property, hospitality & personal services', 'flex', 60, 25, 50, 75, 2, 4, 30, 30, 4, 10, 'private', false,
+        'Real estate, hotels, restaurants, recreation and personal services: 19.8% of US GDP. Much of it is housing (largely rent) and hands-on service work that AI barely touches.'), { evidence: {
+        weight: e(55, 65, 'high', ['bea'], 'Value added 19.8% of GDP, 59% of the two Flex sectors.'),
+        f: e(27, 28, 'medium', ['eloundou'], 'Exposure β 0.27–0.28, weighted by 2023 hours.'),
+        fmax: e(39, 60, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.39–0.47; cooking, cleaning and care stay hands-on.'),
+        p: e(60, 90, 'low', [], 'Judgement: hospitality and personal services are real value; some brokerage is competition for commissions.'),
+        eta: e(1, 4, 'low', [], 'Judgement: mostly low-stakes output.'),
+        gamma: e(3, 6, 'low-medium', ['ic3'], 'Real-estate wire fraud and fake reviews are common, but most of the work is offline.'),
+        gmax: e(15, 45, 'low', [], 'Judgement: hands-on service work limits redesign.'),
+        Tcrit: e(2, 10, 'low', [], 'Judgement.'),
+        alpha: e(5, 15, 'low', [], 'Judgement: many small firms.'),
       } }),
     ];
   }
 
   // Evidence for the economy-wide defaults
   const GLOBAL_EVIDENCE = {
-    Wcore: e(70, 80, 'high', ['bea'], 'Core groups are 73% of the six groups\' 2025 value added.'),
+    Wcore: e(60, 70, 'high', ['bea'], 'The four Core sectors are 66% of 2025 value added; the six sectors together cover the whole economy.'),
     adopt0: e(10, 35, 'medium', ['rps', 'btos'], 'About 6% of US work hours were AI-assisted in 2026, against about 33% of work AI could do: roughly a fifth.'),
     aiNow: e(1.1, 2, 'medium', ['fredtime', 'peng', 'blr', 'metr', 'berkeley', 'scribe'], 'Field trials range from slower (METR) to 2.3× (Copilot); workers report saving about a third of assisted time.'),
     jCost: e(0, 5, 'low', ['jcurve'], 'Intangible investment around general-purpose technologies is large and delays measured gains.'),
@@ -173,14 +173,14 @@
     return {
       mode: 'dynamic', years: 15, startYear: 2027,
       r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0,
-      Tstatic: 20, Wcore: 75, fragility: 5,
+      Tstatic: 20, Wcore: 65, fragility: 5,
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
       adopt0: 20, adoptSpeed: 25, jCost: 2, aiNow: 1.4,
       Nmax: 10, Tnew: 10, newSpeed: 15,
       hmax: 0, Trisk: 30, loss: 100,
       setbackYear: 0, setbackSize: 0,
       spread: 25, runs: 150, corr: 50,
-      sectors: defaultSectors(), sel: 3, preset: 'dyn-base',
+      sectors: defaultSectors(), sel: 4, preset: 'dyn-base',
     };
   }
 

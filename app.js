@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v12';
+  const STORE_KEY = 'ai-transformation-model:v13';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -19,7 +19,7 @@
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
       { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
-      { id: 'dyn-cyber', label: 'Sustained cyber-attack on Banking', apply: (s) => { s.sectors[2].gamma = 40; return s; } },
+      { id: 'dyn-cyber', label: 'Sustained cyber-attack on finance', apply: (s) => { s.sectors[3].gamma = 40; return s; } },
       { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2 + 1); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { dEta: 0.4, dGamma: 0.4 }) },
@@ -28,7 +28,7 @@
     static: [
       { id: 'st-r1', label: 'Near-term 4×, no redesign', apply: (s) => { s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
       { id: 'st-r2', label: 'Redesign wave 20×', apply: (s) => { s.Tstatic = 20; return s; } },
-      { id: 'st-r3', label: 'Cyber-attack on Banking 20×', apply: (s) => { s.Tstatic = 20; s.sectors[2].gamma = 40; return s; } },
+      { id: 'st-r3', label: 'Cyber-attack on finance 20×', apply: (s) => { s.Tstatic = 20; s.sectors[3].gamma = 40; return s; } },
     ],
   };
 
@@ -290,12 +290,12 @@
     if (s.basis) {
       const b = document.createElement('div');
       b.className = 'basis';
-      b.innerHTML = `<span class="pill info">Illustrative</span> ${esc(s.basis)} Settings come from published evidence where it exists, shown under each slider, rounded; the rest is judgement anchored on that evidence.`;
+      b.innerHTML = `<span class="pill info">Basis</span> ${esc(s.basis)} Settings come from published evidence where it exists, shown under each slider, rounded; the rest is judgement anchored on that evidence.`;
       ed.append(b);
     }
     ed.append(
       slider({ ev: s.evidence && s.evidence.weight, evKey: 'weight', id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size at the start (2027). Normalised within Core or Flex.' }),
-      slider({ ev: s.evidence && s.evidence.f, evKey: 'f', id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
+      slider({ ev: s.evidence && s.evidence.f, evKey: 'f', id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: 'About 25% for physical and hands-on work, about 50% for knowledge work (2023 exposure estimates). Capped at 95%.' })
     );
     ed.append(slider({ ev: s.evidence && s.evidence.fmax, evKey: 'fmax', id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
     ed.append(
