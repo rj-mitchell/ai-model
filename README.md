@@ -4,6 +4,10 @@ An interactive simulator of how AI capability turns into economic value, sector 
 
 Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). No build step.
 
+## What the numbers measure
+
+Every V (sector, Core, Flex, macro) is **AI's effect on its own**: real output relative to a world where AI stays at its end-2026 level and use. Ordinary growth from population, other technologies and normal productivity gains is excluded. It is added only in the GDP line, `GDP_t = V_macro,t × (1 + g_ordinary)^t` (default `g_ordinary` = 1.5%/yr), which assumes the two effects multiply.
+
 ## Sector level
 
 - Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)` (`β = 0` keeps it fixed). Capped at 95%.

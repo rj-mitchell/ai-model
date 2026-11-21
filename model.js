@@ -1,6 +1,10 @@
 /*
  * AI Transformation Model — calculation engine.
  *
+ * All V values measure AI's effect only: real output relative to a world where
+ * AI stays at its end-2026 level and use. Ordinary (non-AI) growth is applied
+ * separately as gdp = V_macro × (1 + bgGrowth)^t.
+ *
  * Sector bottleneck / slop / weak-link equation with a dynamic loop
  * (quarterly steps, reported yearly), adoption lag, capability breadth,
  * Baumol spending shares, new products, catastrophe risk and Monte Carlo
@@ -42,7 +46,7 @@
   function defaultState() {
     return {
       mode: 'dynamic', years: 15, startYear: 2026,
-      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200,
+      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, bgGrowth: 1.5,
       Tstatic: 20, Wcore: 60, fragility: 5,
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
       adopt0: 30, adoptSpeed: 25, aiNow: 2,
@@ -259,7 +263,8 @@
       const hazard = X.hmax * hill0(T, X.Trisk);
       if (k % steps === 0) {
         const Vexp = snap.Vmacro * (1 - (1 - surv) * X.loss);
-        rows.push(Object.assign({ t: k / steps, year: start + k / steps, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
+        const gdp = snap.Vmacro * Math.pow(1 + (state.bgGrowth || 0) / 100, k / steps);
+        rows.push(Object.assign({ t: k / steps, year: start + k / steps, gdp, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
       }
       if (k === total) break;
       // update to the next quarter (all from current-step values)
