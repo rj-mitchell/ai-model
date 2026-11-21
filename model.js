@@ -3,7 +3,7 @@
  *
  * Every V is a multiple of what output would be without further AI: real output
  * relative to a world where AI stays at its end-2026 level and use.
- * GDP paths (2026 = 1) add trend growth to both worlds:
+ * GDP paths (2027 = 1) add trend growth to both worlds:
  *   gdpNoAI = (1 + g)^t,  gdp = V_macro · (1 + g)^t,
  * with g = 2.0%/yr, the current average for advanced economies
  * (IMF WEO Oct 2026: 2.0% in 2025, 2.1% in 2026, 1.8% in 2027).
@@ -48,11 +48,11 @@
   }
   function defaultState() {
     return {
-      mode: 'dynamic', years: 15, startYear: 2026,
+      mode: 'dynamic', years: 15, startYear: 2027,
       r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0,
       Tstatic: 20, Wcore: 60, fragility: 5,
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
-      adopt0: 30, adoptSpeed: 25, aiNow: 2,
+      adopt0: 30, adoptSpeed: 25, jCost: 2, aiNow: 2,
       Nmax: 10, Tnew: 10, newSpeed: 15,
       hmax: 0, Trisk: 30, loss: 100,
       setbackYear: 0, setbackSize: 0,
@@ -74,7 +74,8 @@
       newSpeed: (state.newSpeed != null ? state.newSpeed : 15) / 100,
       adopt0: clamp((state.adopt0 != null ? state.adopt0 : 30) / 100, 0, 1),   // share of native fit in use at end-2026
       aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 2),                // how much faster end-2026 AI does the work it is used for
-      adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // share of the adoption gap closed per year
+      adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // logistic adoption rate per year
+      jCost: state.jCost != null ? state.jCost : 2,                              // output diverted per unit/yr rise in automated share (J-curve)
       growthCap: Math.max(0.05, (state.growthCap != null ? state.growthCap : 200) / 100), // max yearly growth in T
       hmax: state.hmax / 100,                    // annual catastrophe hazard at maturity
       Trisk: state.Trisk,
@@ -215,13 +216,18 @@
 
   // ---------------- Snapshot (one moment / static) ----------------
   // gs: redesign per sector (null → static g); fs: native fit in use (null → full available fit); n: new products (null → steady state)
-  function snapshot(state, T, gs, n, fs) {
+  // costs: share of each sector's output diverted into adoption and redesign (J-curve), null → none
+  function snapshot(state, T, gs, n, fs, costs) {
     const X = globalsFor(state);
     const sectors = state.sectors;
     const out = sectors.map((s, i) => {
       const P = sectorParams(s);
       const g = gs ? gs[i] : P.gStatic;
-      return Object.assign({ g }, evalSector(P, g, T, X, fs ? fs[i] : null));
+      const r = Object.assign({ g }, evalSector(P, g, T, X, fs ? fs[i] : null));
+      r.cost = costs ? costs[i] : 0;
+      r.Vgross = r.V;
+      r.V = r.V * (1 - r.cost);
+      return r;
     });
     const nn = n != null ? n : X.Nmax * hill0(T, X.Tnew);
     const m = macro(sectors, out.map((o) => o.V), X, nn);
@@ -236,7 +242,9 @@
   // growth  = raw / (1 + (raw/cap)^4)^(1/4)                   (smooth speed limit; ≈ raw well below the cap)
   // T      ← T (1 + growth)^dt                                 (so a constant rate r gives exactly r per year)
   // setback: at the start of the chosen year, T ← max(1, T (1 − size))
-  // a_i    ← a_i + λ_dt (f*_i(T) − a_i),  a_i,0 = adopt0 · f_0  (adoption lag on native fit)
+  // a_i    ← a_i + λ dt · a_i (1 − a_i / f*_i(T)),  a_i,0 = adopt0 · f_0   (S-shaped adoption of native fit)
+  // cost_i = J · max(0, rate_i − rate_i,0), rate = yearly rise in automated share 1 − ε   (J-curve: output
+  //          diverted into adoption and redesign beyond today's pace; V_i ← V_i (1 − cost_i))
   // g_i    ← g_i + α_dt (g_max / (1 + (T_crit/T)^k) − g_i)
   // n      ← n + s_dt (N_max · hill0(T, T_new) − n)
   // survival ← survival (1 − h_max · hill0(T, T_risk))^dt
@@ -247,17 +255,26 @@
     const steps = STEPS_PER_YEAR, dt = 1 / steps;
     const r0 = state.r0 / 100, phi = state.phi, Thalf = Math.max(1, state.Thalf);
     const rdIdx = state.sectors.findIndex((s) => s.rd);
-    const start = state.startYear || 2026;
+    const start = state.startYear || 2027;
     const Ps = state.sectors.map((s) => sectorParams(s));
-    const lamDt = stepRate(X.adoptSpeed, dt), newDt = stepRate(X.newSpeed, dt);
+    const newDt = stepRate(X.newSpeed, dt);
     const alphaDt = Ps.map((P) => stepRate(P.alpha, dt));
     let T = 1, n = 0, surv = 1;
     let gs = Ps.map(() => 0);
     let fs = Ps.map((P) => X.adopt0 * P.f0);
+    const autoOf = () => fs.map((a, i) => 1 - (1 - a) * (1 - gs[i]));
+    let prevAuto = autoOf();
+    let rate0 = null; // today's pace of adoption, already paid for in the no-further-AI world
     const rows = [];
     const total = years * steps;
     for (let k = 0; k <= total; k++) {
-      const snap = snapshot(state, T, gs, n, fs);
+      // J-curve: output diverted in proportion to how fast the automated share rose over the last quarter
+      const auto = autoOf();
+      const rate = auto.map((x, i) => Math.max(0, x - prevAuto[i]) / dt);
+      if (rate0 === null && k > 0) rate0 = rate.slice();
+      const costs = rate.map((x, i) => clamp(X.jCost * Math.max(0, x - (rate0 ? rate0[i] : x)), 0, 0.5));
+      prevAuto = auto;
+      const snap = snapshot(state, T, gs, n, fs, costs);
       const Vrd = rdIdx >= 0 ? snap.sectors[rdIdx].V : 1;
       const brake = snap.hasC ? Math.min(1, snap.Vcore) : 1;
       const drag = (1 + 1 / Thalf) / (1 + T / Thalf);
@@ -271,7 +288,8 @@
       }
       if (k === total) break;
       // update to the next quarter (all from current-step values)
-      fs = fs.map((a, i) => a + lamDt * (fAvail(Ps[i], T, X) - a));
+      // S-shaped (logistic) adoption: slow while few use it, fastest in the middle, slowing near the available fit
+      fs = fs.map((a, i) => { const fA = fAvail(Ps[i], T, X); return fA <= 0 ? 0 : clamp(a + X.adoptSpeed * dt * a * (1 - a / fA), 0, fA > a ? fA : a); });
       gs = gs.map((g, i) => g + alphaDt[i] * (Ps[i].gmax * hill(T, Ps[i].Tcrit) - g));
       n = n + newDt * (X.Nmax * hill0(T, X.Tnew) - n);
       surv = surv * Math.pow(1 - hazard, dt);
@@ -297,7 +315,7 @@
   const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 10], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
   const GLOBAL_RANGES = {
     r0: [5, 60], phi: [0, 1], Thalf: [5, 50], beta: [0, 1], dEta: [0, 1], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
-    hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], aiNow: [1, 5],
+    hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], jCost: [0, 5], aiNow: [1, 5],
     // structural dials
     Wcore: [20, 80], fragility: [0, 10], cfx: [0, 3], kappa: [0, 2],
   };

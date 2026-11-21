@@ -6,7 +6,7 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 ## What the numbers measure
 
-Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. GDP paths (2026 = 1) add trend growth from everything except AI to both worlds: `GDP = V_macro × 1.02^t` with AI and `1.02^t` without further AI, using 2.0%/yr, the current advanced-economy average (IMF WEO, October 2026).
+Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. GDP paths (2027 = 1) add trend growth from everything except AI to both worlds: `GDP = V_macro × 1.02^t` with AI and `1.02^t` without further AI, using 2.0%/yr, the current advanced-economy average (IMF WEO, October 2026).
 
 ## Sector level
 
@@ -31,7 +31,8 @@ Every V (sector, Core, Flex, macro) is a multiple of what output would be withou
 
 - `x = r_0 V_R&D^φ min(1, V_core) (1 + 1/T_half)/(1 + T/T_half)` (year-one growth equals `r_0`)
 - Speed limit: `growth = x / (1 + (x/cap)^4)^(1/4)`; `T ← T (1 + growth)^Δt`, `Δt = 1/4`
-- Adoption: `a_{t+1} = a_t + λ (f*(T) − a_t)`, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks)
+- Adoption (S-curve): `da/dt = λ a (1 − a / f*(T))`, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks; λ = 25%/yr)
+- J-curve: `cost_i = J · max(0, rate_i − rate_i,0)`, where rate is the yearly rise in the automated share and rate_0 is today's pace; `V_i ← V_i (1 − cost_i)` (J = 2). AI adds about 0.4% to growth in 2027, peaking at about 4% a year in the mid-2030s.
 - Redesign: `g_{t+1} = g_t + α (g_max / (1 + (T_crit/T)^2.5) − g_t)`. `T_crit` below 1× means today's AI already justifies more than half the redesign (default: Software 1×, Ad-Tech 1.5×, Banking and Law 3×, Energy 10×, Healthcare 15×).
 - New products: `n_{t+1} = n_t + s (N_max H(T, T_new) − n_t)`
 - Catastrophic risk: `survival_{t+1} = survival_t (1 − h_max H(T, T_risk))`; risk-adjusted value `= V_macro (1 − (1 − survival) × loss)`

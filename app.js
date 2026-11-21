@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v9';
+  const STORE_KEY = 'ai-transformation-model:v10';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -141,7 +141,8 @@
       const ad = group(host, 'Adoption', true);
       ad.append(
         ...todaySliders(),
-        slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast organisations start using AI for work it can already do. Separate from workflow redesign, which is slower.' })
+        slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. Adoption follows an S-curve: slow while few organisations use it, fastest in the middle, slowing as it nears what AI can do.' }),
+        slider({ id: 'g-jcost', label: 'Cost of adopting (J-curve)', sym: 'J', min: 0, max: 5, step: 0.1, get: () => state.jCost, set: (v) => (state.jCost = v), fmt: (v) => (v ? v.toFixed(1) : 'off'), hint: 'Training, integration and process change divert output while adoption and redesign speed up beyond today\'s pace, so gains arrive later. At 2, automating one extra percentage point of work a year costs 2% of that sector\'s output that year.' })
       );
     } else {
       const g = group(host, 'Snapshot', true);
@@ -580,7 +581,7 @@
         ? kpi(`Catastrophe by ${last.year}`, pc(last.pCat, 1), `risk-adjusted economy ${fx(last.Vexp)}`, last.pCat > 0.1 ? 'bad' : '')
         : kpi('New AI-native products', pc(last.newShare), `of the economy in ${last.year}`));
 
-    // Chart 1: GDP with and without further AI (2026 = 1, both include trend growth)
+    // Chart 1: GDP with and without further AI (start year = 1, both include trend growth)
     const c = [css('--s1'), css('--s2'), css('--s3')];
     const tr = rows.map((r) => r.trend);
     const tgx = state.trendGrowth != null ? state.trendGrowth : 2;

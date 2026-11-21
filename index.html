@@ -312,7 +312,7 @@ tr:last-child td { border-bottom: 0; }
   <section class="panel" aria-label="The equations" style="display:flex;flex-direction:column;gap:18px">
     <div style="display:flex;flex-direction:column;gap:4px">
       <h2>The equations</h2>
-      <p class="eq-note"><b>What the numbers measure:</b> every V is a multiple of what output would be without further AI, meaning a world where AI stays at its end-2026 level and use. 1.0× is that world; 1.6× means 60% more output than it. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds (the current advanced-economy average, IMF October 2026): \(\text{GDP}_t=V_{\text{macro},t}\,(1.02)^t\) with AI and \((1.02)^t\) without. The note under each equation gives the value that switches each optional mechanism off.</p>
+      <p class="eq-note"><b>What the numbers measure:</b> every V is a multiple of what output would be without further AI, meaning a world where AI stays at its end-2026 level and use. 1.0× is that world; 1.6× means 60% more output than it. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds (the current advanced-economy average, IMF October 2026): \(\text{GDP}_t=V_{\text{macro},t}\,(1.02)^t\) with AI and \((1.02)^t\) without, with 2027 = 1. The note under each equation gives the value that switches each optional mechanism off.</p>
     </div>
     <div class="eqs">
       <div class="eq-block">
@@ -336,11 +336,12 @@ tr:last-child td { border-bottom: 0; }
       </div>
       <div class="eq-block">
         <h3>4 · Dynamic loop: adoption, redesign, new products, risk</h3>
-        <div class="eq">\[a_{i,t+1}=a_{i,t}+\lambda\big(f_i^*(T_t)-a_{i,t}\big),\quad a_{i,0}=a_0\,f_{i,0}\]</div>
+        <div class="eq">\[\dot a_i=\lambda\,a_i\Big(1-\frac{a_i}{f_i^*(T)}\Big),\quad a_{i,0}=a_0\,f_{i,0}\]</div>
+        <div class="eq">\[c_i=J\,\max\!\big(0,\;\dot u_i-\dot u_{i,0}\big),\quad u_i=1-\epsilon_i \qquad V_i\leftarrow V_i\,(1-c_i)\]</div>
         <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{k}}-g_{i,t}\Big)\]</div>
         <div class="eq">\[n_{t+1}=n_t+s\big(N_{\max}H(T_t,T_{\text{new}})-n_t\big)\]</div>
         <div class="eq">\[\text{survival}_{t+1}=\text{survival}_t\big(1-h_{\max}H(T_t,T_{\text{risk}})\big)\]</div>
-        <p class="eq-note">Rates \(\lambda,\alpha_i,s\) are shares of the gap closed per year, applied per quarter as \(1-(1-\text{rate})^{1/4}\). \(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\). The risk-adjusted economy is \(V_{\text{macro}}\,\big(1-(1-\text{survival})\times\text{loss}\big)\).</p>
+        <p class="eq-note">Adoption follows an S-curve. \(c_i\) is the productivity J-curve: while the automated share \(u_i\) rises faster than today's pace \(\dot u_{i,0}\), output is diverted into training, integration and process change, so gains arrive later (\(J=0\) off). Rates \(\alpha_i,s\) are shares of the gap closed per year, applied per quarter as \(1-(1-\text{rate})^{1/4}\). \(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\). The risk-adjusted economy is \(V_{\text{macro}}\,\big(1-(1-\text{survival})\times\text{loss}\big)\).</p>
       </div>
     </div>
     <dl class="key">
