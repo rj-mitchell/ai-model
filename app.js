@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v5';
+  const STORE_KEY = 'ai-transformation-model:v6';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -15,10 +15,10 @@
     return [
       sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private'),
       sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private'),
-      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 5, 15, 'private'),
-      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 3, 20, 'private', true),
-      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 5, 15, 'commons'),
-      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 3, 20, 'commons'),
+      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 3, 15, 'private'),
+      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 1, 30, 'private', true),
+      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 3, 15, 'commons'),
+      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 1.5, 25, 'commons'),
     ];
   }
   function defaultState() {
@@ -28,7 +28,7 @@
       Tstatic: 20, Wcore: 60, fragility: 5,
       // extensions (each has a neutral value that switches it off)
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
-      adopt0: 30, adoptSpeed: 25,
+      adopt0: 30, adoptSpeed: 25, aiNow: 2,
       Nmax: 10, Tnew: 10, newSpeed: 15,
       hmax: 0, Trisk: 30, loss: 100,
       setbackYear: 0, setbackSize: 0,
@@ -45,7 +45,7 @@
       { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
       { id: 'dyn-cyber', label: 'Cyber-slop on Banking', apply: (s) => { s.sectors[2].gamma = 10; return s; } },
       { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
-      { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2); }); return s; } },
+      { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2 + 1); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { dEta: 0.4, dGamma: 0.4 }) },
       { id: 'dyn-risk', label: 'High catastrophe risk', apply: (s) => Object.assign(s, { hmax: 5, Trisk: 20, loss: 100 }) },
     ],
@@ -142,6 +142,13 @@
     return body;
   }
 
+  function todaySliders() {
+    return [
+      slider({ id: 'g-ainow', label: 'Speedup from today\'s AI', sym: 'A', min: 1, max: 5, step: 0.1, get: () => state.aiNow, set: (v) => (state.aiNow = v), fmt: (v) => `${v.toFixed(1)}× faster`, hint: 'How much faster end-2026 AI does the work it is already used for, compared with doing it without AI. This is what adoption and redesign catch up on, even if AI stops improving. 1 = no gain from catching up.' }),
+      slider({ id: 'g-adopt0', label: 'Native fit already in use', sym: 'a₀', min: 0, max: 100, step: 5, get: () => state.adopt0, set: (v) => (state.adopt0 = v), fmt: (v) => `${v}% of f₀ in 2026`, hint: 'How much of the work AI could already do is actually done with AI at end-2026. 30% puts about 15% of all tasks on AI, close to published estimates for chatbots without purpose-built tools.' })
+    ];
+  }
+
   function buildGlobalControls() {
     const dyn = state.mode === 'dynamic';
     const host = $('controls');
@@ -157,12 +164,13 @@
       );
       const ad = group(host, 'Adoption', true);
       ad.append(
-        slider({ id: 'g-adopt0', label: 'Native fit already in use', sym: 'a₀', min: 0, max: 100, step: 5, get: () => state.adopt0, set: (v) => (state.adopt0 = v), fmt: (v) => `${v}% of f₀ in 2026`, hint: 'How much of the work AI could already do is actually done with AI at end-2026. 30% puts about 15% of all tasks on AI, close to published estimates for chatbots without purpose-built tools.' }),
+        ...todaySliders(),
         slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast organisations start using AI for work it can already do. Separate from workflow redesign, which is slower.' })
       );
     } else {
       const g = group(host, 'Snapshot', true);
       g.append(slider({ id: 'g-T', label: 'Useful AI work vs end-2026', sym: 'T', min: 1, max: 100, log: true, get: () => state.Tstatic, set: (v) => (state.Tstatic = v), fmt: (v) => fx(v), hint: '1× = end-2026 baseline · 10× = ten times the verified work per £ · 100× = transformative.' }));
+      g.append(...todaySliders());
     }
 
     const ec = group(host, 'Economy structure', true);
@@ -304,7 +312,7 @@
     if (dyn) {
       ed.append(
         slider({ id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck a full redesign can remove. Physical sectors ≲ 50%.' }),
-        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 2, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the redesign target reaches half its ceiling. Adoption is fastest around here.' }),
+        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the redesign target reaches half its ceiling. Below 1× means today\'s AI already justifies more than half the redesign (software, media); physical and regulated sectors sit well above 1×.' }),
         slider({ id: 's-alpha', label: 'Institutional catch-up speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast actual redesign closes the gap to its current target each year.' })
       );
       const rdF = document.createElement('div');
@@ -689,7 +697,8 @@
     ].filter((se) => se.ys.every(Number.isFinite));
     const pk = pts.reduce((a, p) => (p.Vmacro > a.Vmacro ? p : a), pts[0]);
     $('c1-title').textContent = 'Economy-wide value across tech power';
-    $('c1-sub').textContent = pk.T < 99 ? `Economy peaks at ${fx(pk.Vmacro)} when T ≈ ${fx(pk.T)}` : 'Holding these sector settings fixed';
+    const overhang = pts[0].Vmacro > 1.005 ? ` At 1×, ${fx(pts[0].Vmacro)} is the value of fully catching up with today's AI.` : '';
+    $('c1-sub').textContent = (pk.T < 99 ? `Economy peaks at ${fx(pk.Vmacro)} when T ≈ ${fx(pk.T)}.` : 'Holding these sector settings fixed, with full adoption.') + overhang;
     legend($('c1-legend'), ser);
     lineChart($('c1'), {
       xs, series: ser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1,
@@ -811,7 +820,7 @@
     buildGlobalControls();
     $('lede').innerHTML = dyn
       ? 'The snapshot equation values every sector and the whole economy each quarter. Update rules feed that snapshot back into useful AI work <span class="mono">T</span>, how much of what AI can do is actually used, each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span>, new products and risk. Some limits never dissolve, however capable AI gets: that is what the model is built to show.'
-      : 'The snapshot equation with tech power <span class="mono">T</span> as a dial. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
+      : 'The snapshot equation with tech power <span class="mono">T</span> as a dial, assuming organisations have fully adopted what AI can do. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
     buildPresets();
     buildSectorTabs();
     buildSectorEditor();

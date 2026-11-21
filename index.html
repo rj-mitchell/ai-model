@@ -315,8 +315,9 @@ tr:last-child td { border-bottom: 0; }
       <div class="eq-block">
         <h3>1 · Sector level: net real economic value</h3>
         <div class="eq">\[f_i^*(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta} \qquad \epsilon_i=(1-a_i)(1-g_i)\]</div>
-        <div class="eq">\[S_i=\frac{1}{\epsilon_i+\dfrac{1-\epsilon_i}{T_{\text{eff}}}} \qquad V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\eta_iT^{-\delta_\eta}\ln T_{\text{eff}}+\gamma_iT^{-\delta_\gamma}\ln T\big)\,S_i}\]</div>
-        <p class="eq-note">Available native fit \(f_i^*\) rises with capability toward a fixed ceiling (\(\beta=0\) keeps it at \(f_{i,0}\)). \(a_i\) is the native fit actually in use; the snapshot mode assumes full adoption (\(a_i=f_i^*\)). Review burden falls as AI gets more reliable (\(\delta_\eta=0\) off), and defensive AI offsets external attack (\(\delta_\gamma=0\) off). <b>Deployment rule:</b> Private sectors use \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); commons use \(T_{\text{eff}}=T\). Native fit is capped at 95% and redesign at 90%.</p>
+        <div class="eq">\[\tau_i=\epsilon_i+\frac{1-\epsilon_i}{A\,T_{\text{eff}}} \qquad \tau_{i,0}=\epsilon_{i,0}+\frac{1-\epsilon_{i,0}}{A},\;\; \epsilon_{i,0}=1-a_0 f_{i,0} \qquad S_i=\frac{\tau_{i,0}}{\tau_i}\]</div>
+        <div class="eq">\[V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\eta_iT^{-\delta_\eta}\ln T_{\text{eff}}+\gamma_iT^{-\delta_\gamma}\ln T\big)\,S_i}\]</div>
+        <p class="eq-note">Available native fit \(f_i^*\) rises with capability toward a fixed ceiling (\(\beta=0\) keeps it at \(f_{i,0}\)). \(a_i\) is the native fit actually in use; the snapshot mode assumes full adoption (\(a_i=f_i^*\)). \(\tau\) is time per unit of work relative to doing it without AI, and \(A\) is how much faster today's AI already is on the work it is used for. Speedup \(S_i\) is measured against how work was really done at end-2026, so adopting or redesigning around today's AI pays off even if AI stops improving (\(A=1\) switches this off). Review burden falls as AI gets more reliable (\(\delta_\eta=0\) off), and defensive AI offsets external attack (\(\delta_\gamma=0\) off). <b>Deployment rule:</b> Private sectors use \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); commons use \(T_{\text{eff}}=T\). Native fit is capped at 95% and redesign at 90%.</p>
       </div>
       <div class="eq-block">
         <h3>2 · Macro level: Core, Flex and new products</h3>
@@ -341,6 +342,7 @@ tr:last-child td { border-bottom: 0; }
     </div>
     <dl class="key">
       <dt>T</dt><dd>Useful AI work: verified work per £ on the compressible slice of a job, as a multiple of end-2026 (1×). Not raw tokens.</dd>
+      <dt>A</dt><dd>Today's AI speedup: how much faster end-2026 AI does the tasks it is used for than people without it.</dd>
       <dt>f<sub>i</sub>*, a<sub>i</sub></dt><dd>Native fit: the share of the workflow AI can compress (f*, rising from f₀ toward the fixed ceiling f_max), and the share actually being done with AI (a, which lags behind).</dd>
       <dt>g<sub>i</sub></dt><dd>Gustafson redesign: share of the remaining bottleneck removed by re-architecting the workflow (capped at 90%).</dd>
       <dt>p<sub>i</sub></dt><dd>Real wealth share: 1 means the speedup creates wealth, 0 means a zero-sum Red Queen arms race.</dd>

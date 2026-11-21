@@ -36,6 +36,7 @@
       Tnew: state.Tnew,
       newSpeed: (state.newSpeed != null ? state.newSpeed : 15) / 100,
       adopt0: clamp((state.adopt0 != null ? state.adopt0 : 30) / 100, 0, 1),   // share of native fit in use at end-2026
+      aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 2),                // how much faster end-2026 AI does the work it is used for
       adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // share of the adoption gap closed per year
       growthCap: Math.max(0.05, (state.growthCap != null ? state.growthCap : 200) / 100), // max yearly growth in T
       hmax: state.hmax / 100,                    // annual catastrophe hazard at maturity
@@ -59,7 +60,7 @@
       gamma: Math.max(0, s.gamma / 20),
       gmax: clamp(s.gmax / 100, 0, G_CAP),
       gStatic: clamp(s.g / 100, 0, G_CAP),
-      Tcrit: Math.max(1, s.Tcrit),
+      Tcrit: Math.max(0.1, s.Tcrit),
       alpha: clamp(s.alpha / 100, 0, 1),
       private: s.deploy !== 'commons',
     };
@@ -69,16 +70,21 @@
   // f*_i(T)  = f_max − (f_max − f_0) T^(−β)          available native fit (β = 0 → fixed f_0)
   // a_i      = native fit actually in use (dynamic: chases f*_i; snapshot: = f*_i)
   // eps_i    = (1 − a_i) (1 − g_i)
-  // S_i      = 1 / (eps_i + (1 − eps_i) / T_eff)
+  // τ_i      = eps_i + (1 − eps_i) / (A · T_eff)        time per unit of work vs no AI (A = today's AI speedup)
+  // τ_i,0    = eps_i,0 + (1 − eps_i,0) / A,  eps_i,0 = 1 − a_0 f_0   (how work was done at end-2026)
+  // S_i      = τ_i,0 / τ_i                              speedup vs end-2026 (A = 1 → 1 / (eps + (1 − eps)/T_eff))
   // η̂ = η T^(−δη),  γ̂ = γ T^(−δγ)
   // V_i      = (1 + p_i (S_i − 1)) / (1 + (η̂ ln T_eff + γ̂ ln T) S_i)
   function fAvail(P, T, X) { return X.beta > 0 ? P.fmax - (P.fmax - P.f0) * Math.pow(T, -X.beta) : P.f0; }
 
   function sectorValueAt(P, g, T, Teff, X, fUsed) {
     X = X || { beta: 0, dEta: 0, dGamma: 0 };
+    const A = X.aiNow || 1;
     const f = fUsed != null ? fUsed : fAvail(P, T, X);
     const eps = (1 - f) * (1 - g);
-    const S = 1 / (eps + (1 - eps) / Teff);
+    const eps0 = 1 - (X.adopt0 != null ? X.adopt0 : 1) * P.f0;
+    const tau0 = eps0 + (1 - eps0) / A;
+    const S = tau0 / (eps + (1 - eps) / (A * Teff));
     const eta = P.eta * (X.dEta ? Math.pow(T, -X.dEta) : 1);
     const gamma = P.gamma * (X.dGamma ? Math.pow(T, -X.dGamma) : 1);
     const a = eta * Math.log(Teff) + gamma * Math.log(T);
@@ -250,10 +256,10 @@
   // ---------------- 4. Uncertainty (Monte Carlo) ----------------
   // Each uncertain input is multiplied by exp(spread · z), then clamped to its slider range.
   // Sector inputs share a common error component: z = √c · z_common + √(1−c) · z_own.
-  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 10], gmax: [0, 90], g: [0, 90], Tcrit: [2, 30], alpha: [5, 30] };
+  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 10], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
   const GLOBAL_RANGES = {
     r0: [5, 60], phi: [0, 1], Thalf: [5, 50], beta: [0, 1], dEta: [0, 1], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
-    hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60],
+    hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], aiNow: [1, 5],
     // structural dials
     Wcore: [20, 80], fragility: [0, 10], cfx: [0, 3], kappa: [0, 2],
   };

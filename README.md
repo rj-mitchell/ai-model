@@ -8,7 +8,9 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 - Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)` (`β = 0` keeps it fixed). Capped at 95%.
 - Native fit in use `a_i` lags behind `f*_i` (see the dynamic loop); the snapshot mode assumes full adoption.
-- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`; clean speedup `S_i = 1 / (ε_i + (1 − ε_i) / T_eff)`
+- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`
+- Time per unit of work vs no AI: `τ_i = ε_i + (1 − ε_i)/(A T_eff)`; end-2026 baseline `τ_i,0 = ε_i,0 + (1 − ε_i,0)/A` with `ε_i,0 = 1 − a_0 f_0`
+- Clean speedup vs end-2026: `S_i = τ_i,0 / τ_i`. `A` (default 2×) is how much faster today's AI already is on the work it is used for, so adoption and redesign pay off even without new capability (`A = 1` switches this off).
 - Net value: `V_i = (1 + p_i (S_i − 1)) / (1 + (η_i T^(−δη) ln T_eff + γ_i T^(−δγ) ln T) S_i)`
 - Deployment: Private sectors use `T_eff = min(T, T*)`, where `T*` (the Slop Peak) is the usage level that maximises `V_i`. Commons use `T_eff = T`.
 
@@ -26,7 +28,7 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 - `x = r_0 V_R&D^φ min(1, V_core) (1 + 1/T_half)/(1 + T/T_half)` (year-one growth equals `r_0`)
 - Speed limit: `growth = x / (1 + (x/cap)^4)^(1/4)`; `T ← T (1 + growth)^Δt`, `Δt = 1/4`
 - Adoption: `a_{t+1} = a_t + λ (f*(T) − a_t)`, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks)
-- Redesign: `g_{t+1} = g_t + α (g_max / (1 + (T_crit/T)^2.5) − g_t)`
+- Redesign: `g_{t+1} = g_t + α (g_max / (1 + (T_crit/T)^2.5) − g_t)`. `T_crit` below 1× means today's AI already justifies more than half the redesign (default: Software 1×, Ad-Tech 1.5×, Banking and Law 3×, Energy 10×, Healthcare 15×).
 - New products: `n_{t+1} = n_t + s (N_max H(T, T_new) − n_t)`
 - Catastrophic risk: `survival_{t+1} = survival_t (1 − h_max H(T, T_risk))`; risk-adjusted value `= V_macro (1 − (1 − survival) × loss)`
 - Setback: in a chosen year `T ← max(1, T (1 − size))`
