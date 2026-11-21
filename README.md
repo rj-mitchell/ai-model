@@ -46,5 +46,7 @@ Fixed ceilings by design (irreducibility); not calibrated; no labour market (aut
 ## Files
 
 - `model.js`: calculation engine (no DOM; loads in Node via `require('./model.js')`).
+- `model.js` also holds the default economy (`defaultState()`), shared by both pages.
 - `app.js`: controls, charts (hand-built SVG), Monte Carlo scheduling and tables.
 - `index.html`: layout, styles, typeset equations (MathJax from jsDelivr) and limitations.
+- `why.html`: explainer on why the model doesn't go exponential and what singularity arguments leave out. All its numbers are computed live from `model.js` defaults.

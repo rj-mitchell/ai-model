@@ -11,31 +11,7 @@
   function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd) {
     return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd };
   }
-  function defaultSectors() {
-    return [
-      sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private'),
-      sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private'),
-      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 3, 15, 'private'),
-      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 1, 30, 'private', true),
-      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 3, 15, 'commons'),
-      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 1.5, 25, 'commons'),
-    ];
-  }
-  function defaultState() {
-    return {
-      mode: 'dynamic', years: 15, startYear: 2026,
-      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200,
-      Tstatic: 20, Wcore: 60, fragility: 5,
-      // extensions (each has a neutral value that switches it off)
-      beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
-      adopt0: 30, adoptSpeed: 25, aiNow: 2,
-      Nmax: 10, Tnew: 10, newSpeed: 15,
-      hmax: 0, Trisk: 30, loss: 100,
-      setbackYear: 0, setbackSize: 0,
-      spread: 25, runs: 150, corr: 50,
-      sectors: defaultSectors(), sel: 3, preset: 'dyn-base',
-    };
-  }
+  const defaultState = () => M.defaultState();
 
   // ---------------- Presets ----------------
   const PRESETS = {
