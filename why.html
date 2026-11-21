@@ -115,7 +115,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     <span class="eyebrow">AI Transformation Model · explainer</span>
     <h1>Capability compounds. Value doesn't.</h1>
     <p class="lede">Why the model never goes exponential, even when AI improves itself, and what the case for an economic singularity leaves out.</p>
-    <p class="note">This is a simplified model: the economy is represented by only six illustrative sectors, and their settings are rounded judgement calls, not measurements. The numbers below are one scenario from those settings. The argument rests on the shape of the results, not the exact figures.</p>
+    <p class="note">This is a simplified model: the economy is represented by only six illustrative sectors. Their settings come from published evidence where it exists (AI exposure studies, adoption surveys, field trials and GDP data), rounded, with judgement filling the gaps. The numbers below are one scenario from those settings. The argument rests on the shape of the results, not the exact figures.</p>
     <div class="stats" aria-label="Headline numbers from the model's default run">
       <div class="stat"><span class="eyebrow">Useful AI work, 2050</span><span class="big" data-k="T50">–</span><span class="cap">times the end-2026 level</span></div>
       <div class="stat"><span class="eyebrow">Output vs no further AI, 2050</span><span class="big" data-k="V50">–</span><span class="cap">times what output would be without further AI</span></div>
@@ -164,7 +164,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <div class="body">
         <h3>The work AI can't touch sets the ceiling</h3>
         <p>This is Amdahl's law, first stated for parallel computers. If a share of a job can't be sped up, the whole job can never go faster than one divided by that share, however fast the rest becomes. If 20% of the work is irreducible, the most you can ever get is 5×.</p>
-        <p>In the model every sector keeps some irreducible share, even after AI has broadened as far as it can and workflows are fully redesigned. Physical work, care, regulation and judgement don't vanish. The table shows each of the six illustrative sectors' limits with infinitely capable AI. The exact figures come from rounded judgement calls; the pattern, that the physical and essential sectors have the lowest ceilings, is the point.</p>
+        <p>In the model every sector keeps some irreducible share, even after AI has broadened as far as it can and workflows are fully redesigned. Physical work, care, regulation and judgement don't vanish. The table shows each of the six illustrative sectors' limits with infinitely capable AI. The ceilings rest on AI exposure studies and estimates of what robots can do, so the exact figures are uncertain; the pattern, that the physical and essential sectors have the lowest ceilings, is the point.</p>
       </div>
     </div>
     <div class="tbl-wrap"><table id="tCeil"></table></div>
@@ -178,22 +178,22 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <div class="body">
         <h3>What gets cheap shrinks</h3>
         <p>This is Baumol's cost disease. When AI makes an essential service such as banking far more productive, its price falls, and spending shifts toward the essentials that stayed expensive, because people need all of them and can't swap one for another. In the model Banking's share of spending falls from <span class="v" data-k="B26">–</span> in 2027 to <span class="v" data-k="B41">–</span> by 2041, while Healthcare's rises from <span class="v" data-k="H26">–</span> to <span class="v" data-k="H41">–</span>. The slow essentials end up with more of the economy, so their slow growth weighs on the economy's growth.</p>
-        <p>Flexible sectors behave differently. They are treated as substitutes for each other, so Software, which AI helps most, gains share: from <span class="v" data-k="SW26">–</span> to <span class="v" data-k="SW50">–</span> by 2050. That still doesn't produce an explosion, because the essential core it depends on grows slowly.</p>
+        <p>Even Software, which AI helps most, ends up with a slightly smaller share of total spending: <span class="v" data-k="SW26">–</span> in 2027, <span class="v" data-k="SW50">–</span> by 2050. It wins share among the flexible sectors, but spending as a whole drifts toward the slow, essential core, and Energy's share rises from <span class="v" data-k="E26">–</span> to <span class="v" data-k="E41">–</span> by 2041.</p>
         <p>Historically this is why manufacturing productivity gains did not make whole economies explode: manufacturing's share of spending fell while services, which improved slowly, took over.</p>
       </div>
     </div>
     <figure>
       <div class="legend" id="fC-legend"></div>
       <div class="chart" id="fC"></div>
-      <figcaption><b>Spending migrates to the slow essentials.</b> Each sector's share of total spending, 2027 to 2050. Inside the essential core, Banking loses share as AI makes it cheaper, while Energy and Healthcare hold or gain. Software gains among the flexible sectors; Law and Ad-Tech shrink because their output loses value.</figcaption>
+      <figcaption><b>Spending migrates to the slow essentials.</b> Each sector's share of total spending, 2027 to 2050. Inside the essential core, Banking loses share as AI makes it cheaper, while Energy and Healthcare gain. The flexible sectors lose share overall, Software included.</figcaption>
     </figure>
 
     <div class="miss">
       <span class="n">4</span>
       <div class="body">
         <h3>Essential sectors are weak links</h3>
-        <p>Some sectors can't be substituted: power, payments, healthcare, logistics. If one of them fails, everything built on top of it suffers. In the model's cyber-attack scenario, flexible sectors still grow to <span class="v" data-k="CYflex">–</span>, but the essential core falls to <span class="v" data-k="CYcore">–</span> and the economy ends at <span class="v" data-k="CYV">–</span>.</p>
-        <p>Weak essential infrastructure also slows AI itself, because data centres need power, chips and payments. In that scenario useful AI work reaches only <span class="v" data-k="CYT">–</span> by 2041, against <span class="v" data-k="T41">–</span> in the default run. Explosive growth needs the slowest essential sector to keep pace with the fastest, and essential sectors are usually physical, regulated and slow.</p>
+        <p>Some sectors can't be substituted: power, payments, healthcare, logistics. If one of them fails, everything built on top of it suffers. In the model's sustained cyber-attack scenario, which pushes Banking's exposure beyond anything measured, flexible sectors still reach <span class="v" data-k="CYflex">–</span> by 2041. But the essential core manages only <span class="v" data-k="CYcore">–</span>, and the economy <span class="v" data-k="CYV">–</span> against <span class="v" data-k="V41">–</span> without the attack. Banking is only a quarter of the core, yet the damage spreads across it.</p>
+        <p>Weak essential infrastructure also slows AI itself, because data centres need power, chips and payments. In that scenario useful AI work reaches <span class="v" data-k="CYT">–</span> by 2041, against <span class="v" data-k="T41">–</span> in the default run. Explosive growth needs the slowest essential sector to keep pace with the fastest, and essential sectors are usually physical, regulated and slow.</p>
       </div>
     </div>
 
@@ -201,7 +201,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <span class="n">5</span>
       <div class="body">
         <h3>Some output is an arms race, and output needs checking</h3>
-        <p>Part of the economy is zero-sum. Better AI in advertising, litigation or cyber-attack mostly makes the other side spend more too. In those sectors extra capability raises costs without creating wealth. Ad-Tech in the model goes from <span class="v" data-k="AD1">–</span> at today's capability to <span class="v" data-k="AD100">–</span> at 100×.</p>
+        <p>Part of the economy is zero-sum. Better AI in advertising, litigation or cyber-attack mostly makes the other side spend more too. In those sectors extra capability raises costs without creating wealth. At 100× today's capability, Ad-Tech's work gets <span class="v" data-k="ADS">–</span> faster but its value rises only <span class="v" data-k="ADV">–</span>; Law's work gets <span class="v" data-k="LWS">–</span> faster for <span class="v" data-k="LWV">–</span> more value. Software, which is mostly positive-sum, turns <span class="v" data-k="SWS">–</span> faster work into <span class="v" data-k="SWV">–</span> more value.</p>
         <p>Output also has to be verified. Cheap generation creates a review burden that lands on people, and some of it lands on whoever receives the spam, fraud or synthetic content. Measuring AI in tokens hides this: ten times more tokens with subtle errors can be worth less than before.</p>
       </div>
     </div>
@@ -257,6 +257,49 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     </div>
   </section>
 
+  <section class="prose" id="doom" aria-label="Corollary on catastrophic risk">
+    <span class="eyebrow">Corollary</span>
+    <h2>Here's why we (probably) don't all die</h2>
+    <p>The conversation this model grew out of started with AI doom. The economic argument above has a corollary for it. The fastest catastrophe stories need the same thing as the singularity story: AI that turns raw capability into power over the physical world quickly. The bottlenecks that slow the boom also slow that.</p>
+  </section>
+  <section class="misses" aria-label="Why the bottlenecks lower the risk">
+    <div class="miss"><span class="n">1</span><div class="body">
+      <h3>Power runs through the slow sectors</h3>
+      <p>Taking control of anything that matters means energy, chips, factories, robots, money and people's cooperation. Those are the essential sectors with the lowest ceilings and the slowest redesign. In the model, physical infrastructure keeps <span class="v" data-k="EIRR">–</span> of its work out of AI's reach even with unlimited capability.</p>
+    </div></div>
+    <div class="miss"><span class="n">2</span><div class="body">
+      <h3>Capability arrives faster than control</h3>
+      <p>Useful AI work grows about <span class="v" data-k="T50">–</span> by 2050 while output grows <span class="v" data-k="V50">–</span>. That gap is the distance between what AI can do and what it is actually trusted and wired up to do. It closes over decades, through adoption decisions made by people and institutions.</p>
+    </div></div>
+    <div class="miss"><span class="n">3</span><div class="body">
+      <h3>Slow change produces warning shots</h3>
+      <p>When AI spreads gradually, its failures show up first at small scale, where people can see them and respond. That is already happening: courts have sanctioned lawyers in more than 2,300 cases of AI-invented citations, and clinicians correct errors in AI-drafted notes. Failures at small scale lead to rules, audits and better tools before the stakes rise.</p>
+    </div></div>
+    <div class="miss"><span class="n">4</span><div class="body">
+      <h3>Unreliability limits autonomy</h3>
+      <p>The same verification problem that holds down AI's economic value limits how far it can act on its own. Only about 2% of AI uses in UK finance are fully autonomous. Long chains of unsupervised, high-stakes action are exactly where today's AI is least dependable.</p>
+    </div></div>
+    <div class="miss"><span class="n">5</span><div class="body">
+      <h3>Dependence cuts both ways</h3>
+      <p>Weak links constrain AI too. Any AI system depends on power grids, chip supply and data centres that people build, run and can switch off. The model's weak-link structure that drags down the economy in a crisis also makes AI's own expansion hostage to infrastructure it does not control.</p>
+    </div></div>
+  </section>
+  <section class="cols" aria-label="What this does not rule out">
+    <div class="card">
+      <h3>What this does not rule out</h3>
+      <ul>
+        <li><b>Catastrophe doesn't need a growth explosion.</b> An engineered pandemic or an attack on a weak link needs one dangerous capability, not a transformed economy. The model's own cyber-attack scenario shows how damage to one essential sector spreads to everything built on it.</li>
+        <li><b>Capability still compounds.</b> Useful AI work growing about <span data-k="T50">–</span> by 2050 is fast enough to outrun institutions that react slowly.</li>
+        <li><b>People are a risk too.</b> Misuse and concentration of power by humans don't require autonomous AI at all.</li>
+        <li><b>The model has no term for misaligned goals.</b> Its catastrophe setting is an overlay you choose, not a result.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Why "probably"</h3>
+      <p>In a 2023 survey of about 2,700 AI researchers, the median answer put the chance of human extinction or a similarly bad outcome from advanced AI at around 5%, and between 38% and 51% of respondents gave at least 10%, depending on how the question was worded. That is not small. The bottlenecks make a sudden, total takeover less likely. They do not make AI safe. Mostly, they buy time, and what matters is how that time is used.</p>
+    </div>
+  </section>
+
   <section class="prose">
     <h2>How to read this</h2>
     <p>The ceilings in the model are assumptions, set deliberately to show which limits capability alone does not remove. The numbers are scenarios from guessed inputs, not forecasts. The point is the shape: every route to explosive growth runs through the slowest parts of the economy, so that is where the evidence should be looked for.</p>
@@ -272,6 +315,8 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <li>Jones, <a href="https://www.aeaweb.org/articles?id=10.1257/mac.3.2.1" target="_blank" rel="noopener">Intermediate Goods and Weak Links in the Theory of Economic Development</a> (AEJ: Macroeconomics, 2011): why weak links multiply.</li>
       <li>Erdil and Besiroglu, <a href="https://arxiv.org/abs/2309.11690" target="_blank" rel="noopener">Explosive Growth from AI Automation: A Review of the Arguments</a> (2023): the strongest case for the other side.</li>
       <li>Eloundou, Manning, Mishkin and Rock, <a href="https://arxiv.org/abs/2303.10130" target="_blank" rel="noopener">GPTs are GPTs</a> (2023): how much of today's work AI can touch.</li>
+      <li>Grace et al., <a href="https://arxiv.org/abs/2401.02843" target="_blank" rel="noopener">Thousands of AI Authors on the Future of AI</a> (2024; JAIR 2025): survey of AI researchers on risks and timelines.</li>
+      <li>The sources for every default sector setting are listed on the <a href="index.html">model page</a>, under each slider and in "Sources for the default settings".</li>
       <li>Baumol, <a href="https://www.jstor.org/stable/1812111" target="_blank" rel="noopener">Macroeconomics of Unbalanced Growth</a> (American Economic Review, 1967): the original cost-disease argument.</li>
     </ul>
     <p class="foot">Developed from the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a> and the stress tests of the model it produced.</p>
@@ -293,8 +338,10 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   // ---------- numbers ----------
   const run = M.simulate(Object.assign(D(), { years: 23 }));
   const at = (y) => run[y - 2027];
-  const cy = (() => { const s = D(); s.sectors[2].gamma = 10; return M.simulate(s); })();
-  const rsi0 = M.simulate(Object.assign(D(), { phi: 0 }))[15], rsi1 = M.simulate(Object.assign(D(), { phi: 1 }))[15];
+  const cy = (() => { const s = D(); s.sectors[2].gamma = 40; return M.simulate(Object.assign(s, { years: 14 })); })();
+  // year lookup by calendar year, so text that says 2041 always reads 2041
+  const yr = (rows, y) => rows.find((r) => r.year === y);
+  const rsi0 = yr(M.simulate(Object.assign(D(), { phi: 0 })), 2041), rsi1 = yr(M.simulate(Object.assign(D(), { phi: 1 })), 2041);
   const adV = (T) => M.snapshot(D(), T, null, null, null).sectors[5].V;
   const full = (() => { const s = D(); s.sectors.forEach((x) => (x.g = x.gmax)); return s; })();
   const overhang = M.snapshot(full, 1, null, null, null).Vmacro;
@@ -304,10 +351,13 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     H26: pc(at(2027).shares[1]), H41: pc(at(2041).shares[1]),
     B26: pc(at(2027).shares[2]), B41: pc(at(2041).shares[2]),
     SW26: pc(at(2027).shares[3]), SW50: pc(at(2050).shares[3]),
-    CYflex: fx(cy[15].Vflex), CYcore: fx(cy[15].Vcore), CYV: fx(cy[15].Vmacro), CYT: fx(cy[15].T),
+    CYflex: fx(yr(cy, 2041).Vflex), CYcore: fx(yr(cy, 2041).Vcore), CYV: fx(yr(cy, 2041).Vmacro), CYT: fx(yr(cy, 2041).T),
     AD1: fx(adV(1)), AD100: fx(adV(100)),
+    ...(() => { const z = M.snapshot(D(), 100, null, null, null).sectors; return { ADS: fx(z[5].S), ADV: fx(z[5].V), LWS: fx(z[4].S), LWV: fx(z[4].V), SWS: fx(z[3].S), SWV: fx(z[3].V) }; })(),
+    E26: pc(at(2027).shares[0]), E41: pc(at(2041).shares[0]),
     RSI0T: fx(rsi0.T), RSI1T: fx(rsi1.T), RSI0V: fx(rsi0.Vmacro), RSI1V: fx(rsi1.Vmacro),
     AU26: pc(at(2027).automationFixed), OH: fx(overhang),
+    EIRR: pc(M.snapshot((() => { const z = D(); z.sectors.forEach((x) => { x.g = x.gmax; x.eta = 0; x.gamma = 0; }); return z; })(), 1e6, null, null, null).sectors[0].eps),
     A4650: '+' + pc(Math.pow(at(2050).Vmacro / at(2046).Vmacro, 1 / 4) - 1, 1),
     A4650n: pc(Math.pow(at(2050).Vmacro / at(2046).Vmacro, 1 / 4) - 1, 1),
     A2631: pc(Math.pow(at(2032).Vmacro / at(2027).Vmacro, 1 / 5) - 1, 1),

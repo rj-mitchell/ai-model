@@ -37,31 +37,145 @@
     return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd, basis: basis || '' };
   }
   // A simplified economy of six illustrative sectors. Each stands in for a broad part of the
-  // economy, and every setting is a rounded judgement call for illustration, not a measurement.
+  // economy. Defaults are drawn from published evidence where it exists (see SOURCES and each
+  // sector's `evidence`), rounded, and otherwise anchored judgement. They are not measurements.
+  //
+  // Review burden (eta) and external exposure (gamma) are scored 0–10 from sector evidence; the
+  // scale (÷200) is calibrated so slop and fraud together cost about 1% of output by 2028, the high
+  // end of survey and fraud-loss estimates, and AI's net contribution in 2027 is small and positive.
+  const SOURCES = {
+    eloundou: { t: 'Eloundou, Manning, Mishkin & Rock, GPTs are GPTs (2023; Science 2024): occupation exposure, re-weighted to sectors with ACS 2023 hours', u: 'https://arxiv.org/abs/2303.10130' },
+    mgi: { t: 'McKinsey Global Institute, Agents, robots, and us (2025): 57% of US work hours automatable with demonstrated technology', u: 'https://www.mckinsey.com/mgi/our-research/agents-robots-and-us-skill-partnerships-in-the-age-of-ai' },
+    rps: { t: 'Bick, Blandin & Deming, Real-Time Population Survey (FRED): share of work hours using generative AI, by industry', u: 'https://fred.stlouisfed.org/series/RPSGENAIASSISTWRKHRSALL' },
+    btos: { t: 'US Census Bureau, Business Trends and Outlook Survey: AI use by businesses (2026)', u: 'https://census.gov/library/stories/2026/05/ai-use-businesses.html' },
+    fredtime: { t: 'St. Louis Fed, Does generative AI save time at work? (2026): hours saved vs hours assisted', u: 'https://fred.stlouisfed.org/blog/2026/08/does-generative-ai-save-time-at-work/' },
+    peng: { t: 'Peng et al., GitHub Copilot experiment (2023): 55.8% faster', u: 'https://arxiv.org/abs/2302.06590' },
+    blr: { t: 'Brynjolfsson, Li & Raymond, Generative AI at work (2023): +14% issues resolved per hour', u: 'https://www.nber.org/papers/w31161' },
+    metr: { t: 'METR developer productivity studies (2025–2026): from 19% slower to modest speedups', u: 'https://metr.org/blog/2026-02-24-uplift-update/' },
+    berkeley: { t: 'Schwarcz et al., AI-powered lawyering RCT (2025): 12–37% less time', u: 'https://www.law.berkeley.edu/wp-content/uploads/archive/2025/12/AI-Powered-Lawyering.pdf' },
+    scribe: { t: 'UCLA Health / NEJM AI ambient-scribe trial (2025): about 10% less note time for one of two tools', u: 'https://www.uclahealth.org/news/release/ucla-study-finds-ai-scribes-may-reduce-documentation-time' },
+    bea: { t: 'BEA, GDP by Industry, value added 2025 (published September 2026)', u: 'https://apps.bea.gov/industry/Release/XLS/GDPxInd/ValueAdded.xlsx' },
+    philippon: { t: 'Philippon, Has the US finance industry become less efficient? (AER 2015): unit cost of intermediation has not fallen', u: 'https://www.nber.org/papers/w18077' },
+    budish: { t: 'Aquilina, Budish & O\'Neill, Quantifying the high-frequency trading arms race (QJE 2022)', u: 'https://www.nber.org/papers/w29011' },
+    shrank: { t: 'Shrank et al., Waste in the US health care system (JAMA 2019): about a quarter of spending, administrative complexity largest', u: 'https://www.cfo.com/corporate-finance/2019/10/annual-waste-in-u-s-healthcare-system-nears-1-trillion/' },
+    bsv: { t: 'Bloom, Schankerman & Van Reenen, Technology spillovers and product market rivalry (Econometrica 2013): social returns to R&D at least twice private', u: 'https://www.econometricsociety.org/publications/econometrica/2013/07/01/identifying-technology-spillovers-and-product-market-rivalry' },
+    rand: { t: 'Kakalik & Pace, Costs and compensation paid in tort litigation (RAND 1986): litigation costs about half of tort spending', u: 'https://www.rand.org/pubs/papers/P7243.html' },
+    msv: { t: 'Murphy, Shleifer & Vishny, The allocation of talent (1991): more lawyers, slower growth', u: 'https://www.nber.org/papers/w3530' },
+    sht: { t: 'Shapiro, Hitsch & Tuchman, TV advertising effectiveness (Econometrica 2021): negative marginal ROI for over 80% of brands', u: 'https://econometricsociety.org/publications/econometrica/2021/07/01/tv-advertising-effectiveness-and-profitability-generalizable' },
+    workslop: { t: 'BetterUp & Stanford Social Media Lab, The hidden costs of workslop (2025): about $186 per desk worker per month', u: 'https://www.betterup.com/blog/hidden-costs-workslop' },
+    hai: { t: 'Stanford HAI, legal AI hallucination benchmark (2024): 17–34% for legal tools', u: 'https://hai.stanford.edu/news/ai-trial-legal-models-hallucinate-1-out-6-or-more-benchmarking-queries' },
+    charlotin: { t: 'Charlotin, AI Hallucination Cases database: over 2,300 court cases by November 2026', u: 'https://www.damiencharlotin.com/hallucinations/' },
+    dora: { t: 'Google DORA, State of AI-assisted software development (2025): throughput up, delivery stability down', u: 'https://www.infoq.com/news/2025/09/dora-state-of-ai-in-dev-2025' },
+    boe: { t: 'Bank of England & FCA, AI in UK financial services (2024): 2% of use cases fully autonomous', u: 'https://www.bankofengland.co.uk/report/2024/artificial-intelligence-in-uk-financial-services-2024' },
+    ibm: { t: 'IBM, Cost of a Data Breach 2025: healthcare costliest ($7.4M), finance second', u: 'https://www.techtarget.com/healthtechsecurity/news/366628031/Healthcare-remains-costliest-industry-for-breaches-at-742M' },
+    ic3: { t: 'FBI Internet Crime Report 2025: $20.9B losses, $893M in AI-related complaints', u: 'https://helpnetsecurity.com/2026/04/07/online-crime-financial-losses-fbi-report' },
+    deloitte: { t: 'Deloitte, generative-AI fraud in US banking: $12.3B (2023) to $40B (2027)', u: 'https://www.deloitte.com/us/en/insights/industry/financial-services/deepfake-banking-fraud-risk-on-the-rise.html' },
+    imperva: { t: 'Imperva Bad Bot Report 2025: automated traffic 51% of the web', u: 'https://www.imperva.com/blog/2025-imperva-bad-bot-report-how-ai-is-supercharging-the-bot-threat/' },
+    gptzero: { t: 'GPTZero / Graphite: about half of new web articles mainly AI-generated', u: 'https://gptzero.me/news/ai-written-web/' },
+    cisa: { t: 'CISA advisory AA24-038A: state actors pre-positioned in energy networks', u: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-038a' },
+    onc: { t: 'ONC: hospital EHR adoption 9% (2008) to 76% (2014)', u: 'https://www.healthit.gov/data/quickstats/national-trends-hospital-and-physician-adoption-electronic-health-records' },
+    eia: { t: 'EIA: smart-meter share 47% (2016) to 84% (2024)', u: 'https://www.eia.gov/electricity/annual/html/epa_10_05.html' },
+    bcgcloud: { t: 'BCG (2021): most financial institutions run at most 15% of core workloads in public cloud', u: 'https://www.bcg.com/publications/2021/strategies-for-financial-institutions-transitioning-to-the-cloud' },
+    metrsurvey: { t: 'METR AI usage survey (2026): median self-reported speedup 3×, value gain 1.4–2×', u: 'https://metr.org/blog/2026-05-11-ai-usage-survey/' },
+    david: { t: 'David & Wright, general purpose technologies and productivity surges: decades-long reorganisation lags', u: 'https://www.nuffield.ox.ac.uk/economics/history/paper31/davidwright.html' },
+    jcurve: { t: 'Brynjolfsson, Rock & Syverson, The productivity J-curve (AEJ: Macro 2021)', u: 'https://www.aeaweb.org/doi/10.1257/mac.20180386' },
+  };
+
+  // e(range, confidence, sources, note)
+  const e = (lo, hi, c, src, note) => ({ lo, hi, c, src, note });
+
   function defaultSectors() {
     return [
-      sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private', false,
-        'Stands in for physical infrastructure: mostly hands-on work, so low native fit; essential and heavily regulated, so redesign comes late; output is real wealth, not an arms race.'),
-      sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private', false,
-        'Stands in for care and other people-facing services: much of the work is physical or relational; mistakes are costly, so review burden is high and redesign is slow.'),
-      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 3, 15, 'private', false,
-        'Stands in for essential digital services: mostly information work, so high native fit; a real target for fraud and cyber-attack; part of the activity is competitive trading rather than new wealth.'),
-      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 1, 30, 'private', true,
-        'Stands in for knowledge work AI suits best: work is digital and checkable (code compiles, tests pass), redesign is already under way, and its output feeds back into AI progress.'),
-      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 3, 15, 'commons', false,
-        'Stands in for adversarial professional services: lots of text work AI can do, but much of it is an arms race between sides, and both generate review burden for the other.'),
-      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 1.5, 25, 'commons', false,
-        'Stands in for attention markets: almost all digital, so very high native fit, but mostly zero-sum competition for attention, with heavy exposure to spam and synthetic content.'),
+      Object.assign(sec('Energy & Grid', 'core', 55, 25, 55, 90, 3, 4, 30, 30, 5, 8, 'private', false,
+        'Stands in for physical infrastructure: utilities, energy, construction, manufacturing and transport (about 20% of US GDP). Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
+        weight: e(50, 60, 'high', ['bea'], 'Physical infrastructure is 55% of the three Core groups by 2025 value added.'),
+        f: e(12, 36, 'medium', ['eloundou'], 'Exposure β 0.24–0.30 for physical sectors (0.31–0.36 for utilities alone).'),
+        fmax: e(40, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.39–0.48, plus robotics for some physical tasks.'),
+        p: e(80, 100, 'medium', [], 'Judgement: cheaper physical output is mostly real wealth; some rent-seeking in regulated utilities.'),
+        eta: e(2, 5, 'low', ['workslop'], 'No direct study. Simulation and physics checks help, but work is safety-critical.'),
+        gamma: e(3, 6, 'medium', ['cisa'], 'Targeted state and criminal attacks on grids; operational systems are partly segmented.'),
+        gmax: e(15, 45, 'low', ['eia', 'david'], 'Physical assets limit how far workflows can be redesigned.'),
+        Tcrit: e(2, 15, 'low', ['david'], 'Judgement anchored on slow historical reorganisation of physical industries.'),
+        alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; full redesign is slower.'),
+      } }),
+      Object.assign(sec('Healthcare', 'core', 20, 30, 60, 75, 5, 6, 40, 40, 4, 10, 'private', false,
+        'Stands in for health care and social assistance (about 7.5% of US GDP). Much of the work is hands-on or relational; mistakes are costly, so outputs need expert review.'), { evidence: {
+        weight: e(20, 25, 'high', ['bea'], 'Health care and social assistance is 21% of the three Core groups by 2025 value added.'),
+        f: e(15, 35, 'medium', ['eloundou'], 'Exposure β 0.32–0.35; hands-on care pulls it down.'),
+        fmax: e(48, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.48–0.57; about 70% of caregiving tasks still need hands-on abilities.'),
+        p: e(60, 90, 'medium', ['shrank'], 'Clinical gains are real; billing and coding between payers and providers is an arms race.'),
+        eta: e(4, 7, 'medium', ['scribe'], 'Ambient-scribe notes need clinician review; omissions and errors occur in a minority of notes.'),
+        gamma: e(5, 8, 'medium', ['ibm'], 'Costliest sector for data breaches for 14 years running.'),
+        gmax: e(25, 60, 'low', ['onc'], 'Judgement; regulation and liability limit redesign.'),
+        Tcrit: e(2, 10, 'low', ['onc'], 'Judgement: redesign waits for more reliable AI.'),
+        alpha: e(6, 20, 'medium', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians about 8%.'),
+      } }),
+      Object.assign(sec('Banking & Payments', 'core', 25, 50, 85, 50, 4, 7, 50, 50, 2, 8, 'private', false,
+        'Stands in for finance and insurance (about 9% of US GDP). Mostly information work, a prime target for fraud, and part of the activity is competitive trading rather than new wealth.'), { evidence: {
+        weight: e(20, 25, 'high', ['bea'], 'Finance and insurance is 24% of the three Core groups by 2025 value added.'),
+        f: e(20, 56, 'medium', ['eloundou'], 'Exposure β 0.51–0.56.'),
+        fmax: e(78, 93, 'medium', ['eloundou'], 'Exposure with LLM software 0.78–0.93: almost entirely information work.'),
+        p: e(35, 65, 'medium', ['philippon', 'budish'], 'Unit cost of finance has not fallen despite IT; trading races absorb gains.'),
+        eta: e(3, 6, 'medium-low', ['boe'], 'Regulators require human oversight: only 2% of AI use cases are fully autonomous.'),
+        gamma: e(6, 9, 'medium-high', ['ic3', 'deloitte', 'ibm'], 'Main target of AI-enabled fraud and deepfakes.'),
+        gmax: e(30, 70, 'low', ['bcgcloud'], 'Judgement; legacy core systems limit redesign.'),
+        Tcrit: e(1, 5, 'low', ['bcgcloud'], 'Judgement: much of the redesign is justified by today\'s AI.'),
+        alpha: e(5, 15, 'low', ['bcgcloud'], 'Core systems move slowly: most banks run at most 15% of core workloads in the cloud after 15 years.'),
+      } }),
+      Object.assign(sec('Software & R&D', 'flex', 70, 55, 90, 80, 2, 5, 70, 70, 1, 25, 'private', true,
+        'Stands in for software, information and professional and scientific services (about 11% of US GDP). Digital, partly self-checking work, already being reorganised around AI, and its output feeds AI progress.'), { evidence: {
+        weight: e(60, 80, 'medium', ['bea'], 'Literal share is 79% of the Flex groups; shaded down because Law and Ad-Tech stand for broader activity.'),
+        f: e(35, 62, 'medium-high', ['eloundou'], 'Exposure β 0.49–0.62.'),
+        fmax: e(78, 94, 'medium', ['eloundou'], 'Exposure with LLM software 0.78–0.90.'),
+        p: e(65, 95, 'medium-high', ['bsv'], 'Social returns to R&D are at least twice private returns.'),
+        eta: e(1, 4, 'medium', ['metr', 'dora'], 'Code is partly auto-verified, but AI raises delivery instability and trust is low.'),
+        gamma: e(3, 6, 'low-medium', ['ibm'], 'Supply-chain and AI-driven attacks are rising.'),
+        gmax: e(50, 90, 'medium', ['metrsurvey'], 'Teams are already re-architecting around agents.'),
+        Tcrit: e(0.5, 2, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the redesign.'),
+        alpha: e(15, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving, lightly regulated, but systems lag behind tools.'),
+      } }),
+      Object.assign(sec('Corporate Law', 'flex', 15, 45, 85, 30, 7, 4, 40, 40, 3, 10, 'commons', false,
+        'Stands in for legal and other adversarial services (legal alone is 1.4% of US GDP). Text work AI can do, but much of it is a contest between sides, and errors are costly to catch.'), { evidence: {
+        weight: e(10, 25, 'low-medium', ['bea'], 'Literal share is 10% of the Flex groups; raised because it stands in for compliance and other adversarial work.'),
+        f: e(15, 50, 'medium', ['eloundou'], 'Exposure β 0.48–0.49, though the LLM-alone share is low (0.12–0.16).'),
+        fmax: e(80, 86, 'medium', ['eloundou'], 'Exposure with LLM software 0.80–0.86.'),
+        p: e(15, 50, 'low-medium', ['rand', 'msv'], 'Litigation is largely a transfer; transactional work that secures property rights is real value.'),
+        eta: e(5, 8, 'medium-high', ['hai', 'charlotin'], 'Legal AI tools hallucinate 17–34% of the time; over 2,300 court cases involve AI errors.'),
+        gamma: e(3, 6, 'low', ['ic3'], 'Judgement: courts act as gatekeepers; exposure is mainly fraud attempts.'),
+        gmax: e(20, 60, 'low', ['hai'], 'Judgement; partnership structures and court rules slow change.'),
+        Tcrit: e(1.5, 8, 'low', ['hai'], 'Redesign waits for more reliable AI.'),
+        alpha: e(5, 15, 'low', [], 'Judgement.'),
+      } }),
+      Object.assign(sec('Ad-Tech & Media', 'flex', 15, 50, 85, 30, 3, 9, 60, 60, 1, 20, 'commons', false,
+        'Stands in for advertising, media and other competition for attention (advertising and traditional media alone are 1.5% of US GDP). Digital and fast-moving, but largely zero-sum and flooded with bots and synthetic content.'), { evidence: {
+        weight: e(10, 20, 'low-medium', ['bea'], 'Literal share is 11% of the Flex groups; raised because marketing spending is about 8% of company revenue.'),
+        f: e(20, 52, 'medium', ['eloundou'], 'Exposure β 0.47–0.52.'),
+        fmax: e(71, 90, 'medium', ['eloundou'], 'Exposure with LLM software 0.71–0.90.'),
+        p: e(15, 50, 'low-medium', ['sht'], 'Most advertising is business-stealing; over 80% of brands over-invest.'),
+        eta: e(1, 5, 'low', [], 'Judgement: creative output is low-stakes and A/B tested, but the metrics are polluted by bots.'),
+        gamma: e(8, 10, 'medium-high', ['imperva', 'gptzero'], 'Over half of web traffic is automated and about half of new articles are AI-generated.'),
+        gmax: e(40, 80, 'low-medium', ['gptzero'], 'Production is already being reorganised around AI.'),
+        Tcrit: e(0.5, 3, 'low-medium', ['gptzero'], 'Today\'s AI already justifies most of the redesign.'),
+        alpha: e(10, 30, 'low-medium', [], 'Judgement: light regulation, digital-native firms.'),
+      } }),
     ];
   }
+
+  // Evidence for the economy-wide defaults
+  const GLOBAL_EVIDENCE = {
+    Wcore: e(70, 80, 'high', ['bea'], 'Core groups are 73% of the six groups\' 2025 value added.'),
+    adopt0: e(10, 35, 'medium', ['rps', 'btos'], 'About 6% of US work hours were AI-assisted in 2026, against about 33% of work AI could do: roughly a fifth.'),
+    aiNow: e(1.1, 2, 'medium', ['fredtime', 'peng', 'blr', 'metr', 'berkeley', 'scribe'], 'Field trials range from slower (METR) to 2.3× (Copilot); workers report saving about a third of assisted time.'),
+    jCost: e(0, 5, 'low', ['jcurve'], 'Intangible investment around general-purpose technologies is large and delays measured gains.'),
+  };
 
   function defaultState() {
     return {
       mode: 'dynamic', years: 15, startYear: 2027,
       r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0,
-      Tstatic: 20, Wcore: 60, fragility: 5,
+      Tstatic: 20, Wcore: 75, fragility: 5,
       beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
-      adopt0: 30, adoptSpeed: 25, jCost: 2, aiNow: 2,
+      adopt0: 20, adoptSpeed: 25, jCost: 2, aiNow: 1.4,
       Nmax: 10, Tnew: 10, newSpeed: 15,
       hmax: 0, Trisk: 30, loss: 100,
       setbackYear: 0, setbackSize: 0,
@@ -81,8 +195,8 @@
       Nmax: state.Nmax / 100,                    // mature size of AI-native products (share of 2026 economy)
       Tnew: state.Tnew,
       newSpeed: (state.newSpeed != null ? state.newSpeed : 15) / 100,
-      adopt0: clamp((state.adopt0 != null ? state.adopt0 : 30) / 100, 0, 1),   // share of native fit in use at end-2026
-      aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 2),                // how much faster end-2026 AI does the work it is used for
+      adopt0: clamp((state.adopt0 != null ? state.adopt0 : 20) / 100, 0, 1),   // share of native fit in use at end-2026
+      aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 1.4),                // how much faster end-2026 AI does the work it is used for
       adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // logistic adoption rate per year
       jCost: state.jCost != null ? state.jCost : 2,                              // output diverted per unit/yr rise in automated share (J-curve)
       growthCap: Math.max(0.05, (state.growthCap != null ? state.growthCap : 200) / 100), // max yearly growth in T
@@ -103,8 +217,8 @@
       f0,
       fmax: Math.max(f0, clamp((s.fmax != null ? s.fmax : s.f) / 100, 0, F_CAP)),
       p: clamp(s.p / 100, 0, 1),
-      eta: Math.max(0, s.eta / 20),
-      gamma: Math.max(0, s.gamma / 20),
+      eta: Math.max(0, s.eta / 200),
+      gamma: Math.max(0, s.gamma / 200),
       gmax: clamp(s.gmax / 100, 0, G_CAP),
       gStatic: clamp(s.g / 100, 0, G_CAP),
       Tcrit: Math.max(0.1, s.Tcrit),
@@ -321,7 +435,7 @@
   // ---------------- 4. Uncertainty (Monte Carlo) ----------------
   // Each uncertain input is multiplied by exp(spread · z), then clamped to its slider range.
   // Sector inputs share a common error component: z = √c · z_common + √(1−c) · z_own.
-  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 10], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
+  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 40], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
   const GLOBAL_RANGES = {
     r0: [5, 60], phi: [0, 1], Thalf: [5, 50], beta: [0, 1], dEta: [0, 1], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
     hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], jCost: [0, 5], aiNow: [1, 5],
@@ -384,7 +498,7 @@
     return { p10: quantile(vals, 0.1), p50: quantile(vals, 0.5), p90: quantile(vals, 0.9) };
   }
 
-  const api = { defaultState, defaultSectors, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, sweep, rng, perturb, summarise, quantile, mcRun, monteCarlo, monteCarloSnapshot };
+  const api = { defaultState, defaultSectors, SOURCES, GLOBAL_EVIDENCE, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, sweep, rng, perturb, summarise, quantile, mcRun, monteCarlo, monteCarloSnapshot };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AIModel = api;
 })(typeof window !== 'undefined' ? window : this);

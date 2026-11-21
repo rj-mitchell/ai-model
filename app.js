@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v11';
+  const STORE_KEY = 'ai-transformation-model:v12';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -19,7 +19,7 @@
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
       { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
-      { id: 'dyn-cyber', label: 'Cyber-slop on Banking', apply: (s) => { s.sectors[2].gamma = 10; return s; } },
+      { id: 'dyn-cyber', label: 'Sustained cyber-attack on Banking', apply: (s) => { s.sectors[2].gamma = 40; return s; } },
       { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2 + 1); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { dEta: 0.4, dGamma: 0.4 }) },
@@ -28,7 +28,7 @@
     static: [
       { id: 'st-r1', label: 'Near-term 4×, no redesign', apply: (s) => { s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
       { id: 'st-r2', label: 'Redesign wave 20×', apply: (s) => { s.Tstatic = 20; return s; } },
-      { id: 'st-r3', label: 'Cyber-slop shock 20×', apply: (s) => { s.Tstatic = 20; s.sectors[2].gamma = 10; return s; } },
+      { id: 'st-r3', label: 'Cyber-attack on Banking 20×', apply: (s) => { s.Tstatic = 20; s.sectors[2].gamma = 40; return s; } },
     ],
   };
 
@@ -58,6 +58,16 @@
   // ---------------- Control builders ----------------
   function touched() { state.preset = null; markPresets(); update(); }
 
+  // evidence line under a slider: plausible range, confidence, note and linked sources
+  const EV_UNIT = { weight: '', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', Wcore: '%', adopt0: '%', aiNow: '×', jCost: '' };
+  const srcShort = (k) => (M.SOURCES[k] ? M.SOURCES[k].t.split(/[,:(]/)[0].trim() : k);
+  function evidenceHTML(key, ev) {
+    if (!ev) return '';
+    const u = EV_UNIT[key] != null ? EV_UNIT[key] : '';
+    const links = ev.src.map((k) => (M.SOURCES[k] ? `<a href="${M.SOURCES[k].u}" target="_blank" rel="noopener" title="${esc(M.SOURCES[k].t)}">${esc(srcShort(k))}</a>` : '')).filter(Boolean).join(', ');
+    return `<div class="ev"><b>Evidence:</b> ${ev.lo}–${ev.hi}${u} · ${esc(ev.c)} confidence. ${esc(ev.note)}${links ? ` <span class="ev-src">${links}</span>` : ''}</div>`;
+  }
+
   function slider(o) {
     const wrap = document.createElement('div');
     wrap.className = 'ctl';
@@ -69,7 +79,7 @@
       `<label for="${o.id}">${o.label}${o.sym ? `<span class="sym">${o.sym}</span>` : ''}</label>` +
       `<output for="${o.id}" id="${o.id}-out"></output>` +
       `<input type="range" id="${o.id}" min="${min}" max="${max}" step="${o.log ? 1 : o.step}">` +
-      (o.hint ? `<div class="hint">${o.hint}</div>` : '');
+      (o.hint ? `<div class="hint">${o.hint}</div>` : '') + (o.ev ? evidenceHTML(o.evKey, o.ev) : '');
     const input = wrap.querySelector('input');
     const out = wrap.querySelector('output');
     input.value = toPos(o.get());
@@ -121,8 +131,8 @@
 
   function todaySliders() {
     return [
-      slider({ id: 'g-ainow', label: 'Speedup from today\'s AI', sym: 'A', min: 1, max: 5, step: 0.1, get: () => state.aiNow, set: (v) => (state.aiNow = v), fmt: (v) => `${v.toFixed(1)}× faster`, hint: 'How much faster end-2026 AI does the work it is already used for, compared with doing it without AI. This is what adoption and redesign catch up on, even if AI stops improving. 1 = no gain from catching up.' }),
-      slider({ id: 'g-adopt0', label: 'Native fit already in use', sym: 'a₀', min: 0, max: 100, step: 5, get: () => state.adopt0, set: (v) => (state.adopt0 = v), fmt: (v) => `${v}% of f₀ in 2026`, hint: 'How much of the work AI could already do is actually done with AI at end-2026. 30% puts about 15% of all tasks on AI, close to published estimates for chatbots without purpose-built tools.' })
+      slider({ ev: M.GLOBAL_EVIDENCE.aiNow, evKey: 'aiNow', id: 'g-ainow', label: 'Speedup from today\'s AI', sym: 'A', min: 1, max: 5, step: 0.1, get: () => state.aiNow, set: (v) => (state.aiNow = v), fmt: (v) => `${v.toFixed(1)}× faster`, hint: 'How much faster end-2026 AI does the work it is already used for, compared with doing it without AI. This is what adoption and redesign catch up on, even if AI stops improving. 1 = no gain from catching up.' }),
+      slider({ ev: M.GLOBAL_EVIDENCE.adopt0, evKey: 'adopt0', id: 'g-adopt0', label: 'Native fit already in use', sym: 'a₀', min: 0, max: 100, step: 5, get: () => state.adopt0, set: (v) => (state.adopt0 = v), fmt: (v) => `${v}% of f₀ in 2026`, hint: 'How much of the work AI could already do is actually done with AI at end-2026. 30% puts about 15% of all tasks on AI, close to published estimates for chatbots without purpose-built tools.' })
     ];
   }
 
@@ -143,7 +153,7 @@
       ad.append(
         ...todaySliders(),
         slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. Adoption follows an S-curve: slow while few organisations use it, fastest in the middle, slowing as it nears what AI can do.' }),
-        slider({ id: 'g-jcost', label: 'Cost of adopting (J-curve)', sym: 'J', min: 0, max: 5, step: 0.1, get: () => state.jCost, set: (v) => (state.jCost = v), fmt: (v) => (v ? v.toFixed(1) : 'off'), hint: 'Training, integration and process change divert output while adoption and redesign speed up beyond today\'s pace, so gains arrive later. At 2, automating one extra percentage point of work a year costs 2% of that sector\'s output that year.' })
+        slider({ ev: M.GLOBAL_EVIDENCE.jCost, evKey: 'jCost', id: 'g-jcost', label: 'Cost of adopting (J-curve)', sym: 'J', min: 0, max: 5, step: 0.1, get: () => state.jCost, set: (v) => (state.jCost = v), fmt: (v) => (v ? v.toFixed(1) : 'off'), hint: 'Training, integration and process change divert output while adoption and redesign speed up beyond today\'s pace, so gains arrive later. At 2, automating one extra percentage point of work a year costs 2% of that sector\'s output that year.' })
       );
     } else {
       const g = group(host, 'Snapshot', true);
@@ -153,7 +163,7 @@
 
     const ec = group(host, 'Economy structure', true);
     ec.append(
-      slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: 'Core carries this share of any change in the total economy.' }),
+      slider({ ev: M.GLOBAL_EVIDENCE.Wcore, evKey: 'Wcore', id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: 'Core carries this share of any change in the total economy.' }),
       slider({ id: 'g-frag', label: 'Core weak-link fragility', sym: 'ρ = 1 − x', min: 0, max: 10, step: 0.5, get: () => state.fragility, set: (v) => (state.fragility = v), fmt: (v) => `${v.toFixed(1)} · ρ = ${(1 - v).toFixed(1)}`, hint: '0 = normal average · 5 = Jones–Tonetti weak links · 10 = extreme O-ring.' })
     );
     {
@@ -280,24 +290,24 @@
     if (s.basis) {
       const b = document.createElement('div');
       b.className = 'basis';
-      b.innerHTML = `<span class="pill info">Illustrative</span> ${esc(s.basis)} The numbers are rounded judgement calls, not measurements.`;
+      b.innerHTML = `<span class="pill info">Illustrative</span> ${esc(s.basis)} Settings come from published evidence where it exists, shown under each slider, rounded; the rest is judgement anchored on that evidence.`;
       ed.append(b);
     }
     ed.append(
-      slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size at the start (2027). Normalised within Core or Flex.' }),
-      slider({ id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
+      slider({ ev: s.evidence && s.evidence.weight, evKey: 'weight', id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size at the start (2027). Normalised within Core or Flex.' }),
+      slider({ ev: s.evidence && s.evidence.f, evKey: 'f', id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
     );
-    ed.append(slider({ id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
+    ed.append(slider({ ev: s.evidence && s.evidence.fmax, evKey: 'fmax', id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
     ed.append(
-      slider({ id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum (HFT, SEO) · 100% = pure wealth creation.' }),
-      slider({ id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/20', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = auto-verified (compilers) · 2 = heavy review · 10 = unverifiable chaos.' }),
-      slider({ id: 's-gamma', label: 'External spam / cyber exposure', sym: 'γ = x/20', min: 0, max: 10, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = air-gapped · 2 = exposed · 10 = public inbox or active attack.' })
+      slider({ ev: s.evidence && s.evidence.p, evKey: 'p', id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum (HFT, SEO) · 100% = pure wealth creation.' }),
+      slider({ ev: s.evidence && s.evidence.eta, evKey: 'eta', id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/200', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = auto-verified · 2 = mostly checkable (code) · 5 = needs expert review (clinical notes) · 7 = error-prone and costly to check (legal citations) · 10 = unverifiable.' }),
+      slider({ ev: s.evidence && s.evidence.gamma, evKey: 'gamma', id: 's-gamma', label: 'External spam / cyber exposure', sym: 'γ = x/200', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = air-gapped · 4 = targeted attacks (grids, courts) · 7 = prime fraud target (banking) · 9 = flooded with bots and synthetic content (ad-tech) · above 10 = crisis scenario, beyond anything measured.' })
     );
     if (dyn) {
       ed.append(
-        slider({ id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck a full redesign can remove. Physical sectors ≲ 50%.' }),
-        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the redesign target reaches half its ceiling. Below 1× means today\'s AI already justifies more than half the redesign (software, media); physical and regulated sectors sit well above 1×.' }),
-        slider({ id: 's-alpha', label: 'Institutional catch-up speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast actual redesign closes the gap to its current target each year.' })
+        slider({ ev: s.evidence && s.evidence.gmax, evKey: 'gmax', id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck a full redesign can remove. Physical sectors ≲ 50%.' }),
+        slider({ ev: s.evidence && s.evidence.Tcrit, evKey: 'Tcrit', id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the redesign target reaches half its ceiling. Below 1× means today\'s AI already justifies more than half the redesign (software, media); physical and regulated sectors sit well above 1×.' }),
+        slider({ ev: s.evidence && s.evidence.alpha, evKey: 'alpha', id: 's-alpha', label: 'Institutional catch-up speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast actual redesign closes the gap to its current target each year.' })
       );
       const rdF = document.createElement('div');
       rdF.className = 'field';
@@ -802,6 +812,12 @@
     raf = requestAnimationFrame(() => { render(); save(); scheduleMC(); });
   }
 
+  function renderSources() {
+    const el = $('sources-list');
+    if (!el) return;
+    el.innerHTML = Object.keys(M.SOURCES).map((k) => `<li><a href="${M.SOURCES[k].u}" target="_blank" rel="noopener">${esc(M.SOURCES[k].t)}</a></li>`).join('');
+  }
+
   function rebuildAll() {
     const dyn = state.mode === 'dynamic';
     $('mode-dynamic').setAttribute('aria-pressed', String(dyn));
@@ -812,6 +828,7 @@
       ? 'The snapshot equation values every sector and the whole economy each quarter. Update rules feed that snapshot back into useful AI work <span class="mono">T</span>, how much of what AI can do is actually used, each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span>, new products and risk. Some limits never dissolve, however capable AI gets: that is what the model is built to show.'
       : 'The snapshot equation with tech power <span class="mono">T</span> as a dial, assuming organisations have fully adopted what AI can do. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
     buildPresets();
+    renderSources();
     buildSectorTabs();
     buildSectorEditor();
     update();

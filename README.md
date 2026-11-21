@@ -2,7 +2,14 @@
 
 An interactive simulator of how AI capability turns into economic value, sector by sector, once bottlenecks, arms races, slop and weak links are accounted for. It is built to highlight irreducibility: native fit, redesign and new products have fixed ceilings, so some limits never dissolve however capable AI becomes. It was developed from the Gemini conversation *Evaluating AI Doomer Math Predictions* (https://share.gemini.google/WyXAFP6PUBY5) and a stress test of the model it produced.
 
-**A simplified model.** The economy is represented by only six illustrative sectors (Energy & Grid, Healthcare, Banking & Payments, Software & R&D, Corporate Law, Ad-Tech & Media), each standing in for a broad part of the economy. Their default settings are rounded judgement calls, not measurements; each sector carries a one-line rationale in `model.js`. Results are scenarios, shown to two significant figures.
+**A simplified model.** The economy is represented by only six illustrative sectors (Energy & Grid, Healthcare, Banking & Payments, Software & R&D, Corporate Law, Ad-Tech & Media), each standing in for a broad part of the economy. Results are scenarios, shown to two significant figures.
+
+**Evidence-based defaults.** Sector settings come from published evidence where it exists, rounded, with judgement filling the gaps. `model.js` holds each sector's plausible range, confidence and sources (`evidence`), the economy-wide ones (`GLOBAL_EVIDENCE`) and the source list (`SOURCES`); the model page shows them under each slider.
+- Sector sizes: BEA value added 2025 (Core 75% of the six groups; Energy 55 / Healthcare 20 / Banking 25 within Core; Software 70 / Law 15 / Ad-Tech 15 within Flex, with Law and Ad-Tech raised to stand for broader adversarial and attention activity).
+- Native fit today and ceiling: Eloundou et al. occupation exposure re-weighted by ACS 2023 hours; McKinsey Global Institute 2025 for robotics.
+- Adoption: about 6% of US work hours AI-assisted in 2026 (Real-Time Population Survey), so about a fifth of what AI could do is in use (a0 = 20%).
+- Today's AI speedup: field trials and survey evidence, about 1.4×.
+- Real-wealth share, review burden, fraud exposure and redesign speed: judgement anchored on finance, advertising, litigation and health-waste research, hallucination and breach data, and historical adoption lags. Review burden and exposure are scored 0–10 and divided by 200; that scale is calibrated so slop and fraud cost about 1% of output by 2028.
 
 Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). No build step.
 
