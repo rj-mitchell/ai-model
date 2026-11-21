@@ -1,6 +1,6 @@
 # AI Transformation Model
 
-An interactive site for the sector/macro equation (and its dynamic, year-by-year version) developed in the Gemini conversation *Evaluating AI Doomer Math Predictions*.
+An interactive site for the sector/macro equation (and its dynamic, year-by-year version) developed in the Gemini conversation *Evaluating AI Doomer Math Predictions* (latest share: https://share.gemini.google/WyXAFP6PUBY5).
 
 Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). No build step.
 
@@ -21,8 +21,8 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 **Dynamic loop** (t → t+1, starting at `T_0 = 1`, `g_i,0 = 0` in 2026):
 
-- `T_{t+1} = T_t [1 + r_0 · V_R&D,t^φ · min(1, V_core,t) · (1 − T_t / T_max)]`
-- `g_{i,t+1} = g_{i,t} + α_i (g_i,max − g_{i,t})` once `T_t ≥ T_crit,i`, else unchanged
+- Tech power, soft slowdown (Option B): `T_{t+1} = T_t [1 + r_0 · V_R&D,t^φ · min(1, V_core,t) / (1 + T_t / T_half)]`
+- Workflow redesign, smooth S-curve: target `g*_i(T_t) = g_i,max / (1 + (T_crit,i / T_t)^k)` with `k = 2.5`, and `g_{i,t+1} = g_{i,t} + α_i (g*_i(T_t) − g_{i,t})`
 - Optional: η and γ decay by a fixed %/yr ("slop learning").
 
 ## Slider conversions (bounded slider spec)
@@ -36,6 +36,7 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 | Internal slop, external spam | 0–10 | `η, γ = x/20` |
 | Core fragility | 0–10 | `ρ = 1 − x` |
 | Core share | 20–80% | `W_core = x/100` |
+| Diminishing returns midpoint | 5×–50× | `T_half = x` |
 | Sector weight | 1–100 | normalised within tier |
 
 ## Files

@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v1';
+  const STORE_KEY = 'ai-transformation-model:v2';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -24,7 +24,7 @@
   function defaultState() {
     return {
       mode: 'dynamic', years: 15, startYear: 2026,
-      r0: 25, phi: 0.4, Tmax: 50, slopLearning: 0,
+      r0: 25, phi: 0.4, Thalf: 15, slopLearning: 0,
       Tstatic: 20, Wcore: 60, fragility: 5,
       sectors: defaultSectors(), sel: 3, preset: 'dyn-base',
     };
@@ -34,7 +34,7 @@
   const PRESETS = {
     dynamic: [
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
-      { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Tmax: 100 }) },
+      { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
       { id: 'dyn-cyber', label: 'Cyber-slop on Banking', apply: (s) => { s.sectors[2].gamma = 10; return s; } },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { slopLearning: 10 }) },
@@ -125,7 +125,7 @@
       slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 30, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
       slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Annual growth in useful AI work before any R&D feedback.' }),
       slider({ id: 'g-phi', label: 'AI R&D feedback', sym: 'φ', min: 0, max: 1, step: 0.05, get: () => state.phi, set: (v) => (state.phi = v), fmt: (v) => v.toFixed(2), hint: '0 = no recursive self-improvement · 0.5 = modest · 1 = strong.' }),
-      slider({ id: 'g-tmax', label: 'Hard tech ceiling', sym: 'T_max', min: 10, max: 100, step: 1, get: () => state.Tmax, set: (v) => (state.Tmax = v), fmt: (v) => `${v}×`, hint: 'Data, energy and algorithmic limits on useful AI work.' }),
+      slider({ id: 'g-thalf', label: 'Diminishing returns midpoint', sym: 'T_half', min: 5, max: 50, step: 1, get: () => state.Thalf, set: (v) => (state.Thalf = v), fmt: (v) => `${v}×`, hint: 'The level of useful AI work where data, energy and algorithmic drag halve annual progress. Growth slows past it but never stops.' }),
       slider({ id: 'g-learn', label: 'Slop learning', min: 0, max: 20, step: 1, get: () => state.slopLearning, set: (v) => (state.slopLearning = v), fmt: (v) => (v ? `−${v}%/yr` : 'off'), hint: 'Optional: η and γ decay each year as institutions learn to filter slop.' })
     );
     const st = $('static-controls');
@@ -219,8 +219,8 @@
     if (dyn) {
       ed.append(
         slider({ id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck a full redesign can remove. Physical sectors ≲ 50%.' }),
-        slider({ id: 's-tcrit', label: 'Redesign threshold', sym: 'T_crit', min: 2, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work needed before the sector starts re-wiring.' }),
-        slider({ id: 's-alpha', label: 'Redesign speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr` })
+        slider({ id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 2, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the sector\'s redesign target reaches half its ceiling. Adoption is fastest around here.' }),
+        slider({ id: 's-alpha', label: 'Institutional catch-up speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast actual redesign closes the gap to its current target each year.' })
       );
       const rdF = document.createElement('div');
       rdF.className = 'field';
@@ -284,7 +284,8 @@
     return out;
   }
   function logTicks(lo, hi) {
-    const c = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+    const c = [];
+    for (let e = 0; e <= 8; e++) [1, 2, 5].forEach((m) => c.push(m * Math.pow(10, e)));
     const t = c.filter((v) => v >= lo * 0.999 && v <= hi * 1.001);
     return t.length >= 2 ? t : [lo, hi];
   }
@@ -444,7 +445,7 @@
     const worst = best[best.length - 1];
     $('kpis').innerHTML =
       kpi(`Economy in ${last.year}`, fx(last.Vmacro), `${pct(last.Vmacro - 1)} real output vs ${startY}`, last.Vmacro >= 1 ? 'good' : 'bad') +
-      kpi(`Useful AI work ${last.year}`, fx(last.T), `ceiling ${state.Tmax}× · growth now ${(last.growth * 100).toFixed(1)}%/yr`) +
+      kpi(`Useful AI work ${last.year}`, fx(last.T), `growth now ${(last.growth * 100).toFixed(1)}%/yr · half-speed at ${state.Thalf}×`) +
       kpi('Core infrastructure', fx(last.Vcore), last.Vcore < 1 ? 'Below baseline: braking AI progress' : 'Above baseline: no brake', last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad');
 
@@ -465,13 +466,13 @@
 
     // Chart 2: T over time (log)
     $('c2-title').textContent = 'Useful AI work, T';
-    $('c2-sub').textContent = 'Multiple of end-2026 verified work per £ (log scale). Growth slows as Core weakens or T approaches the ceiling.';
+    $('c2-sub').textContent = 'Multiple of end-2026 verified work per £ (log scale). Growth slows as Core weakens and as T passes the diminishing-returns midpoint.';
     $('c2-legend').innerHTML = '';
     lineChart($('c2'), {
       xs, series: [{ name: 'Useful AI work', color: css('--s7'), ys: rows.map((r) => r.T), width: 2.5 }],
       yLog: true, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v + '×'),
       tipX: (x) => String(x), height: 240, aria: 'Tech power T over time',
-      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div>`,
+      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div><div class="r"><i></i><span>Diminishing returns</span><b>${f2(rows[i].drag)}</b></div>`,
     });
 
     // Chart 3: sector V

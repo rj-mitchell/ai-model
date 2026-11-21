@@ -129,11 +129,16 @@
   }
 
   // ---------- Dynamic loop (t -> t+1) ----------
-  // T_{t+1}   = T_t [ 1 + r0 (V_RD,t)^phi * min(1, V_core,t) * (1 - T_t / T_max) ]
-  // g_{i,t+1} = g_{i,t} + alpha_i (g_i,max - g_{i,t})   if T_t >= T_crit,i   (else unchanged)
+  // Option B soft slowdown + smooth S-curve redesign:
+  // T_{t+1}   = T_t [ 1 + r0 (V_RD,t)^phi * min(1, V_core,t) / (1 + T_t / T_half) ]
+  // g*_i(T_t) = g_i,max / (1 + (T_crit,i / T_t)^k),  k = 2.5
+  // g_{i,t+1} = g_{i,t} + alpha_i (g*_i(T_t) - g_{i,t})
+  const K_STEEPNESS = 2.5;
+  function redesignTarget(P, T) { return P.gmax / (1 + Math.pow(P.Tcrit / T, K_STEEPNESS)); }
+
   function simulate(state) {
     const years = Math.max(1, Math.round(state.years));
-    const r0 = state.r0 / 100, phi = state.phi, Tmax = Math.max(1.0001, state.Tmax);
+    const r0 = state.r0 / 100, phi = state.phi, Thalf = Math.max(1, state.Thalf);
     const rdIdx = state.sectors.findIndex((s) => s.rd);
     let T = 1;
     let gs = state.sectors.map(() => 0);
@@ -142,13 +147,13 @@
       const snap = snapshot(state, T, gs, t);
       const Vrd = rdIdx >= 0 ? snap.sectors[rdIdx].V : 1;
       const brake = Math.min(1, snap.Vcore);
-      const ceiling = Math.max(0, 1 - T / Tmax);
-      const growth = r0 * Math.pow(Math.max(Vrd, 1e-9), phi) * brake * ceiling;
-      rows.push(Object.assign({ t, year: (state.startYear || 2026) + t, growth, Vrd, brake, ceiling }, snap));
+      const drag = 1 / (1 + T / Thalf);
+      const growth = r0 * Math.pow(Math.max(Vrd, 1e-9), phi) * brake * drag;
+      rows.push(Object.assign({ t, year: (state.startYear || 2026) + t, growth, Vrd, brake, drag }, snap));
       // update for next year
       const nextG = gs.map((g, i) => {
         const P = sectorParams(state.sectors[i], t, state.slopLearning);
-        return T >= P.Tcrit ? g + P.alpha * (P.gmax - g) : g;
+        return g + P.alpha * (redesignTarget(P, T) - g);
       });
       T = T * (1 + growth);
       gs = nextG;
@@ -167,7 +172,7 @@
     return pts;
   }
 
-  const api = { simulate, snapshot, sweep, sectorParams, evalSector, sectorValueAt, macro, slopPeak, G_CAP };
+  const api = { K_STEEPNESS, redesignTarget, simulate, snapshot, sweep, sectorParams, evalSector, sectorValueAt, macro, slopPeak, G_CAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AIModel = api;
 })(typeof window !== 'undefined' ? window : this);

@@ -301,13 +301,13 @@ tr:last-child td { border-bottom: 0; }
       </div>
       <div class="eq-block">
         <h3>3 · Dynamic loop: tech power</h3>
-        <div class="eq">\[T_{t+1}=T_t\Big[1+r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\Big(1-\frac{T_t}{T_{\max}}\Big)\Big]\]</div>
-        <p class="eq-note">Baseline progress \(r_0\), boosted by the AI R&amp;D sector's own value (recursive self-improvement, strength \(\phi\)), braked when Core infrastructure falls below baseline, and capped smoothly by \(T_{\max}\). Starts from \(T_0=1\) at end-2026.</p>
+        <div class="eq">\[T_{t+1}=T_t\left[1+\frac{r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})}{1+T_t/T_{\text{half}}}\right]\]</div>
+        <p class="eq-note">Baseline progress \(r_0\), boosted by the AI R&amp;D sector's own value (recursive self-improvement, strength \(\phi\)) and braked when Core infrastructure falls below baseline. Diminishing returns halve growth at \(T_{\text{half}}\) and keep slowing it beyond, without ever stopping it. Starts from \(T_0=1\) at end-2026.</p>
       </div>
       <div class="eq-block">
-        <h3>4 · Dynamic loop: lagged redesign</h3>
-        <div class="eq">\[g_{i,t+1}=\begin{cases} g_{i,t}+\alpha_i\big(g_{i,\max}-g_{i,t}\big) & T_t\ge T_{\text{crit},i}\\ g_{i,t} & \text{otherwise}\end{cases}\]</div>
-        <p class="eq-note">Sectors don't re-wire until AI crosses their reliability threshold. After that they close a fraction \(\alpha_i\) of the remaining gap each year, starting from \(g_{i,0}=0\). This produces the productivity paradox.</p>
+        <h3>4 · Dynamic loop: S-curve redesign</h3>
+        <div class="eq">\[g_i^*(T_t)=\frac{g_{i,\max}}{1+\big(T_{\text{crit},i}/T_t\big)^{k}} \qquad g_{i,t+1}=g_{i,t}+\alpha_i\big(g_i^*(T_t)-g_{i,t}\big)\]</div>
+        <p class="eq-note">Each sector has a smooth target level of redesign that rises with \(T\) and reaches half its ceiling at \(T_{\text{crit},i}\) (steepness \(k=2.5\)). Actual redesign chases that target with institutional lag \(\alpha_i\), starting from \(g_{i,0}=0\). Early adopters move slowly, adoption is fastest around \(T_{\text{crit},i}\), then it rounds off toward \(g_{i,\max}\).</p>
       </div>
     </div>
     <dl class="key">
@@ -320,7 +320,7 @@ tr:last-child td { border-bottom: 0; }
       <dt>ρ</dt><dd>Core complementarity: ρ = 1 − fragility. ρ = −4 is the Jones–Tonetti weak-link case.</dd>
       <dt>w̃, W</dt><dd>Sector weights within each tier (normalised), and the Core / Flex split of the economy.</dd>
     </dl>
-    <p class="foot">Built from the "final final equation" and the dynamic update loop in the Gemini conversation <a href="https://share.gemini.google/r0sep6lVLzf7" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a>. The sector presets are that conversation's six-sector example economy. Slider conversions follow its bounded slider spec. Your settings are saved in this browser.</p>
+    <p class="foot">Built from the "final final equation" and the dynamic update loop (Option B soft slowdown and S-curve redesign) in the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a>. The sector presets are that conversation's six-sector example economy. Slider conversions follow its bounded slider spec. Your settings are saved in this browser.</p>
   </section>
 </div>
 
