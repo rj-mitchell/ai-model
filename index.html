@@ -314,9 +314,9 @@ tr:last-child td { border-bottom: 0; }
     <div class="eqs">
       <div class="eq-block">
         <h3>1 · Sector level: net real economic value</h3>
-        <div class="eq">\[f_i(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta} \qquad \epsilon_i=(1-f_i)(1-g_i)\]</div>
+        <div class="eq">\[f_i^*(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta} \qquad \epsilon_i=(1-a_i)(1-g_i)\]</div>
         <div class="eq">\[S_i=\frac{1}{\epsilon_i+\dfrac{1-\epsilon_i}{T_{\text{eff}}}} \qquad V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\eta_iT^{-\delta_\eta}\ln T_{\text{eff}}+\gamma_iT^{-\delta_\gamma}\ln T\big)\,S_i}\]</div>
-        <p class="eq-note">Native fit rises with capability toward a ceiling (\(\beta=0\) keeps it fixed). Review burden falls as AI gets more reliable (\(\delta_\eta=0\) off), and defensive AI offsets external attack (\(\delta_\gamma=0\) off). <b>Deployment rule:</b> Private sectors use \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); commons use \(T_{\text{eff}}=T\). Native fit is capped at 95% and redesign at 90%.</p>
+        <p class="eq-note">Available native fit \(f_i^*\) rises with capability toward a fixed ceiling (\(\beta=0\) keeps it at \(f_{i,0}\)). \(a_i\) is the native fit actually in use; the snapshot mode assumes full adoption (\(a_i=f_i^*\)). Review burden falls as AI gets more reliable (\(\delta_\eta=0\) off), and defensive AI offsets external attack (\(\delta_\gamma=0\) off). <b>Deployment rule:</b> Private sectors use \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); commons use \(T_{\text{eff}}=T\). Native fit is capped at 95% and redesign at 90%.</p>
       </div>
       <div class="eq-block">
         <h3>2 · Macro level: Core, Flex and new products</h3>
@@ -326,20 +326,22 @@ tr:last-child td { border-bottom: 0; }
       </div>
       <div class="eq-block">
         <h3>3 · Dynamic loop: tech power</h3>
-        <div class="eq">\[T_{t+1}=T_t\left[1+r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\,V_{\text{macro},t}^{\psi}\;\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\right]\]</div>
-        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth exactly \(r_0\). Investment feedback \(\psi\) lets a richer economy fund more compute (\(\psi=0\) off). <b>Setback:</b> in the chosen year, \(T\) is multiplied by \((1-\text{size})\), with a floor of 1.</p>
+        <div class="eq">\[x_t=r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\,\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\]</div>
+        <div class="eq">\[\text{growth}_t=\frac{x_t}{\big(1+(x_t/\text{cap})^4\big)^{1/4}} \qquad T_{t+\Delta t}=T_t\,(1+\text{growth}_t)^{\Delta t}\]</div>
+        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth equal \(r_0\). The speed limit leaves ordinary growth untouched and bends very fast growth toward the cap, standing in for how fast chips, data centres and power can be built. The model steps quarterly (\(\Delta t=\tfrac14\)) and reports yearly. <b>Setback:</b> in the chosen year, \(T\) is multiplied by \((1-\text{size})\), with a floor of 1.</p>
       </div>
       <div class="eq-block">
-        <h3>4 · Dynamic loop: redesign, new products, risk</h3>
+        <h3>4 · Dynamic loop: adoption, redesign, new products, risk</h3>
+        <div class="eq">\[a_{i,t+1}=a_{i,t}+\lambda\big(f_i^*(T_t)-a_{i,t}\big),\quad a_{i,0}=a_0\,f_{i,0}\]</div>
         <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{k}}-g_{i,t}\Big)\]</div>
         <div class="eq">\[n_{t+1}=n_t+s\big(N_{\max}H(T_t,T_{\text{new}})-n_t\big)\]</div>
         <div class="eq">\[\text{survival}_{t+1}=\text{survival}_t\big(1-h_{\max}H(T_t,T_{\text{risk}})\big)\]</div>
-        <p class="eq-note">\(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\). The risk-adjusted economy is \(V_{\text{macro}}\,\big(1-(1-\text{survival})\times\text{loss}\big)\).</p>
+        <p class="eq-note">Rates \(\lambda,\alpha_i,s\) are shares of the gap closed per year, applied per quarter as \(1-(1-\text{rate})^{1/4}\). \(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\). The risk-adjusted economy is \(V_{\text{macro}}\,\big(1-(1-\text{survival})\times\text{loss}\big)\).</p>
       </div>
     </div>
     <dl class="key">
       <dt>T</dt><dd>Useful AI work: verified work per £ on the compressible slice of a job, as a multiple of end-2026 (1×). Not raw tokens.</dd>
-      <dt>f<sub>i</sub></dt><dd>Native fit: share of the workflow AI can compress. Starts at f₀ and rises toward f_max as capability broadens.</dd>
+      <dt>f<sub>i</sub>*, a<sub>i</sub></dt><dd>Native fit: the share of the workflow AI can compress (f*, rising from f₀ toward the fixed ceiling f_max), and the share actually being done with AI (a, which lags behind).</dd>
       <dt>g<sub>i</sub></dt><dd>Gustafson redesign: share of the remaining bottleneck removed by re-architecting the workflow (capped at 90%).</dd>
       <dt>p<sub>i</sub></dt><dd>Real wealth share: 1 means the speedup creates wealth, 0 means a zero-sum Red Queen arms race.</dd>
       <dt>η<sub>i</sub>, γ<sub>i</sub></dt><dd>Internal slop and ambient exposure (slider 0–10 maps to 0–0.5).</dd>
@@ -357,7 +359,9 @@ tr:last-child td { border-bottom: 0; }
       <li><b>Red Queen sectors lose from every speedup.</b> When a sector's real-wealth share p is below a/(1 + a), where a is its slop term (η ln T_eff + γ ln T), anything that makes it faster lowers its value. That is the intended arms-race logic, but it is a strong claim. The sector status flags when a sector is in this regime.</li>
       <li><b>New products, capability breadth and defensive AI are the most speculative mechanisms.</b> They have the least evidence behind them and push results up. Setting them to zero gives a deliberately conservative model.</li>
       <li><b>Strong Core–Flex complementarity makes a whole-tier collapse costly.</b> With high complementarity, a collapse of the entire Flex tier drags the economy down. A single Flex sector collapsing still doesn't, because sectors inside Flex are averaged normally.</li>
-      <li><b>Each run is annual and deterministic.</b> Shocks other than the single setback, business cycles and policy responses are not represented.</li>
+      <li><b>Some limits are irreducible by design.</b> Native fit, redesign and new products all have fixed ceilings, so the economy levels off however capable AI becomes. That is deliberate: the model shows which bottlenecks capability alone does not remove. Raising the ceilings is a different claim, not a correction.</li>
+      <li><b>The uncertainty band covers inputs, not structure.</b> It varies every setting, including the structural dials, with errors partly shared across sectors. It cannot cover equations that are wrong in form. The headline shows the median of the runs, which sits below the central run because outcomes are curved and several inputs start at their upper limits.</li>
+      <li><b>Each run is deterministic apart from the uncertainty runs.</b> Shocks other than the single setback, business cycles and policy responses are not represented.</li>
     </ul>
     <p class="foot">Developed from the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a> and a stress test of the model it produced. The default sectors are that conversation's six-sector example economy. Your settings are saved in this browser.</p>
   </section>
