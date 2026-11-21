@@ -52,6 +52,7 @@ h3 { font-size: 18px; font-weight: 700; }
 p { margin: 0; }
 a { color: var(--accent); }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.note { font-size: 14px; color: var(--ink-2); background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; max-width: 72ch; }
 .lede { font-size: 19px; color: var(--ink-2); max-width: 62ch; }
 .num, .mono, .v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .v { font-weight: 500; color: var(--ink); }
@@ -114,6 +115,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     <span class="eyebrow">AI Transformation Model · explainer</span>
     <h1>Capability compounds. Value doesn't.</h1>
     <p class="lede">Why the model never goes exponential, even when AI improves itself, and what the case for an economic singularity leaves out.</p>
+    <p class="note">This is a simplified model: the economy is represented by only six illustrative sectors, and their settings are rounded judgement calls, not measurements. The numbers below are one scenario from those settings. The argument rests on the shape of the results, not the exact figures.</p>
     <div class="stats" aria-label="Headline numbers from the model's default run">
       <div class="stat"><span class="eyebrow">Useful AI work, 2050</span><span class="big" data-k="T50">–</span><span class="cap">times the end-2026 level</span></div>
       <div class="stat"><span class="eyebrow">Output vs no further AI, 2050</span><span class="big" data-k="V50">–</span><span class="cap">times what output would be without further AI</span></div>
@@ -162,7 +164,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <div class="body">
         <h3>The work AI can't touch sets the ceiling</h3>
         <p>This is Amdahl's law, first stated for parallel computers. If a share of a job can't be sped up, the whole job can never go faster than one divided by that share, however fast the rest becomes. If 20% of the work is irreducible, the most you can ever get is 5×.</p>
-        <p>In the model every sector keeps some irreducible share, even after AI has broadened as far as it can and workflows are fully redesigned. Physical work, care, regulation and judgement don't vanish. The table shows each sector's limit with infinitely capable AI.</p>
+        <p>In the model every sector keeps some irreducible share, even after AI has broadened as far as it can and workflows are fully redesigned. Physical work, care, regulation and judgement don't vanish. The table shows each of the six illustrative sectors' limits with infinitely capable AI. The exact figures come from rounded judgement calls; the pattern, that the physical and essential sectors have the lowest ceilings, is the point.</p>
       </div>
     </div>
     <div class="tbl-wrap"><table id="tCeil"></table></div>
@@ -282,7 +284,8 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   'use strict';
   const M = window.AIModel;
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const fx = (v) => (v >= 100 ? Math.round(v).toLocaleString('en-GB') : v >= 10 ? v.toFixed(0) : v.toFixed(2)) + '×';
+  // two significant figures: the inputs are judgement calls, so more digits would be false precision
+  const fx = (v) => (v >= 10 ? Math.round(v).toLocaleString('en-GB') : v >= 1 ? v.toFixed(1) : v.toFixed(2)) + '×';
   const pc = (v, d = 0) => (v * 100).toFixed(d) + '%';
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const D = () => M.defaultState();
@@ -330,7 +333,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   const cS = M.snapshot(ceilState(false), BIG, null, null, null), c0 = M.snapshot(ceilState(true), BIG, null, null, null);
   let h = '<thead><tr><th>Sector</th><th>Irreducible share</th><th>Max speedup</th><th>Max value, no slop</th><th>Max value, with slop and arms races</th></tr></thead><tbody>';
   D().sectors.forEach((s, i) => {
-    h += `<tr><td class="txt">${esc(s.name)}</td><td>${pc(c0.sectors[i].eps, 1)}</td><td>${fx(c0.sectors[i].S)}</td><td>${fx(c0.sectors[i].V)}</td><td>${fx(cS.sectors[i].V)}</td></tr>`;
+    h += `<tr><td class="txt">${esc(s.name)}</td><td>${pc(c0.sectors[i].eps)}</td><td>${fx(c0.sectors[i].S)}</td><td>${fx(c0.sectors[i].V)}</td><td>${fx(cS.sectors[i].V)}</td></tr>`;
   });
   h += `<tr class="hl"><td class="txt"><b>Whole economy</b></td><td></td><td></td><td>${fx(c0.Vmacro)}</td><td>${fx(cS.Vmacro)}</td></tr></tbody>`;
   document.getElementById('tCeil').innerHTML = h;
@@ -342,7 +345,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     return M.snapshot(q, BIG, null, null, null).Vmacro;
   }
   let b = '<thead><tr><th>Irreducible share of work, every sector</th><th>Output ceiling (× no further AI), infinite AI</th><th>Growth AI adds if reached in 30 years</th></tr></thead><tbody>';
-  b += `<tr class="hl"><td class="txt">Model defaults (${pc(Math.min(...c0.sectors.map((s) => s.eps)), 1)}–${pc(Math.max(...c0.sectors.map((s) => s.eps)), 0)}), with slop and arms races</td><td>${fx(cS.Vmacro)}</td><td>${pc(Math.pow(cS.Vmacro, 1 / 30) - 1, 1)} a year</td></tr>`;
+  b += `<tr class="hl"><td class="txt">Model defaults (${pc(Math.min(...c0.sectors.map((s) => s.eps)))}–${pc(Math.max(...c0.sectors.map((s) => s.eps)), 0)}), with slop and arms races</td><td>${fx(cS.Vmacro)}</td><td>${pc(Math.pow(cS.Vmacro, 1 / 30) - 1, 1)} a year</td></tr>`;
   [0.05, 0.02, 0.01, 0.005].forEach((e) => { const v = ceilingWith(e); b += `<tr><td class="txt">${pc(e, e < 0.01 ? 1 : 0)}, no slop, no arms races</td><td>${fx(v)}</td><td>${pc(Math.pow(v, 1 / 30) - 1, 1)} a year</td></tr>`; });
   document.getElementById('tBelieve').innerHTML = b + '</tbody>';
 
@@ -422,7 +425,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     s += `<text x="${X(0.0045)}" y="${Y(1 / 0.0045) - 8}" font-size="11.5" fill="${ink2}">max speedup = 1 ÷ irreducible share</text>`;
     const pts = D().sectors.map((sec, i) => ({ n: sec.name, e: c0.sectors[i].eps, S: c0.sectors[i].S, c: css('--s' + (i + 1)) }));
     pts.forEach((p) => {
-      s += `<circle cx="${X(p.e)}" cy="${Y(p.S)}" r="6" fill="${p.c}" stroke="${surf}" stroke-width="2"><title>${esc(p.n)}: ${pc(p.e, 1)} irreducible, ${fx(p.S)} max speedup</title></circle>`;
+      s += `<circle cx="${X(p.e)}" cy="${Y(p.S)}" r="6" fill="${p.c}" stroke="${surf}" stroke-width="2"><title>${esc(p.n)}: ${pc(p.e)} irreducible, ${fx(p.S)} max speedup</title></circle>`;
     });
     const lab = pts.map((p) => ({ x: X(p.e) + 10, y: Y(p.S) + 4, t: p.n.split(' ')[0] })).sort((a, b2) => a.y - b2.y);
     for (let k = 1; k < lab.length; k++) if (Math.abs(lab[k].x - lab[k - 1].x) < 90 && lab[k].y - lab[k - 1].y < 14) lab[k].y = lab[k - 1].y + 14;

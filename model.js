@@ -33,19 +33,28 @@
 
   // ---------------- Default economy (UI units) ----------------
   // f, fmax, p, g, gmax in %; eta, gamma on 0–10 (÷20); Tcrit in ×; alpha in %/yr.
-  function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd) {
-    return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd };
+  function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd, basis) {
+    return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd, basis: basis || '' };
   }
+  // A simplified economy of six illustrative sectors. Each stands in for a broad part of the
+  // economy, and every setting is a rounded judgement call for illustration, not a measurement.
   function defaultSectors() {
     return [
-      sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private'),
-      sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private'),
-      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 3, 15, 'private'),
-      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 1, 30, 'private', true),
-      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 3, 15, 'commons'),
-      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 1.5, 25, 'commons'),
+      sec('Energy & Grid', 'core', 35, 20, 45, 100, 0.2, 0.2, 20, 20, 10, 15, 'private', false,
+        'Stands in for physical infrastructure: mostly hands-on work, so low native fit; essential and heavily regulated, so redesign comes late; output is real wealth, not an arms race.'),
+      sec('Healthcare', 'core', 35, 25, 55, 95, 1.0, 0.4, 35, 35, 15, 10, 'private', false,
+        'Stands in for care and other people-facing services: much of the work is physical or relational; mistakes are costly, so review burden is high and redesign is slow.'),
+      sec('Banking & Payments', 'core', 30, 60, 90, 70, 0.8, 1.0, 50, 50, 3, 15, 'private', false,
+        'Stands in for essential digital services: mostly information work, so high native fit; a real target for fraud and cyber-attack; part of the activity is competitive trading rather than new wealth.'),
+      sec('Software & R&D', 'flex', 40, 70, 95, 90, 0.4, 0.2, 60, 60, 1, 30, 'private', true,
+        'Stands in for knowledge work AI suits best: work is digital and checkable (code compiles, tests pass), redesign is already under way, and its output feeds back into AI progress.'),
+      sec('Corporate Law', 'flex', 30, 60, 85, 15, 2.0, 2.0, 40, 40, 3, 15, 'commons', false,
+        'Stands in for adversarial professional services: lots of text work AI can do, but much of it is an arms race between sides, and both generate review burden for the other.'),
+      sec('Ad-Tech & Media', 'flex', 30, 80, 95, 10, 3.0, 3.0, 50, 50, 1.5, 25, 'commons', false,
+        'Stands in for attention markets: almost all digital, so very high native fit, but mostly zero-sum competition for attention, with heavy exposure to spam and synthetic content.'),
     ];
   }
+
   function defaultState() {
     return {
       mode: 'dynamic', years: 15, startYear: 2027,

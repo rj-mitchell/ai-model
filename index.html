@@ -70,6 +70,9 @@ p { margin: 0; }
 .num, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .lede { color: var(--ink-2); max-width: 68ch; }
+.basis { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); line-height: 1.5; max-width: 110ch; }
+.basis .pill { margin-right: 6px; }
+.simplified { font-size: 13px; color: var(--ink-2); background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; max-width: 72ch; }
 .why-link { font-weight: 600; font-size: 14px; color: var(--accent); text-decoration: none; }
 .why-link:hover { text-decoration: underline; }
 a { color: var(--accent); }
@@ -212,6 +215,7 @@ tr:last-child td { border-bottom: 0; }
       <span class="eyebrow">Bottlenecks · Slop · Red Queen · Weak links</span>
       <h1>AI Transformation Model</h1>
       <p class="lede" id="lede">Each year the static equation gives a snapshot of every sector and the whole economy. Two update rules then feed that snapshot back into next year's useful AI work <span class="mono">T</span> and each sector's workflow redesign <span class="mono">g<sub>i</sub></span>. Move the dials to see whether the economy compounds, stalls, or drowns in slop.</p>
+      <p class="simplified"><b>A simplified model.</b> The economy is represented by only six illustrative sectors, each standing in for a broad part of the economy. Their settings are rounded judgement calls, not measurements, so read the results as scenarios.</p>
       <a class="why-link" href="why.html">Why doesn't it go exponential? Read the explainer →</a>
     </div>
     <div class="seg" role="group" aria-label="Model mode">
@@ -289,7 +293,7 @@ tr:last-child td { border-bottom: 0; }
     <div class="row" style="justify-content:space-between">
       <div style="display:flex;flex-direction:column;gap:4px">
         <h2>Sectors</h2>
-        <p class="eq-note">Pick a sector to edit its parameters. Core sectors are combined as a weakest-link average. Flex sectors are a plain weighted average.</p>
+        <p class="eq-note">Six illustrative sectors, each standing in for a broad part of the economy. Pick one to see why its settings are what they are, or to change them. Core sectors are combined as a weakest-link average. Flex sectors are a plain weighted average.</p>
       </div>
       <div class="row">
         <button class="btn" id="add-sector">Add sector</button>
@@ -360,6 +364,7 @@ tr:last-child td { border-bottom: 0; }
     <h2>What this model still can't tell you</h2>
     <ul class="limits">
       <li><b>Output figures are relative to no further AI.</b> "1.6×" means 60% more output than if AI stayed at its end-2026 level and use. The GDP chart adds the same 2.0% trend to both worlds, which assumes trend growth and AI's effect are independent.</li>
+      <li><b>Six sectors stand in for a whole economy.</b> Each default sector represents a broad group (physical infrastructure, care, essential digital services, knowledge work, adversarial services, attention markets). A real economy has hundreds of industries with very different settings, so the results show how the mechanisms interact, not how any actual industry will fare.</li>
       <li><b>It is not calibrated.</b> About 80 inputs are judgement calls, and the results depend mostly on native fit, the wealth share and the slop settings. Use the uncertainty band, and treat results as scenarios, not forecasts.</li>
       <li><b>Jobs and wages are not modelled.</b> "Tasks automated" measures how much work AI handles. Whether that means lost jobs, higher wages or shorter hours depends on a labour market this model doesn't contain. Adding one would double the number of unanchored inputs.</li>
       <li><b>Catastrophic risk is an overlay you set.</b> It discounts the economy but doesn't feed back into AI progress, and the yearly hazard rising with T is an assumption, not a finding.</li>

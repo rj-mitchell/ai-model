@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v10';
+  const STORE_KEY = 'ai-transformation-model:v11';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -46,7 +46,8 @@
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
 
   // ---------------- Formatting ----------------
-  const fx = (v, d = 2) => (!Number.isFinite(v) ? '–' : v >= 1e5 ? v.toExponential(1).replace('e+', 'e') + '×' : v >= 100 ? v.toFixed(0) + '×' : v >= 10 ? v.toFixed(1) + '×' : v.toFixed(d) + '×');
+  // displayed multiples use two significant figures: the inputs are judgement calls, so more digits would be false precision
+  const fx = (v) => (!Number.isFinite(v) ? '–' : v >= 1e5 ? v.toExponential(1).replace('e+', 'e') + '×' : v >= 10 ? Math.round(v).toLocaleString('en-GB') + '×' : v >= 1 ? v.toFixed(1) + '×' : v.toFixed(2) + '×');
   const f2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : '–');
   const pct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(0) + '%';
   const pc = (v, d = 0) => (v * 100).toFixed(d) + '%';
@@ -263,7 +264,7 @@
     nameF.innerHTML = '<label for="s-name">Sector name</label><input class="text-in" id="s-name" maxlength="40">';
     const nameIn = nameF.querySelector('input');
     nameIn.value = s.name;
-    nameIn.addEventListener('input', () => { s.name = nameIn.value || 'Sector'; buildSectorTabs(); update(); });
+    nameIn.addEventListener('input', () => { s.name = nameIn.value || 'Sector'; s.basis = ''; buildSectorTabs(); update(); });
 
     const tierF = document.createElement('div');
     tierF.className = 'field';
@@ -276,15 +277,21 @@
     depF.append(segmented('s-deploy', [['private', 'Private · caps at Slop Peak'], ['commons', 'Commons · no cap']], () => s.deploy, (v) => (s.deploy = v)));
 
     ed.append(nameF, tierF, depF);
+    if (s.basis) {
+      const b = document.createElement('div');
+      b.className = 'basis';
+      b.innerHTML = `<span class="pill info">Illustrative</span> ${esc(s.basis)} The numbers are rounded judgement calls, not measurements.`;
+      ed.append(b);
+    }
     ed.append(
-      slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size in 2026. Normalised within Core or Flex.' }),
+      slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size at the start (2027). Normalised within Core or Flex.' }),
       slider({ id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
     );
     ed.append(slider({ id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
     ed.append(
       slider({ id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum (HFT, SEO) · 100% = pure wealth creation.' }),
-      slider({ id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/20', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} · η ${(v / 20).toFixed(3)}`, hint: '0 = auto-verified (compilers) · 2 = heavy review · 10 = unverifiable chaos.' }),
-      slider({ id: 's-gamma', label: 'External spam / cyber exposure', sym: 'γ = x/20', min: 0, max: 10, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} · γ ${(v / 20).toFixed(3)}`, hint: '0 = air-gapped · 2 = exposed · 10 = public inbox or active attack.' })
+      slider({ id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/20', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = auto-verified (compilers) · 2 = heavy review · 10 = unverifiable chaos.' }),
+      slider({ id: 's-gamma', label: 'External spam / cyber exposure', sym: 'γ = x/20', min: 0, max: 10, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = air-gapped · 2 = exposed · 10 = public inbox or active attack.' })
     );
     if (dyn) {
       ed.append(
@@ -598,7 +605,7 @@
     $('c1-sub').textContent = `Real GDP, ${startY} = 1. Both worlds grow ${tgx.toFixed(1)}% a year from everything except AI, the current average for advanced economies (IMF). The gap is what AI adds.`;
     legend($('c1-legend'), ser.concat(band ? [{ name: 'With AI, 80% range', color: c[0], band: true }] : []));
     lineChart($('c1'), {
-      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`, yLabel: `GDP, ${startY} = 1`,
+      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`, yLabel: `GDP, ${startY} = 1`,
       tipX: (x, i) => `${x} · with AI ${fx(rows[i].Vmacro)} of no further AI · T = ${fx(rows[i].T)}`, height: 300, directLabels: true, aria: 'GDP with and without further AI over time',
     });
 
@@ -619,7 +626,7 @@
     $('c3-title').textContent = 'Sector net value, Vᵢ';
     $('c3-sub').textContent = 'Each sector\'s output as a multiple of what it would be without further AI, after bottlenecks, Red Queen losses and slop. Below 1.0 means AI made the sector worse off.';
     legend($('c3-legend'), sser);
-    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× sector output without further AI', tipX: (x) => String(x), height: 240, aria: 'Sector values over time' });
+    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× sector output without further AI', tipX: (x) => String(x), height: 240, aria: 'Sector values over time' });
 
     // Chart 4: g adoption
     $('c4-card').hidden = false;
@@ -684,7 +691,7 @@
     $('c1-sub').textContent = (pk.T < 99 ? `Economy peaks at ${fx(pk.Vmacro)} when T ≈ ${fx(pk.T)}.` : 'Holding these sector settings fixed, with full adoption.') + overhang;
     legend($('c1-legend'), ser);
     lineChart($('c1'), {
-      xs, series: ser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1,
+      xs, series: ser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1,
       marker: T, markerLabel: `now ${fx(T)}`, tipX: (x) => `T = ${fx(x)}`, height: 300, yLabel: '× output without further AI', aria: 'Macro value as a function of T',
     });
 
@@ -702,7 +709,7 @@
     $('c3-title').textContent = 'Sector value across tech power';
     $('c3-sub').textContent = 'Private sectors flatten at their Slop Peak. Commons sectors keep scaling and can fall below 1.0.';
     legend($('c3-legend'), sser);
-    lineChart($('c3'), { xs: sx, series: sser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1, marker: T, tipX: (x) => `T = ${fx(x)}`, height: 240, aria: 'Sector values across T' });
+    lineChart($('c3'), { xs: sx, series: sser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, marker: T, tipX: (x) => `T = ${fx(x)}`, height: 240, aria: 'Sector values across T' });
 
     $('c4-card').hidden = true;
     $('c5-card').hidden = true;
@@ -717,7 +724,7 @@
     if (!s) { $('sector-status').innerHTML = ''; return; }
     const pills = [];
     const fitTxt = s.fAvail - s.f > 0.005 ? `native fit in use ${pc(s.f)} of ${pc(s.fAvail)} available` : `native fit ${pc(s.f)}`;
-    pills.push(`<span class="pill info">${when}: V = ${f2(s.V)}× · clean speedup S = ${f2(s.S)}× · ${fitTxt} · bottleneck ε = ${f2(s.eps)}</span>`);
+    pills.push(`<span class="pill info">${when}: V ≈ ${fx(s.V)} · clean speedup ≈ ${fx(s.S)} · ${fitTxt} · bottleneck ≈ ${pc(s.eps)}</span>`);
     if (s.capped) pills.push(`<span class="pill warn">Capped at Slop Peak T* ≈ ${fx(s.Tstar)}</span>`);
     else if (cfg.deploy === 'commons' && s.Tstar < snap.T - 1e-6) pills.push(`<span class="pill crit">Past its Slop Peak (T* ≈ ${fx(s.Tstar)}), no cap in commons</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);

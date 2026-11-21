@@ -2,6 +2,8 @@
 
 An interactive simulator of how AI capability turns into economic value, sector by sector, once bottlenecks, arms races, slop and weak links are accounted for. It is built to highlight irreducibility: native fit, redesign and new products have fixed ceilings, so some limits never dissolve however capable AI becomes. It was developed from the Gemini conversation *Evaluating AI Doomer Math Predictions* (https://share.gemini.google/WyXAFP6PUBY5) and a stress test of the model it produced.
 
+**A simplified model.** The economy is represented by only six illustrative sectors (Energy & Grid, Healthcare, Banking & Payments, Software & R&D, Corporate Law, Ad-Tech & Media), each standing in for a broad part of the economy. Their default settings are rounded judgement calls, not measurements; each sector carries a one-line rationale in `model.js`. Results are scenarios, shown to two significant figures.
+
 Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). No build step.
 
 ## What the numbers measure
