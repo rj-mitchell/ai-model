@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v3';
+  const STORE_KEY = 'ai-transformation-model:v4';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -23,7 +23,7 @@
   }
   function defaultState() {
     return {
-      mode: 'dynamic', model: 'extended', years: 15, startYear: 2026,
+      mode: 'dynamic', years: 15, startYear: 2026,
       r0: 25, phi: 0.4, Thalf: 15, slopLearning: 0,
       Tstatic: 20, Wcore: 60, fragility: 5,
       // extensions (each has a neutral value that switches it off)
@@ -41,17 +41,17 @@
     dynamic: [
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
-      { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { model: 'extended', r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, psi: 0.8, Nmax: 50, Tnew: 15, years: 25 }); return s; } },
+      { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, psi: 0.8, Nmax: 50, Tnew: 15, years: 25 }); return s; } },
       { id: 'dyn-cyber', label: 'Cyber-slop on Banking', apply: (s) => { s.sectors[2].gamma = 10; return s; } },
-      { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { model: 'extended', setbackYear: 2030, setbackSize: 60 }) },
+      { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2); }); return s; } },
       { id: 'dyn-learn', label: 'Institutions learn to fight slop', apply: (s) => Object.assign(s, { slopLearning: 10 }) },
-      { id: 'dyn-risk', label: 'High catastrophe risk', apply: (s) => Object.assign(s, { model: 'extended', hmax: 5, Trisk: 20, loss: 100 }) },
+      { id: 'dyn-risk', label: 'High catastrophe risk', apply: (s) => Object.assign(s, { hmax: 5, Trisk: 20, loss: 100 }) },
     ],
     static: [
-      { id: 'st-r1', label: 'Gemini Round 1 · 4×', apply: (s) => { s.model = 'original'; s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
-      { id: 'st-r2', label: 'Gemini Round 2 · 20×', apply: (s) => { s.model = 'original'; s.Tstatic = 20; return s; } },
-      { id: 'st-r3', label: 'Gemini Round 3 · cyber shock', apply: (s) => { s.model = 'original'; s.Tstatic = 20; s.sectors[2].gamma = 10; return s; } },
+      { id: 'st-r1', label: 'Near-term 4×, no redesign', apply: (s) => { s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
+      { id: 'st-r2', label: 'Redesign wave 20×', apply: (s) => { s.Tstatic = 20; return s; } },
+      { id: 'st-r3', label: 'Cyber-slop shock 20×', apply: (s) => { s.Tstatic = 20; s.sectors[2].gamma = 10; return s; } },
     ],
   };
 
@@ -76,7 +76,6 @@
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const seriesColor = (i) => css('--s' + ((i % 8) + 1));
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const isExt = () => state.model !== 'original';
 
   // ---------------- Control builders ----------------
   function touched() { state.preset = null; markPresets(); update(); }
@@ -143,23 +142,14 @@
   }
 
   function buildGlobalControls() {
-    const dyn = state.mode === 'dynamic', ext = isExt();
+    const dyn = state.mode === 'dynamic';
     const host = $('controls');
     host.innerHTML = '';
-    const OFF = 'Switched off: you are using the Gemini original equation.';
-
-    const eq = group(host, 'Equation set', true);
-    eq.append(segmented('g-model', [['extended', 'Extended'], ['original', 'Gemini original']], () => state.model, (v) => (state.model = v), rebuildAll));
-    const note = document.createElement('p');
-    note.className = 'hint';
-    note.textContent = ext ? 'Gemini\'s equation plus the stress-test fixes. Set any extension to its neutral value to switch it off.' : 'Exactly the equation and dynamic loop from the Gemini conversation.';
-    eq.append(note);
-
     if (dyn) {
       const g = group(host, 'AI progress over time', true);
       g.append(
         slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 60, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
-        slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: ext ? 'Annual growth in useful AI work in year one, before feedbacks.' : 'Annual growth in useful AI work before feedbacks (year one is slightly lower in the original drag term).' }),
+        slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Annual growth in useful AI work in year one, before feedbacks.' }),
         slider({ id: 'g-phi', label: 'AI R&D feedback', sym: 'φ', min: 0, max: 1, step: 0.05, get: () => state.phi, set: (v) => (state.phi = v), fmt: (v) => v.toFixed(2), hint: '0 = no recursive self-improvement · 0.5 = modest · 1 = strong.' }),
         slider({ id: 'g-thalf', label: 'Diminishing returns midpoint', sym: 'T_half', min: 5, max: 50, step: 1, get: () => state.Thalf, set: (v) => (state.Thalf = v), fmt: (v) => `${v}×`, hint: 'Where data, energy and algorithmic drag halve annual progress. Growth slows past it but never stops.' }),
         slider({ id: 'g-learn', label: 'Slop learning', min: 0, max: 20, step: 1, get: () => state.slopLearning, set: (v) => (state.slopLearning = v), fmt: (v) => (v ? `−${v}%/yr` : 'off'), hint: 'η and γ decay each year as institutions learn to filter slop, independent of AI capability.' })
@@ -171,38 +161,38 @@
 
     const ec = group(host, 'Economy structure', true);
     ec.append(
-      slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: ext ? 'In the extended equation this is the true weight: Core carries this share of any change in the total.' : 'Caution: in the original formula Core\'s real influence is larger than this (84% at 60/40).' }),
+      slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: 'Core carries this share of any change in the total economy.' }),
       slider({ id: 'g-frag', label: 'Core weak-link fragility', sym: 'ρ = 1 − x', min: 0, max: 10, step: 0.5, get: () => state.fragility, set: (v) => (state.fragility = v), fmt: (v) => `${v.toFixed(1)} · ρ = ${(1 - v).toFixed(1)}`, hint: '0 = normal average · 5 = Jones–Tonetti weak links · 10 = extreme O-ring.' })
     );
-    if (ext) {
+    {
       ec.append(
         slider({ id: 'g-cfx', label: 'Core–Flex complementarity', sym: 'ρ_m = 1 − x', min: 0, max: 3, step: 0.1, get: () => state.cfx, set: (v) => (state.cfx = v), fmt: (v) => `${v.toFixed(1)} · σ = ${(1 / v).toFixed(2).replace('Infinity', '∞')}`, hint: '0 = Core and Flex are substitutes · 1 = constant spending shares · above 1 = Baumol effect: spending shifts to the slower tier and the slow tier limits growth.' }),
         slider({ id: 'g-kappa', label: 'Flex dependence on Core', sym: 'κ', min: 0, max: 2, step: 0.1, get: () => state.kappa, set: (v) => (state.kappa = v), fmt: (v) => v.toFixed(1), hint: 'When Core falls below baseline, Flex output is scaled by V_core^κ (no power, no payments, no Flex). Has no effect while Core ≥ 1.' })
       );
     }
 
-    const cap = group(host, 'Capability and slop', ext, ext ? '' : OFF);
-    if (ext) {
+    const cap = group(host, 'Capability and slop', true);
+    {
       cap.append(
-        slider({ id: 'g-beta', label: 'Capability breadth', sym: 'β', min: 0, max: 1, step: 0.05, get: () => state.beta, set: (v) => (state.beta = v), fmt: (v) => v.toFixed(2), hint: 'How fast better AI expands native fit f toward each sector\'s ceiling f_max. 0 = fixed (original).' }),
-        slider({ id: 'g-deta', label: 'Verification keeps pace', sym: 'δ_η', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => v.toFixed(2), hint: 'More reliable AI needs less human review: internal slop scales with T^−δ. 0 = original.' }),
-        slider({ id: 'g-dgamma', label: 'Defensive AI', sym: 'δ_γ', min: 0, max: 1, step: 0.05, get: () => state.dGamma, set: (v) => (state.dGamma = v), fmt: (v) => v.toFixed(2), hint: 'Filters and fraud detection improve with AI too: ambient slop scales with T^−δ. 0 = original (attack grows forever).' })
+        slider({ id: 'g-beta', label: 'Capability breadth', sym: 'β', min: 0, max: 1, step: 0.05, get: () => state.beta, set: (v) => (state.beta = v), fmt: (v) => v.toFixed(2), hint: 'How fast better AI expands native fit f toward each sector\'s ceiling f_max. 0 = fixed.' }),
+        slider({ id: 'g-deta', label: 'Verification keeps pace', sym: 'δ_η', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => v.toFixed(2), hint: 'More reliable AI needs less human review: internal slop scales with T^−δ. 0 = off.' }),
+        slider({ id: 'g-dgamma', label: 'Defensive AI', sym: 'δ_γ', min: 0, max: 1, step: 0.05, get: () => state.dGamma, set: (v) => (state.dGamma = v), fmt: (v) => v.toFixed(2), hint: 'Filters and fraud detection improve with AI too: ambient slop scales with T^−δ. 0 = off (attacks keep growing with T).' })
       );
     }
 
     if (dyn) {
-      const fb = group(host, 'Feedbacks and shocks', ext, ext ? '' : OFF);
-      if (ext) {
+      const fb = group(host, 'Feedbacks and shocks', true);
+      {
         fb.append(
-          slider({ id: 'g-psi', label: 'Investment feedback', sym: 'ψ', min: 0, max: 1, step: 0.05, get: () => state.psi, set: (v) => (state.psi = v), fmt: (v) => v.toFixed(2), hint: 'A richer economy funds more compute: growth × V_macro^ψ. 0 = original.' }),
+          slider({ id: 'g-psi', label: 'Investment feedback', sym: 'ψ', min: 0, max: 1, step: 0.05, get: () => state.psi, set: (v) => (state.psi = v), fmt: (v) => v.toFixed(2), hint: 'A richer economy funds more compute: growth × V_macro^ψ. 0 = off.' }),
           slider({ id: 'g-sby', label: 'AI setback year', min: 2027, max: 2086, step: 1, get: () => state.setbackYear || 2030, set: (v) => (state.setbackYear = v), fmt: (v) => (state.setbackSize ? String(v) : `${v} (off)`) }),
           slider({ id: 'g-sbs', label: 'Setback size', min: 0, max: 90, step: 5, get: () => state.setbackSize, set: (v) => { state.setbackSize = v; if (v && !state.setbackYear) state.setbackYear = 2030; }, fmt: (v) => (v ? `T falls ${v}%` : 'none'), hint: 'Regulation, a compute crunch or an AI winter. Useful AI work drops once, then the loop resumes.', after: () => { const o = $('g-sby-out'); if (o) o.textContent = state.setbackSize ? String(state.setbackYear) : `${state.setbackYear} (off)`; } })
         );
       }
     }
 
-    const np = group(host, 'New AI-native products', false, ext ? '' : OFF);
-    if (ext) {
+    const np = group(host, 'New AI-native products', false);
+    {
       np.append(
         slider({ id: 'g-nmax', label: 'Mature size', sym: 'N_max', min: 0, max: 100, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}% of 2026 economy`, hint: 'Value from goods and services that do not exist today. Pure judgement: there is no data for this.' }),
         slider({ id: 'g-tnew', label: 'Midpoint', sym: 'T_new', min: 2, max: 50, step: 1, get: () => state.Tnew, set: (v) => (state.Tnew = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the new sector reaches half its mature size.' })
@@ -211,8 +201,8 @@
     }
 
     if (dyn) {
-      const rk = group(host, 'Catastrophic risk', false, ext ? 'Off by default: there is no agreed number. Set your own.' : OFF);
-      if (ext) {
+      const rk = group(host, 'Catastrophic risk', false, 'Off by default: there is no agreed number. Set your own.');
+      {
         rk.append(
           slider({ id: 'g-hmax', label: 'Annual risk at maturity', sym: 'h_max', min: 0, max: 20, step: 0.1, get: () => state.hmax, set: (v) => (state.hmax = v), fmt: (v) => (v ? `${v.toFixed(1)}%/yr` : 'off'), hint: 'Yearly chance of a catastrophe once AI is far past the midpoint below.' }),
           slider({ id: 'g-trisk', label: 'Risk midpoint', sym: 'T_risk', min: 2, max: 100, step: 1, get: () => state.Trisk, set: (v) => (state.Trisk = v), fmt: (v) => `${v}×`, hint: 'Useful AI work at which the yearly risk reaches half its maximum.' }),
@@ -240,7 +230,6 @@
       b.addEventListener('click', () => {
         const base = defaultState();
         base.mode = state.mode;
-        base.model = state.mode === 'dynamic' ? state.model : 'extended';
         base.sel = Math.min(state.sel, 5);
         state = p.apply(base);
         state.preset = p.id;
@@ -276,7 +265,7 @@
     const s = state.sectors[state.sel];
     const ed = $('sector-edit');
     ed.innerHTML = '';
-    const dyn = state.mode === 'dynamic', ext = isExt();
+    const dyn = state.mode === 'dynamic';
 
     const nameF = document.createElement('div');
     nameF.className = 'field';
@@ -298,9 +287,9 @@
     ed.append(nameF, tierF, depF);
     ed.append(
       slider({ id: 's-weight', label: 'Weight within tier', sym: 'w̃', min: 1, max: 100, step: 1, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => String(v), hint: 'Relative size in 2026. Normalised within Core or Flex.' }),
-      slider({ id: 's-f', label: ext ? 'Native workflow fit today' : 'Native workflow fit', sym: ext ? 'f₀' : 'f', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
+      slider({ id: 's-f', label: 'Native workflow fit today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: '20% ≈ physical or care work · 70% ≈ software and knowledge work. Capped at 95%.' })
     );
-    if (ext) ed.append(slider({ id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
+    ed.append(slider({ id: 's-fmax', label: 'Native fit ceiling', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The most of this workflow AI could ever compress, as capability broadens (agents, robotics).' }));
     ed.append(
       slider({ id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum (HFT, SEO) · 100% = pure wealth creation.' }),
       slider({ id: 's-eta', label: 'Internal slop / review tax', sym: 'η = x/20', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} · η ${(v / 20).toFixed(3)}`, hint: '0 = auto-verified (compilers) · 2 = heavy review · 10 = unverifiable chaos.' }),
@@ -541,7 +530,6 @@
   }
 
   function renderDynamic() {
-    const ext = isExt();
     const rows = M.simulate(state);
     lastRows = rows; lastSnap = null;
     const mc = currentMC();
@@ -551,7 +539,7 @@
     const peak = rows.reduce((a, r) => (r.Vmacro > a.Vmacro ? r : a), rows[0]);
     const yrFmt = (v) => String(Math.round(v));
     const L = rows.length - 1;
-    const risk = ext && state.hmax > 0;
+    const risk = state.hmax > 0;
 
     // KPIs
     const best = last.sectors.map((s, i) => ({ s, i })).sort((a, b) => b.s.V - a.s.V);
@@ -566,7 +554,7 @@
       kpi('Tasks automated', pc(last.automation), `spending-weighted share of work AI handles · ${pc(rows[0].automation)} in ${startY}`) +
       (risk
         ? kpi(`Catastrophe by ${last.year}`, pc(last.pCat, 1), `risk-adjusted economy ${fx(last.Vexp)}`, last.pCat > 0.1 ? 'bad' : '')
-        : kpi('New AI-native products', ext ? pc(last.newShare) : '–', ext ? `of the economy in ${last.year}` : 'Off in Gemini original'));
+        : kpi('New AI-native products', pc(last.newShare), `of the economy in ${last.year}`));
 
     // Chart 1: macro
     const c = [css('--s1'), css('--s2'), css('--s3')];
@@ -594,7 +582,7 @@
       xs, series: [{ name: 'Useful AI work', color: css('--s7'), ys: rows.map((r) => r.T), width: 2.5 }], band: tBand,
       yLog: true, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : tickFmtX(v)),
       tipX: (x) => String(x), height: 240, aria: 'Tech power T over time',
-      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div><div class="r"><i></i><span>Diminishing returns</span><b>${f2(rows[i].drag)}</b></div>` + (ext ? `<div class="r"><i></i><span>Investment boost</span><b>${f2(rows[i].invest)}</b></div>` : ''),
+      tipExtra: (i) => `<div class="r"><i></i><span>growth next yr</span><b>${(rows[i].growth * 100).toFixed(1)}%</b></div><div class="r"><i></i><span>Core brake</span><b>${f2(rows[i].brake)}</b></div><div class="r"><i></i><span>Diminishing returns</span><b>${f2(rows[i].drag)}</b></div><div class="r"><i></i><span>Investment boost</span><b>${f2(rows[i].invest)}</b></div>`,
     });
 
     // Chart 3: sector V
@@ -613,10 +601,8 @@
     // Chart 5: spending shares (Baumol)
     $('c5-card').hidden = false;
     const shser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.shares[i] * 100), width: i === state.sel ? 3 : 2 }));
-    if (ext && state.Nmax > 0) shser.push({ name: 'AI-native products', color: css('--s7'), ys: rows.map((r) => r.newShare * 100), width: 2, dash: '5 4' });
-    $('c5-sub').textContent = ext
-      ? 'Share of total spending. When sectors are complements, spending shifts toward the ones AI speeds up least (the Baumol effect).'
-      : 'Approximate shares under the original formula, which has no explicit price or spending mechanism.';
+    if (state.Nmax > 0) shser.push({ name: 'AI-native products', color: css('--s7'), ys: rows.map((r) => r.newShare * 100), width: 2, dash: '5 4' });
+    $('c5-sub').textContent = 'Share of total spending. When sectors are complements, spending shifts toward the ones AI speeds up least (the Baumol effect).';
     legend($('c5-legend'), shser);
     lineChart($('c5'), { xs, series: shser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, tipX: (x) => String(x), height: 240, aria: 'Spending shares over time' });
 
@@ -636,7 +622,6 @@
   }
 
   function renderStatic() {
-    const ext = isExt();
     const T = state.Tstatic;
     const snap = M.snapshot(state, T, null, 0);
     lastSnap = snap; lastRows = null;
@@ -650,7 +635,7 @@
       kpi('Flex sectors', fx(snap.Vflex), snap.hasF ? 'weighted average' : 'No Flex sectors', !snap.hasF || snap.Vflex >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
       kpi('Tasks automated', pc(snap.automation), 'spending-weighted share of work AI handles') +
-      kpi('New AI-native products', ext ? pc(snap.newShare) : '–', ext ? 'share of the economy at this T' : 'Off in Gemini original');
+      kpi('New AI-native products', pc(snap.newShare), 'share of the economy at this T');
 
     const pts = M.sweep(state, 1, 100, 120);
     const xs = pts.map((p) => p.T);
@@ -714,13 +699,13 @@
 
   function cls(v) { return v < 1 ? 'lo' : ''; }
   function renderTableDynamic(rows) {
-    const ext = isExt(), risk = ext && state.hmax > 0;
+    const risk = state.hmax > 0;
     $('tbl-title').textContent = 'Year by year';
     const names = state.sectors.map((s) => esc(s.name));
-    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th>' + (ext ? '<th>New products</th>' : '') + '<th>V macro</th>' + (risk ? '<th>P(catastrophe)</th><th>Risk-adj.</th>' : '') + '<th>Automated</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th><th>New products</th><th>V macro</th>' + (risk ? '<th>P(catastrophe)</th><th>Risk-adj.</th>' : '') + '<th>Automated</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
     rows.forEach((r) => {
       h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td>${(r.growth * 100).toFixed(1)}%</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
-        (ext ? `<td>${f2(r.newGoods)}</td>` : '') + `<td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td>` +
+        `<td>${f2(r.newGoods)}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td>` +
         (risk ? `<td>${pc(r.pCat, 1)}</td><td class="${cls(r.Vexp)}">${f2(r.Vexp)}</td>` : '') + `<td>${pc(r.automation)}</td>` +
         r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
     });
@@ -736,7 +721,7 @@
     const blank = '<td></td>'.repeat(8);
     if (snap.hasC) h += `<tr><td class="txt"><b>Core</b></td><td></td>${blank}<td class="${cls(snap.Vcore)}"><b>${f2(snap.Vcore)}</b></td></tr>`;
     if (snap.hasF) h += `<tr><td class="txt"><b>Flex</b></td><td></td>${blank}<td class="${cls(snap.Vflex)}"><b>${f2(snap.Vflex)}</b></td></tr>`;
-    if (isExt()) h += `<tr><td class="txt"><b>AI-native products</b></td><td></td><td></td><td>${pc(snap.newShare, 1)}</td>${'<td></td>'.repeat(6)}<td>+${f2(snap.newGoods)}</td></tr>`;
+    h += `<tr><td class="txt"><b>AI-native products</b></td><td></td><td></td><td>${pc(snap.newShare, 1)}</td>${'<td></td>'.repeat(6)}<td>+${f2(snap.newGoods)}</td></tr>`;
     h += `<tr><td class="txt"><b>Total economy</b></td><td></td>${blank}<td class="${cls(snap.Vmacro)}"><b>${f2(snap.Vmacro)}</b></td></tr>`;
     $('tbl').innerHTML = h + '</tbody>';
   }
@@ -782,10 +767,9 @@
     $('mode-dynamic').setAttribute('aria-pressed', String(dyn));
     $('mode-static').setAttribute('aria-pressed', String(!dyn));
     if (state.sel >= state.sectors.length) state.sel = 0;
-    document.body.dataset.model = state.model;
     buildGlobalControls();
     $('lede').innerHTML = dyn
-      ? 'Each year the snapshot equation values every sector and the whole economy. Update rules then feed that snapshot back into next year\'s useful AI work <span class="mono">T</span>, each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span> and, in the extended equation, investment, new products and risk.'
+      ? 'Each year the snapshot equation values every sector and the whole economy. Update rules then feed that snapshot back into next year\'s useful AI work <span class="mono">T</span>, each sector\'s workflow redesign <span class="mono">g<sub>i</sub></span>, investment, new products and risk.'
       : 'The snapshot equation with tech power <span class="mono">T</span> as a dial. Set a level of useful AI work and each sector\'s settings to see net value after Amdahl bottlenecks, Red Queen arms races, internal slop and external spam, and how a weak Core drags down the economy.';
     buildPresets();
     buildSectorTabs();

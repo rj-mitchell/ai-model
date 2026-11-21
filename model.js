@@ -1,12 +1,9 @@
 /*
- * AI Transformation Model — calculation engine (v3).
+ * AI Transformation Model — calculation engine.
  *
- * Two equation sets:
- *   'original' — exactly the Gemini conversation's equation + dynamic loop
- *                (Option B soft slowdown, S-curve redesign).
- *   'extended' — the same core, plus fixes for the weaknesses found in the
- *                stress test. Every extension has a parameter whose zero
- *                (or neutral) value switches it off.
+ * Sector bottleneck / slop / weak-link equation with a yearly dynamic loop,
+ * capability breadth, Baumol spending shares, new products, risk and
+ * Monte Carlo uncertainty.
  *
  * Works in the browser (window.AIModel) and in Node (module.exports).
  */
@@ -22,26 +19,23 @@
   // S-curve that is exactly 0 at T = 1 and tends to 1 as T grows (keeps baseline invariance)
   const hill0 = (T, mid) => { const a = Math.pow(T, K) - 1; return a <= 0 ? 0 : a / (a + Math.pow(mid, K)); };
 
-  // ---------------- Globals for the active equation set ----------------
+  // ---------------- Global parameters ----------------
   function globalsFor(state) {
-    const ext = state.model !== 'original';
     return {
-      ext,
-      beta: ext ? state.beta : 0,                 // capability breadth: f rises toward f_max
-      dEta: ext ? state.dEta : 0,                 // verification keeps pace with capability
-      dGamma: ext ? state.dGamma : 0,             // defensive AI
-      psi: ext ? state.psi : 0,                   // investment feedback
-      rhoM: ext ? 1 - state.cfx : null,           // Core–Flex complementarity (Baumol between tiers)
-      kappa: ext ? state.kappa : 0,               // Flex dependence on Core shortfall
-      Nmax: ext ? state.Nmax / 100 : 0,           // mature size of AI-native products (share of 2026 economy)
+      beta: state.beta,                 // capability breadth: f rises toward f_max
+      dEta: state.dEta,                 // verification keeps pace with capability
+      dGamma: state.dGamma,             // defensive AI
+      psi: state.psi,                   // investment feedback
+      rhoM: 1 - state.cfx,              // Core–Flex complementarity (Baumol between tiers)
+      kappa: state.kappa,               // Flex dependence on Core shortfall
+      Nmax: state.Nmax / 100,           // mature size of AI-native products (share of 2026 economy)
       Tnew: state.Tnew,
       newSpeed: (state.newSpeed != null ? state.newSpeed : 15) / 100,
-      hmax: ext ? state.hmax / 100 : 0,           // annual catastrophe hazard at maturity
+      hmax: state.hmax / 100,           // annual catastrophe hazard at maturity
       Trisk: state.Trisk,
       loss: state.loss / 100,
-      setbackYear: ext ? state.setbackYear : 0,
-      setbackSize: ext ? state.setbackSize / 100 : 0,
-      normaliseDrag: ext,
+      setbackYear: state.setbackYear,
+      setbackSize: state.setbackSize / 100,
       fragility: state.fragility,
       Wcore: state.Wcore,
       slopLearning: state.slopLearning || 0,
@@ -67,10 +61,10 @@
   }
 
   // ---------------- 1. Sector level ----------------
-  // f_i(T)   = f_max − (f_max − f_0) T^(−β)                       [ext; β = 0 → f_0]
+  // f_i(T)   = f_max − (f_max − f_0) T^(−β)                       (β = 0 → fixed f_0)
   // eps_i    = (1 − f_i(T)) (1 − g_i)
   // S_i      = 1 / (eps_i + (1 − eps_i) / T_eff)
-  // η̂ = η T^(−δη),  γ̂ = γ T^(−δγ)                               [ext; δ = 0 → original]
+  // η̂ = η T^(−δη),  γ̂ = γ T^(−δγ)
   // V_i      = (1 + p_i (S_i − 1)) / (1 + (η̂ ln T_eff + γ̂ ln T) S_i)
   function fOf(P, T, X) { return X.beta > 0 ? P.fmax - (P.fmax - P.f0) * Math.pow(T, -X.beta) : P.f0; }
 
@@ -136,10 +130,9 @@
     return { idx, w };
   }
 
-  // Original:  V_macro = V_core^Wc (Wc V_core + Wf V_flex)^Wf
-  // Extended:  D = min(1, V_core)^κ;  V_base = ( Wc V_core^ρm + Wf (D V_flex)^ρm )^(1/ρm)
-  //            V_macro = V_base + D · n_t           (n_t = AI-native products, share of 2026 economy)
-  // Empty tier: the other tier alone (in both equation sets).
+  // D = min(1, V_core)^κ;  V_base = ( Wc V_core^ρm + Wf (D V_flex)^ρm )^(1/ρm)
+  // V_macro = V_base + D · n_t           (n_t = AI-native products, share of 2026 economy)
+  // Empty tier: the other tier alone.
   function macro(sectors, Vs, X, n) {
     const rho = 1 - X.fragility;
     const Wc0 = clamp(X.Wcore / 100, 0, 1);
@@ -150,18 +143,12 @@
     const Wc = hasC && hasF ? Wc0 : hasC ? 1 : 0, Wf = 1 - Wc;
     const coreShares = hasC ? cesShares(C.idx.map((i) => Vs[i]), C.w, rho) : [];
     const flexShares = hasF ? (() => { const raw = F.idx.map((i, k) => F.w[k] * Vs[i]); const t = raw.reduce((a, b) => a + b, 0) || 1; return raw.map((x) => x / t); })() : [];
-    let Vbase, D = 1, tierShareCore;
-    if (!X.ext) {
-      if (hasC && hasF) Vbase = Math.pow(Vcore, Wc) * Math.pow(Wc * Vcore + Wf * Vflex, Wf);
-      else Vbase = hasC ? Vcore : Vflex;
-      tierShareCore = hasC && hasF ? (Wc * Vcore) / (Wc * Vcore + Wf * Vflex) : (hasC ? 1 : 0);
-    } else {
-      D = hasC && X.kappa > 0 ? Math.pow(Math.min(1, Vcore), X.kappa) : 1;
-      if (hasC && hasF) {
-        Vbase = ces([Vcore, D * Vflex], [Wc, Wf], X.rhoM);
-        tierShareCore = cesShares([Vcore, D * Vflex], [Wc, Wf], X.rhoM)[0];
-      } else { Vbase = hasC ? Vcore : D * Vflex; tierShareCore = hasC ? 1 : 0; }
-    }
+    const D = hasC && X.kappa > 0 ? Math.pow(Math.min(1, Vcore), X.kappa) : 1;
+    let Vbase, tierShareCore;
+    if (hasC && hasF) {
+      Vbase = ces([Vcore, D * Vflex], [Wc, Wf], X.rhoM);
+      tierShareCore = cesShares([Vcore, D * Vflex], [Wc, Wf], X.rhoM)[0];
+    } else { Vbase = hasC ? Vcore : D * Vflex; tierShareCore = hasC ? 1 : 0; }
     const newGoods = D * (n || 0);
     const Vmacro = Vbase + newGoods;
     // spending shares across sectors (+ new products)
@@ -192,8 +179,7 @@
 
   // ---------------- 3. Dynamic loop (t → t+1) ----------------
   // T_{t+1}   = T_t [ 1 + r0 V_RD^φ · min(1, V_core) · V_macro^ψ · drag(T_t) ]
-  //   original: drag = 1 / (1 + T/T_half)
-  //   extended: drag = (1 + 1/T_half) / (1 + T/T_half)   (so year-1 growth = r0 exactly)
+  //   drag = (1 + 1/T_half) / (1 + T/T_half)   (so year-1 growth = r0 exactly)
   //   setback:  T_{Y} ← max(1, T_{Y} (1 − size))
   // g*_i(T)   = g_max / (1 + (T_crit/T)^k);  g_{t+1} = g_t + α (g* − g_t)
   // n*(T)     = N_max · hill0(T, T_new);      n_{t+1} = n_t + speed (n* − n_t)
@@ -212,7 +198,7 @@
       const Vrd = rdIdx >= 0 ? snap.sectors[rdIdx].V : 1;
       const brake = snap.hasC ? Math.min(1, snap.Vcore) : 1;
       const invest = X.psi ? Math.pow(snap.Vmacro, X.psi) : 1;
-      const drag = (X.normaliseDrag ? 1 + 1 / Thalf : 1) / (1 + T / Thalf);
+      const drag = (1 + 1 / Thalf) / (1 + T / Thalf);
       const growth = r0 * Math.pow(Math.max(Vrd, 1e-9), phi) * brake * invest * drag;
       const hazard = X.hmax * hill0(T, X.Trisk);
       const Vexp = snap.Vmacro * (1 - (1 - surv) * X.loss);
