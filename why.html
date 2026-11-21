@@ -116,25 +116,25 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     <p class="lede">Why the model never goes exponential, even when AI improves itself, and what the case for an economic singularity leaves out.</p>
     <div class="stats" aria-label="Headline numbers from the model's default run">
       <div class="stat"><span class="eyebrow">Useful AI work, 2086</span><span class="big" data-k="T86">–</span><span class="cap">times the end-2026 level</span></div>
-      <div class="stat"><span class="eyebrow">AI's effect on output, 2086</span><span class="big" data-k="V86">–</span><span class="cap">times what it would be without further AI</span></div>
-      <div class="stat"><span class="eyebrow">Growth AI adds, 2076–86</span><span class="big" data-k="A7686">–</span><span class="cap">a year, on top of ordinary growth</span></div>
+      <div class="stat"><span class="eyebrow">Output vs no further AI, 2086</span><span class="big" data-k="V86">–</span><span class="cap">times what output would be without further AI</span></div>
+      <div class="stat"><span class="eyebrow">Growth AI adds, 2076–86</span><span class="big" data-k="A7686">–</span><span class="cap">a year, compared with no further AI</span></div>
     </div>
   </header>
 
   <figure>
     <div class="legend" id="fA-legend"></div>
     <div class="chart" id="fA"></div>
-    <figcaption><b>The gap is the argument.</b> All lines are multiples of the end-2026 level on the same log scale. Useful AI work keeps climbing for sixty years. AI's effect on output bends over within about fifteen. The dashed line adds <span data-k="BG">–</span> a year of ordinary growth: it ends up close to a straight line again, which is what growth looks like when AI's boost has run out. Default settings of the model, central run.</figcaption>
+    <figcaption><b>The gap is the argument.</b> Both lines are multiples on the same log scale: useful AI work against its end-2026 level, and output against what it would be without further AI. AI work keeps climbing for sixty years. Output bends over within about fifteen. Default settings of the model, central run.</figcaption>
   </figure>
 
   <section class="prose">
     <h2>What these numbers measure</h2>
-    <p>The model measures AI's effect on its own: how much bigger real output is than in a world where AI stays at its end-2026 level and level of use. It leaves out ordinary growth from population, other technologies and normal productivity gains, which in rich economies has run at roughly 1–2% a year. So "<span class="v" data-k="V86">–</span> by 2086" means AI makes the economy that much bigger than it would otherwise be, not that GDP is only that much bigger than today.</p>
-    <p>The clearest way to see the result is as a growth rate. A singularity means the growth rate itself keeps rising. In the model, AI adds a lot to growth at first and then less and less, until growth is back at its ordinary pace.</p>
+    <p>Every output figure in the model is a multiple of what output would be without further AI, meaning a world where AI stays at its end-2026 level and level of use. So "<span class="v" data-k="V86">–</span> by 2086" means the economy produces that many times more than it would have without further AI. It is not a GDP forecast: growth from population and other technologies would happen in both worlds.</p>
+    <p>The clearest way to see the result is as a growth rate. A singularity means the growth rate keeps rising. In the model, AI adds a lot to growth at first and then less and less, until it adds almost nothing.</p>
   </section>
   <div class="tbl-wrap"><table id="tRate"></table></div>
   <section class="prose">
-    <p>Over sixty years in the default run, ordinary growth at <span class="v" data-k="BG">–</span> a year multiplies the economy by <span class="v" data-k="BG60">–</span> and AI multiplies it by a further <span class="v" data-k="V86">–</span>, for <span class="v" data-k="GDP86">–</span> in total. AI is a large, one-off boost spread over a few decades, closer to electrification than to a takeoff.</p>
+    <p>AI is a large, one-off boost spread over a few decades, closer to electrification than to a takeoff.</p>
   </section>
 
   <section class="prose">
@@ -151,7 +151,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <span class="n">1</span>
       <div class="body">
         <h3>Capability is not value</h3>
-        <p>The model separates <b>T</b>, how much useful work AI can do per pound, from <b>V</b>, how much more real output the economy produces. Singularity arguments usually treat these as the same number. In the default run, T grows <span class="v" data-k="T41">–</span> by 2041 and <span class="v" data-k="T86">–</span> by 2086, while AI's effect on the economy reaches <span class="v" data-k="V41">–</span> and then <span class="v" data-k="V86">–</span>.</p>
+        <p>The model separates <b>T</b>, how much useful work AI can do per pound, from <b>V</b>, how much more real output the economy produces. Singularity arguments usually treat these as the same number. In the default run, T grows <span class="v" data-k="T41">–</span> by 2041 and <span class="v" data-k="T86">–</span> by 2086, while output reaches <span class="v" data-k="V41">–</span> and then <span class="v" data-k="V86">–</span> what it would be without further AI.</p>
         <p>Turning capability into output needs everything else in the economy to change with it: the work that AI can't do, the people who check AI's work, the infrastructure it runs on, and the organisations that have to rebuild around it.</p>
       </div>
     </div>
@@ -224,7 +224,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
 
   <section class="prose">
     <h2>What you would have to believe for it to explode</h2>
-    <p>The model can produce explosive growth. To get it you have to remove every bottleneck in every sector at once: no arms races, no slop, and an irreducible share of work close to zero everywhere, including energy, healthcare and law. The table shows the ceiling on AI's effect with infinitely capable AI as the irreducible share in every sector shrinks. Ordinary growth would come on top.</p>
+    <p>The model can produce explosive growth. To get it you have to remove every bottleneck in every sector at once: no arms races, no slop, and an irreducible share of work close to zero everywhere, including energy, healthcare and law. The table shows the ceiling on output, as a multiple of no further AI, with infinitely capable AI as the irreducible share in every sector shrinks.</p>
   </section>
   <div class="tbl-wrap"><table id="tBelieve"></table></div>
   <section class="prose">
@@ -305,15 +305,13 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     RSI0T: fx(rsi0.T), RSI1T: fx(rsi1.T), RSI0V: fx(rsi0.Vmacro), RSI1V: fx(rsi1.Vmacro),
     AU26: pc(at(2026).automationFixed), OH: fx(overhang),
     A7686: '+' + pc(Math.pow(at(2086).Vmacro / at(2076).Vmacro, 1 / 10) - 1, 2),
-    BG: (D().bgGrowth).toFixed(1) + '%', BG60: fx(Math.pow(1 + D().bgGrowth / 100, 60)), GDP86: fx(at(2086).gdp),
   };
   // growth-rate table
   (function () {
-    const bg = D().bgGrowth / 100;
-    let t = `<thead><tr><th>Period</th><th>Growth AI adds</th><th>Total growth with ${(bg * 100).toFixed(1)}% ordinary growth</th></tr></thead><tbody>`;
+    let t = `<thead><tr><th>Period</th><th>Growth AI adds each year</th><th>Output at end of period (× no further AI)</th></tr></thead><tbody>`;
     [[2026, 2031], [2031, 2036], [2036, 2041], [2041, 2051], [2051, 2061], [2061, 2071], [2071, 2086]].forEach(([a, c]) => {
       const ai = Math.pow(at(c).Vmacro / at(a).Vmacro, 1 / (c - a)) - 1;
-      t += `<tr><td class="txt">${a}–${c}</td><td>${pc(ai, 2)} a year</td><td>${pc((1 + ai) * (1 + bg) - 1, 1)} a year</td></tr>`;
+      t += `<tr><td class="txt">${a}–${c}</td><td>${pc(ai, 2)}</td><td>${fx(at(c).Vmacro)}</td></tr>`;
     });
     document.getElementById('tRate').innerHTML = t + '</tbody>';
   })();
@@ -336,7 +334,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     q.sectors.forEach((x) => { x.eta = 0; x.gamma = 0; x.p = 100; x.f = 95; x.fmax = 95; x.gmax = Math.max(0, Math.min(90, (1 - e / 0.05) * 100)); x.g = x.gmax; });
     return M.snapshot(q, BIG, null, null, null).Vmacro;
   }
-  let b = '<thead><tr><th>Irreducible share of work, every sector</th><th>Ceiling on AI\'s effect, infinite AI</th><th>Growth AI adds if reached in 30 years</th></tr></thead><tbody>';
+  let b = '<thead><tr><th>Irreducible share of work, every sector</th><th>Output ceiling (× no further AI), infinite AI</th><th>Growth AI adds if reached in 30 years</th></tr></thead><tbody>';
   b += `<tr class="hl"><td class="txt">Model defaults (${pc(Math.min(...c0.sectors.map((s) => s.eps)), 1)}–${pc(Math.max(...c0.sectors.map((s) => s.eps)), 0)}), with slop and arms races</td><td>${fx(cS.Vmacro)}</td><td>${pc(Math.pow(cS.Vmacro, 1 / 30) - 1, 1)} a year</td></tr>`;
   [0.05, 0.02, 0.01, 0.005].forEach((e) => { const v = ceilingWith(e); b += `<tr><td class="txt">${pc(e, e < 0.01 ? 1 : 0)}, no slop, no arms races</td><td>${fx(v)}</td><td>${pc(Math.pow(v, 1 / 30) - 1, 1)} a year</td></tr>`; });
   document.getElementById('tBelieve').innerHTML = b + '</tbody>';
@@ -388,8 +386,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     const xs = run.map((r) => r.year);
     const sA = [
       { name: 'Useful AI work (T)', label: `AI work ${fx(at(2086).T)}`, color: css('--s7'), ys: run.map((r) => r.T), w: 2.5 },
-      { name: 'AI\'s effect on output (V)', label: `AI effect ${fx(at(2086).Vmacro)}`, color: css('--s1'), ys: run.map((r) => r.Vmacro), w: 3 },
-      { name: 'GDP incl. ordinary growth', label: `GDP ${fx(at(2086).gdp)}`, color: css('--ink-2'), ys: run.map((r) => r.gdp), w: 1.5, dash: '6 4' },
+      { name: 'Output, × no further AI (V)', label: `Output ${fx(at(2086).Vmacro)}`, color: css('--s1'), ys: run.map((r) => r.Vmacro), w: 3 },
     ];
     legend('fA-legend', sA);
     lineChart(document.getElementById('fA'), { xs, series: sA, yLog: true, ylo: 1, yhi: Math.max(1000, at(2086).T * 1.2), yFmt: (v, t) => (t ? fx(v) : (v >= 1000 ? (v / 1000) + 'k' : v) + '×'), xTicks: [2030, 2040, 2050, 2060, 2070, 2080], aria: 'Useful AI work and economy, 2026 to 2086', height: 320, labelW: 128 });

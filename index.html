@@ -312,7 +312,7 @@ tr:last-child td { border-bottom: 0; }
   <section class="panel" aria-label="The equations" style="display:flex;flex-direction:column;gap:18px">
     <div style="display:flex;flex-direction:column;gap:4px">
       <h2>The equations</h2>
-      <p class="eq-note"><b>What the numbers measure:</b> every V is AI's effect on its own, the ratio of real output to a world where AI stays at its end-2026 level and use. Ordinary growth from population and other technologies is excluded, and is only added in the GDP line as \(\text{GDP}_t=V_{\text{macro},t}\,(1+g_{\text{ordinary}})^t\), which assumes the two effects multiply. The note under each equation gives the value that switches each optional mechanism off.</p>
+      <p class="eq-note"><b>What the numbers measure:</b> every V is a multiple of what output would be without further AI, meaning a world where AI stays at its end-2026 level and use. 1.0× is that world; 1.6× means 60% more output than it. The note under each equation gives the value that switches each optional mechanism off.</p>
     </div>
     <div class="eqs">
       <div class="eq-block">
@@ -332,7 +332,7 @@ tr:last-child td { border-bottom: 0; }
         <h3>3 · Dynamic loop: tech power</h3>
         <div class="eq">\[x_t=r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\,\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\]</div>
         <div class="eq">\[\text{growth}_t=\frac{x_t}{\big(1+(x_t/\text{cap})^4\big)^{1/4}} \qquad T_{t+\Delta t}=T_t\,(1+\text{growth}_t)^{\Delta t}\]</div>
-        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth equal \(r_0\). The speed limit leaves ordinary growth untouched and bends very fast growth toward the cap, standing in for how fast chips, data centres and power can be built. The model steps quarterly (\(\Delta t=\tfrac14\)) and reports yearly. <b>Setback:</b> in the chosen year, \(T\) is multiplied by \((1-\text{size})\), with a floor of 1.</p>
+        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth equal \(r_0\). The speed limit leaves normal rates of AI progress untouched and bends very fast progress toward the cap, standing in for how fast chips, data centres and power can be built. The model steps quarterly (\(\Delta t=\tfrac14\)) and reports yearly. <b>Setback:</b> in the chosen year, \(T\) is multiplied by \((1-\text{size})\), with a floor of 1.</p>
       </div>
       <div class="eq-block">
         <h3>4 · Dynamic loop: adoption, redesign, new products, risk</h3>
@@ -358,7 +358,7 @@ tr:last-child td { border-bottom: 0; }
   <section class="panel" aria-label="Known limitations" style="display:flex;flex-direction:column;gap:12px">
     <h2>What this model still can't tell you</h2>
     <ul class="limits">
-      <li><b>AI's effect is measured on its own.</b> Headline figures exclude ordinary growth, so "1.6×" means AI makes the economy 60% bigger than it would otherwise be, not that GDP is 1.6× today's. The total-GDP line treats ordinary growth as independent of AI, which ignores any overlap between the two.</li>
+      <li><b>Every figure is relative to no further AI.</b> "1.6×" means 60% more output than if AI stayed at its end-2026 level and use. It is not a GDP forecast, which would also need growth from population and other technologies.</li>
       <li><b>It is not calibrated.</b> About 80 inputs are judgement calls, and the results depend mostly on native fit, the wealth share and the slop settings. Use the uncertainty band, and treat results as scenarios, not forecasts.</li>
       <li><b>Jobs and wages are not modelled.</b> "Tasks automated" measures how much work AI handles. Whether that means lost jobs, higher wages or shorter hours depends on a labour market this model doesn't contain. Adding one would double the number of unanchored inputs.</li>
       <li><b>Catastrophic risk is an overlay you set.</b> It discounts the economy but doesn't feed back into AI progress, and the yearly hazard rising with T is an assumption, not a finding.</li>

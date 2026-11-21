@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v7';
+  const STORE_KEY = 'ai-transformation-model:v8';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -150,7 +150,6 @@
     }
 
     const ec = group(host, 'Economy structure', true);
-    if (dyn) ec.append(slider({ id: 'g-bg', label: 'Ordinary growth without AI', min: 0, max: 3, step: 0.1, get: () => state.bgGrowth, set: (v) => (state.bgGrowth = v), fmt: (v) => `${v.toFixed(1)}%/yr`, hint: 'Growth from population, other technologies and normal productivity gains. The model\'s AI figures exclude it; it is only used for the total-GDP line. Typical rich-economy trend: 1–2%.' }));
     ec.append(
       slider({ id: 'g-wcore', label: 'Core share of economy', sym: 'W_core', min: 20, max: 80, step: 1, get: () => state.Wcore, set: (v) => (state.Wcore = v), fmt: (v) => `${v}% · flex ${100 - v}%`, hint: 'Core carries this share of any change in the total economy.' }),
       slider({ id: 'g-frag', label: 'Core weak-link fragility', sym: 'ρ = 1 − x', min: 0, max: 10, step: 0.5, get: () => state.fragility, set: (v) => (state.fragility = v), fmt: (v) => `${v.toFixed(1)} · ρ = ${(1 - v).toFixed(1)}`, hint: '0 = normal average · 5 = Jones–Tonetti weak links · 10 = extreme O-ring.' })
@@ -358,7 +357,7 @@
   function lineChart(el, o) {
     const W = Math.max(280, el.clientWidth || 600);
     const H = o.height || 260;
-    const m = { l: 48, r: o.directLabels ? 112 : 14, t: 10, b: 28 };
+    const m = { l: 48, r: o.directLabels ? 112 : 14, t: o.yLabel ? 26 : 10, b: 28 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const xs = o.xs;
     const allY = o.series.flatMap((s) => s.ys).concat(o.band ? o.band.lo.concat(o.band.hi) : []).filter(Number.isFinite);
@@ -385,6 +384,7 @@
 
     const grid = css('--grid'), muted = css('--muted'), ink2 = css('--ink-2'), surface = css('--panel'), ink = css('--ink');
     let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(o.aria || '')}">`;
+    if (o.yLabel) s += `<text x="4" y="12" font-size="11.5" fill="${ink2}">${esc(o.yLabel)}</text>`;
     yt.forEach((v) => {
       s += `<line x1="${m.l}" x2="${m.l + iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="${grid}" stroke-width="1"/>`;
       s += `<text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="${muted}" font-family="var(--font-mono)">${o.yFmt(v)}</text>`;
@@ -565,13 +565,11 @@
     const worst = best[best.length - 1];
     const head = mc ? mc.Vmacro.p50[L] : last.Vmacro;
     const annual = Math.pow(head, 1 / Math.max(1, last.t)) - 1;
-    const bgF = Math.pow(1 + (state.bgGrowth || 0) / 100, last.t);
-    const gdpTxt = state.bgGrowth > 0 ? ` · total GDP with ${state.bgGrowth.toFixed(1)}%/yr ordinary growth: ${fx(head * bgF)}` : '';
     const econSub = mc
-      ? `excludes ordinary growth · median of ${Math.round(state.runs)} runs · adds ${(annual * 100).toFixed(1)}%/yr · 80% range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])} · central run ${fx(last.Vmacro)}${gdpTxt}`
-      : `excludes ordinary growth · central run · adds ${(annual * 100).toFixed(1)}%/yr${gdpTxt}${state.spread ? ' · ' + mcPending() : ''}`;
+      ? `times what output would be without further AI · median of ${Math.round(state.runs)} runs · adds ${(annual * 100).toFixed(1)}%/yr · 80% range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])} · central run ${fx(last.Vmacro)}`
+      : `times what output would be without further AI · central run · adds ${(annual * 100).toFixed(1)}%/yr${state.spread ? ' · ' + mcPending() : ''}`;
     $('kpis').innerHTML =
-      kpi(`AI's effect on the economy, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
+      kpi(`Output vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
       kpi(`Useful AI work ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `${mc ? `median · 80% range ${fx(mc.T.p10[L])}–${fx(mc.T.p90[L])} · ` : ''}growth now ${(last.growth * 100).toFixed(1)}%/yr${last.capped ? ' (at the speed limit)' : ''}`) +
       kpi('Core infrastructure', fx(last.Vcore), !last.hasC ? 'No Core sectors' : last.Vcore < 1 ? 'Below baseline: braking AI and Flex' : 'Above baseline: no brake', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
@@ -583,19 +581,18 @@
     // Chart 1: macro
     const c = [css('--s1'), css('--s2'), css('--s3')];
     const ser = [
-      { name: 'AI effect, total (central run)', label: 'AI total', color: c[0], ys: rows.map((r) => r.Vmacro), width: 3 },
+      { name: 'Whole economy (central run)', label: 'Total', color: c[0], ys: rows.map((r) => r.Vmacro), width: 3 },
       { name: 'Core sectors', label: 'Core', color: c[1], ys: rows.map((r) => r.Vcore), width: 2 },
       { name: 'Flex sectors', label: 'Flex', color: c[2], ys: rows.map((r) => r.Vflex), width: 2 },
     ].filter((se) => se.ys.every(Number.isFinite));
-    if (state.bgGrowth > 0) ser.push({ name: `GDP incl. ${state.bgGrowth.toFixed(1)}%/yr ordinary growth`, label: 'GDP', color: css('--ink-2'), ys: rows.map((r) => r.gdp), width: 1.5, dash: '6 4' });
-    if (mc) ser.push({ name: 'AI effect, median of runs', label: 'Median', color: c[0], ys: mc.Vmacro.p50, width: 1.5, dash: '2 3' });
+    if (mc) ser.push({ name: 'Whole economy, median of runs', label: 'Median', color: c[0], ys: mc.Vmacro.p50, width: 1.5, dash: '2 3' });
     if (risk) ser.push({ name: 'Risk-adjusted total', label: 'Risk-adj.', color: css('--s8'), ys: rows.map((r) => r.Vexp), width: 2, dash: '5 4' });
     const band = mc ? { lo: mc.Vmacro.p10, hi: mc.Vmacro.p90, color: c[0], name: 'Total, 80% range' } : null;
-    $('c1-title').textContent = 'AI\'s effect on the economy';
-    $('c1-sub').textContent = `Real output relative to a world where AI stays at its ${startY} level and use. Ordinary growth is excluded except in the dashed GDP line.` + (peak.year !== last.year ? ` AI's effect peaks at ${fx(peak.Vmacro)} in ${peak.year}.` : '');
+    $('c1-title').textContent = 'Output as a multiple of no further AI';
+    $('c1-sub').textContent = `1.0× = what output would be if AI stayed at its ${startY} level and use.` + (peak.year !== last.year ? ` Peaks at ${fx(peak.Vmacro)} in ${peak.year}.` : '');
     legend($('c1-legend'), ser.concat(band ? [{ name: 'Total, 80% range', color: c[0], band: true }] : []));
     lineChart($('c1'), {
-      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
+      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× output without further AI',
       tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 300, directLabels: true, aria: 'Macro, core and flex value over time',
     });
 
@@ -614,9 +611,9 @@
     // Chart 3: sector V
     const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].V), width: i === state.sel ? 3 : 2 }));
     $('c3-title').textContent = 'Sector net value, Vᵢ';
-    $('c3-sub').textContent = 'Each sector after bottlenecks, Red Queen losses and slop. Below 1.0 means AI made the sector worse off.';
+    $('c3-sub').textContent = 'Each sector\'s output as a multiple of what it would be without further AI, after bottlenecks, Red Queen losses and slop. Below 1.0 means AI made the sector worse off.';
     legend($('c3-legend'), sser);
-    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1, tipX: (x) => String(x), height: 240, aria: 'Sector values over time' });
+    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× sector output without further AI', tipX: (x) => String(x), height: 240, aria: 'Sector values over time' });
 
     // Chart 4: g adoption
     $('c4-card').hidden = false;
@@ -660,7 +657,7 @@
     const head = mc ? mc.p50 : snap.Vmacro;
     const sub = mc ? `median of ${Math.round(state.runs)} runs · 80% range ${fx(mc.p10)}–${fx(mc.p90)} · central ${fx(snap.Vmacro)}` : state.spread ? `central run · ${mcPending()}` : 'central run';
     $('kpis').innerHTML =
-      kpi('AI\'s effect on the economy', fx(head), 'excludes ordinary growth · ' + sub, head >= 1 ? 'good' : 'bad') +
+      kpi('Output vs no further AI', fx(head), 'times what output would be without further AI · ' + sub, head >= 1 ? 'good' : 'bad') +
       kpi('Core sectors', fx(snap.Vcore), snap.hasC ? `weak-link average, ρ = ${(1 - state.fragility).toFixed(1)}` : 'No Core sectors', !snap.hasC || snap.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Flex sectors', fx(snap.Vflex), snap.hasF ? 'weighted average' : 'No Flex sectors', !snap.hasF || snap.Vflex >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
@@ -671,18 +668,18 @@
     const xs = pts.map((p) => p.T);
     const c = [css('--s1'), css('--s2'), css('--s3')];
     const ser = [
-      { name: 'AI effect, total', label: 'Total', color: c[0], ys: pts.map((p) => p.Vmacro), width: 3 },
+      { name: 'Whole economy', label: 'Total', color: c[0], ys: pts.map((p) => p.Vmacro), width: 3 },
       { name: 'Core sectors', label: 'Core', color: c[1], ys: pts.map((p) => p.Vcore), width: 2 },
       { name: 'Flex sectors', label: 'Flex', color: c[2], ys: pts.map((p) => p.Vflex), width: 2 },
     ].filter((se) => se.ys.every(Number.isFinite));
     const pk = pts.reduce((a, p) => (p.Vmacro > a.Vmacro ? p : a), pts[0]);
-    $('c1-title').textContent = 'AI\'s effect on the economy, across tech power';
+    $('c1-title').textContent = 'Output as a multiple of no further AI, across tech power';
     const overhang = pts[0].Vmacro > 1.005 ? ` At 1×, ${fx(pts[0].Vmacro)} is the value of fully catching up with today's AI.` : '';
     $('c1-sub').textContent = (pk.T < 99 ? `Economy peaks at ${fx(pk.Vmacro)} when T ≈ ${fx(pk.T)}.` : 'Holding these sector settings fixed, with full adoption.') + overhang;
     legend($('c1-legend'), ser);
     lineChart($('c1'), {
       xs, series: ser, xLog: true, xFmt: (v) => v + '×', yFmt: (v, t) => (t ? f2(v) + '×' : v.toFixed(1) + '×'), baseline: 1,
-      marker: T, markerLabel: `now ${fx(T)}`, tipX: (x) => `T = ${fx(x)}`, height: 300, aria: 'Macro value as a function of T',
+      marker: T, markerLabel: `now ${fx(T)}`, tipX: (x) => `T = ${fx(x)}`, height: 300, yLabel: '× output without further AI', aria: 'Macro value as a function of T',
     });
 
     $('c2-title').textContent = 'Sector net value at ' + fx(T);
@@ -732,10 +729,10 @@
     const risk = state.hmax > 0;
     $('tbl-title').textContent = 'Year by year';
     const names = state.sectors.map((s) => esc(s.name));
-    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th><th>New products</th><th>AI effect (V macro)</th><th>GDP incl. ordinary growth</th>' + (risk ? '<th>P(catastrophe)</th><th>Risk-adj.</th>' : '') + '<th>Automated (' + state.startYear + ' mix)</th><th>Automated (spending)</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+    let h = '<thead><tr><th>Year</th><th>T</th><th>Growth</th><th>V core</th><th>V flex</th><th>New products</th><th>Whole economy (× no further AI)</th>' + (risk ? '<th>P(catastrophe)</th><th>Risk-adj.</th>' : '') + '<th>Automated (' + state.startYear + ' mix)</th><th>Automated (spending)</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
     rows.forEach((r) => {
       h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td>${(r.growth * 100).toFixed(1)}%</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
-        `<td>${f2(r.newGoods)}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td><td>${f2(r.gdp)}</td>` +
+        `<td>${f2(r.newGoods)}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td>` +
         (risk ? `<td>${pc(r.pCat, 1)}</td><td class="${cls(r.Vexp)}">${f2(r.Vexp)}</td>` : '') + `<td>${pc(r.automationFixed)}</td><td>${pc(r.automation)}</td>` +
         r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
     });
@@ -752,7 +749,7 @@
     if (snap.hasC) h += `<tr><td class="txt"><b>Core</b></td><td></td>${blank}<td class="${cls(snap.Vcore)}"><b>${f2(snap.Vcore)}</b></td></tr>`;
     if (snap.hasF) h += `<tr><td class="txt"><b>Flex</b></td><td></td>${blank}<td class="${cls(snap.Vflex)}"><b>${f2(snap.Vflex)}</b></td></tr>`;
     h += `<tr><td class="txt"><b>AI-native products</b></td><td></td><td></td><td>${pc(snap.newShare, 1)}</td>${'<td></td>'.repeat(6)}<td>+${f2(snap.newGoods)}</td></tr>`;
-    h += `<tr><td class="txt"><b>AI effect, whole economy</b></td><td></td>${blank}<td class="${cls(snap.Vmacro)}"><b>${f2(snap.Vmacro)}</b></td></tr>`;
+    h += `<tr><td class="txt"><b>Whole economy (× no further AI)</b></td><td></td>${blank}<td class="${cls(snap.Vmacro)}"><b>${f2(snap.Vmacro)}</b></td></tr>`;
     $('tbl').innerHTML = h + '</tbody>';
   }
 
@@ -760,8 +757,8 @@
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
     const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
     if (lastRows) {
-      const head = ['year', 'T', 'growth', 'V_core', 'V_flex', 'new_products', 'V_macro_ai_effect', 'gdp_incl_ordinary_growth', 'P_catastrophe', 'V_risk_adjusted', 'automated_2026_mix', 'automated_spending_weighted'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `g ${s.name}`, `fit_in_use ${s.name}`, `share ${s.name}`]));
-      const lines = lastRows.map((r) => [r.year, r.T, r.growth, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.gdp, r.pCat, r.Vexp, r.automationFixed, r.automation].concat(r.sectors.flatMap((s, i) => [s.V, s.g, s.f, r.shares[i]])).map(n).join(','));
+      const head = ['year', 'T', 'growth', 'V_core', 'V_flex', 'new_products', 'V_macro_vs_no_further_AI', 'P_catastrophe', 'V_risk_adjusted', 'automated_2026_mix', 'automated_spending_weighted'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `g ${s.name}`, `fit_in_use ${s.name}`, `share ${s.name}`]));
+      const lines = lastRows.map((r) => [r.year, r.T, r.growth, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.pCat, r.Vexp, r.automationFixed, r.automation].concat(r.sectors.flatMap((s, i) => [s.V, s.g, s.f, r.shares[i]])).map(n).join(','));
       return [head.map(q).join(',')].concat(lines).join('\n');
     }
     const s = lastSnap;

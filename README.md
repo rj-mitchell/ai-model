@@ -6,7 +6,7 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 ## What the numbers measure
 
-Every V (sector, Core, Flex, macro) is **AI's effect on its own**: real output relative to a world where AI stays at its end-2026 level and use. Ordinary growth from population, other technologies and normal productivity gains is excluded. It is added only in the GDP line, `GDP_t = V_macro,t × (1 + g_ordinary)^t` (default `g_ordinary` = 1.5%/yr), which assumes the two effects multiply.
+Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. It is not a GDP forecast.
 
 ## Sector level
 
