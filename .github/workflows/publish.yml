@@ -1,0 +1,45 @@
+# Publishes the site as the Cloudflare Worker "ai-transformation-model"
+# (https://ai-transformation-model.uk-rob-mitchell.workers.dev), using wrangler.jsonc.
+#
+# Runs whenever the site files change on main or the working branch, and by hand from the Actions tab.
+# Needs one repository secret, CLOUDFLARE_API_TOKEN: a Cloudflare token that can edit Workers
+# (the same kind Lumaya uses). Until it is set, the run skips the deploy instead of failing.
+name: Publish the site
+
+on:
+  push:
+    branches: [main, ccr-6c979d72-cdrqw9]
+    paths:
+      - "index.html"
+      - "why.html"
+      - "app.js"
+      - "model.js"
+      - "wrangler.jsonc"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Publish the Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 154076637323ce9d7929c2116d425d71
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::No CLOUDFLARE_API_TOKEN repository secret yet, so nothing was published."
+            exit 0
+          fi
+          npx --yes wrangler@4 deploy

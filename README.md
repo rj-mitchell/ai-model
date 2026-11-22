@@ -72,3 +72,7 @@ Fixed ceilings by design (irreducibility); only partly calibrated; six broad sec
 - `app.js`: controls, charts (hand-built SVG), Monte Carlo scheduling and tables.
 - `index.html`: layout, styles, typeset equations (MathJax from jsDelivr) and limitations.
 - `why.html`: explainer on why the model doesn't go exponential and what singularity arguments leave out. All its numbers are computed live from `model.js` defaults.
+
+## Publishing
+
+The site is deployed as the Cloudflare Worker `ai-transformation-model` (static assets, `wrangler.jsonc`), at https://ai-transformation-model.uk-rob-mitchell.workers.dev. The **Publish the site** GitHub Action (`.github/workflows/publish.yml`) deploys it whenever the site files change on `main` or the working branch, and can be run by hand from the Actions tab. It needs a repository secret, `CLOUDFLARE_API_TOKEN`: a Cloudflare token that can edit Workers (Settings → Secrets and variables → Actions). From a computer: `CLOUDFLARE_API_TOKEN=… npx wrangler@4 deploy`.

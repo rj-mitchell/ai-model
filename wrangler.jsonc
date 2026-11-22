@@ -1,0 +1,8 @@
+{
+  // Deploys the site as a Cloudflare Worker serving static assets: `npx wrangler deploy`.
+  // The build step copies just the four site files into dist/ so nothing else is published.
+  "name": "ai-transformation-model",
+  "compatibility_date": "2026-11-01",
+  "build": { "command": "rm -rf dist && mkdir -p dist && cp index.html why.html app.js model.js dist/" },
+  "assets": { "directory": "./dist", "html_handling": "auto-trailing-slash", "not_found_handling": "404-page" }
+}
