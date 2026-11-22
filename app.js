@@ -116,7 +116,7 @@
     g.append(
       slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 40, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
       slider({ ev: E.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => String(v), hint: 'AI that beats a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost. By this year, AI can do 90% of the work it could ever do in each sector.' }),
-      slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth in useful AI work (verified work per £) at the start.' }),
+      slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth in useful AI work (verified work per $) at the start.' }),
       slider({ ev: E.adoptSpeed, evKey: 'adoptSpeed', id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. An S-curve that speeds up as AI’s advantage grows.' }),
       slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before rebuilding', sym: 'h', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×`, hint: 'In existing processes, people still direct and check AI’s work, which caps the speedup until the work itself is rebuilt around AI.' }),
       slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', sym: 'N', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}% of today's economy`, hint: 'Goods and services that don’t exist yet.' })
@@ -463,7 +463,7 @@
 
     // Chart 2: T over time (log)
     $('c2-title').textContent = 'Useful AI work, T';
-    $('c2-sub').textContent = 'Multiple of end-2026 verified work per £ (log scale).';
+    $('c2-sub').textContent = 'Multiple of end-2026 verified work per $ (log scale).';
     const tBand = mc ? { lo: mc.T.p10, hi: mc.T.p90, color: css('--s7'), name: '80% range' } : null;
     legend($('c2-legend'), tBand ? [{ name: 'Useful AI work', color: css('--s7') }, { name: '80% range', color: css('--s7'), band: true }] : []);
     lineChart($('c2'), {

@@ -33,11 +33,11 @@
 
   // ---------------- Default economy (UI units) ----------------
   // f, fmax, p, g, gmax in %; eta, gamma on 0–10 (÷20); Tcrit in ×; alpha in %/yr.
-  // weight = share of US GDP (%); f, fmax, p, gmax in %; eta, gamma on 0–10 (÷200); Tcrit in ×; alpha in %/yr
+  // weight = share of GDP (%), US 2025 mix used as the template for advanced economies; f, fmax, p, gmax in %; eta, gamma on 0–10 (÷200); Tcrit in ×; alpha in %/yr
   function sec(name, tier, weight, f, fmax, p, eta, gamma, gmax, Tcrit, alpha, rd, basis) {
     return { name, tier, weight, f, fmax, p, eta, gamma, gmax, Tcrit, alpha, rd: !!rd, basis: basis || '' };
   }
-  // A simplified economy of six broad sectors that together cover the whole US economy (BEA 2025
+  // A simplified economy of six broad sectors that together cover a whole advanced economy, sized from US data (BEA 2025
   // value added), each between 13.5% and 20% of GDP. Defaults are drawn from published evidence where it exists (see SOURCES and each
   // sector's `evidence`), rounded, and otherwise anchored judgement. They are not measurements.
   //
@@ -92,8 +92,8 @@
   function defaultSectors() {
     return [
       Object.assign(sec('Physical production & energy', 'core', 17.5, 25, 55, 90, 3, 4, 30, 5, 8, false,
-        'Manufacturing, construction, utilities, mining and agriculture: 17.5% of US GDP. Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
-        weight: e(17, 18, 'high', ['bea'], 'Value added in 2025: 17.5% of US GDP.'),
+        'Manufacturing, construction, utilities, mining and agriculture: 17.5% of GDP (US mix, used as the template). Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
+        weight: e(17, 18, 'high', ['bea'], 'US value added in 2025 (BEA), the template for advanced economies. Manufacturing-heavy economies such as Germany and Japan have a larger physical sector.'),
         f: e(24, 29, 'medium', ['eloundou'], 'Exposure β 0.24 (human raters) to 0.29 (GPT-4 raters), weighted by 2023 hours.'),
         fmax: e(40, 65, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.38–0.48, plus robotics for some physical tasks.'),
         p: e(80, 100, 'medium', [], 'Judgement: cheaper physical output is mostly real wealth; some rent-seeking in regulated utilities.'),
@@ -104,8 +104,8 @@
         alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; rebuilding plant and sites is slower.'),
       } }),
       Object.assign(sec('Trade & logistics', 'core', 15.5, 30, 60, 80, 3, 5, 45, 3, 12, false,
-        'Wholesale, retail, transport and warehousing: 15.5% of US GDP. Supply chains everything else depends on; already digitised and partly automated, but much of the work is physical.'), { evidence: {
-        weight: e(15, 16, 'high', ['bea'], 'Value added in 2025: 15.5% of US GDP.'),
+        'Wholesale, retail, transport and warehousing: 15.5% of GDP (US mix, used as the template). Supply chains everything else depends on; already digitised and partly automated, but much of the work is physical.'), { evidence: {
+        weight: e(15, 16, 'high', ['bea'], 'US value added in 2025 (BEA): 15.5% of GDP, used as the template for advanced economies.'),
         f: e(31, 35, 'medium', ['eloundou'], 'Exposure β 0.31–0.35, weighted by 2023 hours.'),
         fmax: e(47, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.47–0.55, plus warehouse and vehicle automation.'),
         p: e(65, 95, 'low', [], 'Judgement: logistics efficiency is real value; some retail competition is business-stealing.'),
@@ -116,8 +116,8 @@
         alpha: e(8, 20, 'low', [], 'Judgement: competitive, lightly regulated, but with large physical networks.'),
       } }),
       Object.assign(sec('Health, education & government', 'core', 19.7, 35, 60, 70, 5, 6, 35, 5, 8, false,
-        'Health care, social assistance, education and government: 19.7% of US GDP. People-facing and rule-bound; mistakes are costly, outputs need expert review, and institutions change slowly.'), { evidence: {
-        weight: e(19, 20, 'high', ['bea'], 'Value added in 2025: 19.7% of US GDP.'),
+        'Health care, social assistance, education and government: 19.7% of GDP (US mix, used as the template). People-facing and rule-bound; mistakes are costly, outputs need expert review, and institutions change slowly.'), { evidence: {
+        weight: e(19, 20, 'high', ['bea'], 'US value added in 2025 (BEA): 19.7% of GDP, used as the template for advanced economies.'),
         f: e(34, 37, 'medium', ['eloundou'], 'Exposure β 0.34–0.37, weighted by 2023 hours.'),
         fmax: e(52, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.52–0.61; much caregiving and teaching stays hands-on.'),
         p: e(50, 85, 'low-medium', ['shrank'], 'Clinical and educational gains are real; billing, coding and compliance contests are arms races.'),
@@ -128,8 +128,8 @@
         alpha: e(5, 15, 'medium-low', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians and public bodies slower.'),
       } }),
       Object.assign(sec('Finance & business services', 'core', 13.5, 40, 75, 50, 4, 7, 50, 2, 10, false,
-        'Finance and insurance, management of companies and administrative support: 13.5% of US GDP. Mostly information work and a prime target for fraud; part of the activity is trading and competition rather than new wealth.'), { evidence: {
-        weight: e(13, 14, 'high', ['bea'], 'Value added in 2025: 13.5% of US GDP.'),
+        'Finance and insurance, management of companies and administrative support: 13.5% of GDP (US mix, used as the template). Mostly information work and a prime target for fraud; part of the activity is trading and competition rather than new wealth.'), { evidence: {
+        weight: e(13, 14, 'high', ['bea'], 'US value added in 2025 (BEA): 13.5% of GDP, used as the template for advanced economies.'),
         f: e(40, 44, 'medium', ['eloundou'], 'Exposure β 0.40–0.44, weighted by 2023 hours.'),
         fmax: e(61, 85, 'medium', ['eloundou'], 'Exposure with LLM software 0.61–0.72; finance alone 0.78–0.93.'),
         p: e(35, 65, 'medium', ['philippon', 'budish'], 'Unit cost of finance has not fallen despite IT; trading races absorb gains.'),
@@ -140,8 +140,8 @@
         alpha: e(5, 15, 'low', ['bcgcloud'], 'Core systems move slowly: most banks run at most 15% of core workloads in the cloud after 15 years.'),
       } }),
       Object.assign(sec('Knowledge & professional services', 'flex', 13.7, 50, 85, 70, 3, 6, 65, 1, 22, true,
-        'Software, information, media, R&D, consulting, legal and advertising: 13.7% of US GDP. Digital work AI suits best, already being reorganised, and its output feeds AI progress; legal and advertising add arms races and review burden.'), { evidence: {
-        weight: e(13, 14, 'high', ['bea'], 'Value added in 2025: 13.7% of US GDP.'),
+        'Software, information, media, R&D, consulting, legal and advertising: 13.7% of GDP (US mix, used as the template). Digital work AI suits best, already being reorganised, and its output feeds AI progress; legal and advertising add arms races and review burden.'), { evidence: {
+        weight: e(13, 14, 'high', ['bea'], 'US value added in 2025 (BEA): 13.7% of GDP, used as the template for advanced economies.'),
         f: e(47, 54, 'medium-high', ['eloundou'], 'Exposure β 0.47–0.54, weighted by 2023 hours.'),
         fmax: e(74, 90, 'medium', ['eloundou'], 'Exposure with LLM software 0.74–0.86.'),
         p: e(55, 85, 'medium', ['bsv', 'rand', 'sht'], 'Software and R&D are strongly positive-sum; legal and advertising (about a fifth of hours) are largely zero-sum.'),
@@ -152,8 +152,8 @@
         alpha: e(12, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving and lightly regulated, but systems lag behind tools.'),
       } }),
       Object.assign(sec('Property, hospitality & personal services', 'flex', 19.8, 25, 50, 75, 2, 4, 30, 4, 10, false,
-        'Real estate, hotels, restaurants, recreation and personal services: 19.8% of US GDP. Much of it is housing (largely rent) and hands-on service work that AI barely touches.'), { evidence: {
-        weight: e(19, 20, 'high', ['bea'], 'Value added in 2025: 19.8% of US GDP.'),
+        'Real estate, hotels, restaurants, recreation and personal services: 19.8% of GDP (US mix, used as the template). Much of it is housing (largely rent) and hands-on service work that AI barely touches.'), { evidence: {
+        weight: e(19, 20, 'high', ['bea'], 'US value added in 2025 (BEA): 19.8% of GDP, used as the template for advanced economies.'),
         f: e(27, 28, 'medium', ['eloundou'], 'Exposure β 0.27–0.28, weighted by 2023 hours.'),
         fmax: e(39, 60, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.39–0.47; cooking, cleaning and care stay hands-on.'),
         p: e(60, 90, 'low', [], 'Judgement: hospitality and personal services are real value; some brokerage is competition for commissions.'),
