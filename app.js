@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v15';
+  const STORE_KEY = 'ai-transformation-model:v16';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -64,7 +64,7 @@
   function touched() { state.preset = null; markPresets(); update(); }
 
   // evidence line under a slider: plausible range, confidence, note and linked sources
-  const EV_UNIT = { weight: '', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', Wcore: '%', adopt0: '%', aiNow: '×', jCost: '', agiYear: '', r0: '%/yr', hLoop: '%' };
+  const EV_UNIT = { weight: '', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', Wcore: '%', adopt0: '%', aiNow: '×', jCost: '', agiYear: '', r0: '%/yr', hLoop: '%', payoffResp: '', dEta: '' };
   const srcShort = (k) => (M.SOURCES[k] ? M.SOURCES[k].t.split(/[,:(]/)[0].trim() : k);
   function evidenceHTML(key, ev) {
     if (!ev) return '';
@@ -158,6 +158,7 @@
       ad.append(
         ...todaySliders(),
         slider({ ev: M.GLOBAL_EVIDENCE.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before redesign', sym: 'h', min: 0, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => (v ? `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×` : 'off'), hint: 'AI first speeds up tasks inside existing processes, where people still direct and check the work. That caps the speedup until processes are redesigned around AI, which removes the cap.' }),
+        slider({ ev: M.GLOBAL_EVIDENCE.payoffResp, evKey: 'payoffResp', id: 'g-payoff', label: 'Adoption responds to payoff', sym: 'ν', min: 0, max: 1, step: 0.05, get: () => state.payoffResp, set: (v) => (state.payoffResp = v), fmt: (v) => (v ? v.toFixed(2) : 'off'), hint: 'How much faster adoption, redesign and new products spread as AI\'s advantage grows: speed × (ln R ÷ ln 1.4)^ν, where R is the current speedup on assisted work and 1.4× is the speedup measured today. 0 = fixed speeds whatever AI can do.' }),
         slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. Adoption follows an S-curve: slow while few organisations use it, fastest in the middle, slowing as it nears what AI can do.' }),
         slider({ ev: M.GLOBAL_EVIDENCE.jCost, evKey: 'jCost', id: 'g-jcost', label: 'Cost of adopting (J-curve)', sym: 'J', min: 0, max: 5, step: 0.1, get: () => state.jCost, set: (v) => (state.jCost = v), fmt: (v) => (v ? v.toFixed(1) : 'off'), hint: 'Training, integration and process change divert output while adoption and redesign speed up beyond today\'s pace, so gains arrive later. At 2, automating one extra percentage point of work a year costs 2% of that sector\'s output that year.' })
       );
@@ -183,7 +184,7 @@
     {
       cap.append(
         slider({ ev: M.GLOBAL_EVIDENCE.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => `${v} · breadth β ${M.calibratedBeta(state).toFixed(2)}`, hint: 'AGI here means AI that beats a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost. The model sets capability breadth so that, by this year, AI can do 90% of the work it could ever do in each sector.' }),
-        slider({ id: 'g-deta', label: 'Verification keeps pace', sym: 'δ_η', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => v.toFixed(2), hint: 'More reliable AI needs less human review: internal slop scales with T^−δ. 0 = off.' }),
+        slider({ ev: M.GLOBAL_EVIDENCE.dEta, evKey: 'dEta', id: 'g-deta', label: 'Verification improves with AI breadth', sym: 'v', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => `${Math.round(v * 100)}% of review burden`, hint: 'Share of the internal review burden that disappears once AI can do nearly all the work it ever could (at AGI it has gone 90% of the way). An AI that can do the work can mostly check it too. 0 = review burden never falls.' }),
         slider({ id: 'g-dgamma', label: 'Defensive AI', sym: 'δ_γ', min: 0, max: 1, step: 0.05, get: () => state.dGamma, set: (v) => (state.dGamma = v), fmt: (v) => v.toFixed(2), hint: 'Filters and fraud detection improve with AI too: ambient slop scales with T^−δ. 0 = off (attacks keep growing with T).' })
       );
     }

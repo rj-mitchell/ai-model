@@ -81,6 +81,7 @@
     jcurve: { t: 'Brynjolfsson, Rock & Syverson, The productivity J-curve (AEJ: Macro 2021)', u: 'https://www.aeaweb.org/doi/10.1257/mac.20180386' },
     leap8: { t: 'Forecasting Research Institute, LEAP expert panel wave 8 (2026): median expert AGI year 2050 (middle half 2039–2065); 8-hour software tasks at 80% reliability by about 2030', u: 'https://forecastingresearch.substack.com/p/leap-wave-8-ai-timelines' },
     leap10: { t: 'Forecasting Research Institute, LEAP wave 10 (2026): median expert expects about 5% advanced-economy growth in 2050 if AI progresses rapidly', u: 'https://forecastingresearch.substack.com/p/forecasting-ai-benefits' },
+    griliches: { t: 'Griliches, Hybrid corn: an exploration in the economics of technological change (Econometrica 1957): adoption is faster where the payoff is larger', u: 'https://www.jstor.org/stable/1905380' },
     anthropicprod: { t: 'Anthropic, Estimating AI productivity gains (2025): about 80% time saved on tasks done in conversation, an upper bound', u: 'https://www.anthropic.com/research/estimating-productivity-gains' },
   };
 
@@ -190,6 +191,8 @@
     jCost: e(0, 2, 'low', ['jcurve'], 'Intangible investment around general-purpose technologies is large and delays measured gains. Set so AI adds a little to growth in 2027, as current measurements suggest.'),
     agiYear: e(2039, 2065, 'medium', ['leap8'], 'Median expert 2050, middle half 2039–2065; superforecasters 2047. Forecasting sites and AI lab leaders expect the early 2030s or sooner.'),
     r0: e(15, 60, 'medium', ['leap8', 'metr'], 'The median expert expects reliable 8-hour software tasks by about 2030, up from about 3.4 hours at end-2026: roughly 25% a year.'),
+    payoffResp: e(0, 0.5, 'low', ['griliches'], 'Technologies spread faster where the payoff is bigger; the strength of the response is judgement, set so the median-expert path stays near expert growth expectations.'),
+    dEta: e(0.2, 0.8, 'low', [], 'Judgement: an AI that can do nearly all of a task can also check much of it, but accountability keeps some human review.'),
     hLoop: e(20, 35, 'medium', ['metrsurvey', 'anthropicprod', 'fredtime'], 'Assisted work tops out at about 3–5× faster: a median self-reported 3× (METR survey) and about 5× for tasks done in conversation.'),
   };
 
@@ -198,8 +201,8 @@
       mode: 'dynamic', years: 15, startYear: 2027,
       r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0, agiYear: 2050, hLoop: 25,
       Tstatic: 20, Wcore: 65, fragility: 5,
-      beta: 0.1, dEta: 0.1, dGamma: 0.1, cfx: 1.5, kappa: 1,
-      adopt0: 20, adoptSpeed: 25, jCost: 0.5, aiNow: 1.4,
+      beta: 0.1, dEta: 0.5, dGamma: 0.1, cfx: 1.5, kappa: 1, payoffResp: 0.25,
+      adopt0: 20, adoptSpeed: 25, jCost: 0.25, aiNow: 1.4,
       Nmax: 10, Tnew: 10, newSpeed: 15,
       hmax: 0, Trisk: 30, loss: 100,
       setbackYear: 0, setbackSize: 0,
@@ -213,7 +216,8 @@
     return {
       beta: state._beta != null ? state._beta : (state.agiYear ? calibratedBeta(state) : state.beta), // capability breadth: f rises toward f_max
       hLoop: clamp((state.hLoop != null ? state.hLoop : 25) / 100, 0, 0.9),    // human-in-the-loop share of AI-assisted work in old processes
-      dEta: state.dEta,                          // verification keeps pace with capability
+      dEta: state.dEta,                          // share of review burden removed as AI reaches full breadth
+      payoffResp: state.payoffResp != null ? state.payoffResp : 0.25, // how strongly adoption and redesign speed up with the payoff
       dGamma: state.dGamma,                      // defensive AI
       rhoM: 1 - state.cfx,                       // Core–Flex complementarity (Baumol between tiers)
       kappa: state.kappa,                        // Flex dependence on Core shortfall
@@ -223,7 +227,7 @@
       adopt0: clamp((state.adopt0 != null ? state.adopt0 : 20) / 100, 0, 1),   // share of native fit in use at end-2026
       aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 1.4),                // how much faster end-2026 AI does the work it is used for
       adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // logistic adoption rate per year
-      jCost: state.jCost != null ? state.jCost : 0.5,                              // output diverted per unit/yr rise in automated share (J-curve)
+      jCost: state.jCost != null ? state.jCost : 0.25,                              // output diverted per unit/yr rise in automated share (J-curve)
       growthCap: Math.max(0.05, (state.growthCap != null ? state.growthCap : 200) / 100), // max yearly growth in T
       hmax: state.hmax / 100,                    // annual catastrophe hazard at maturity
       Trisk: state.Trisk,
@@ -278,7 +282,9 @@
     const tau0 = eps0 + (1 - eps0) / A;
     const tau = eps + assisted * (h + (1 - h) / (Araw * Teff)) + autonomous / (Araw * Teff);
     const S = tau0 / tau;
-    const eta = P.eta * (X.dEta ? Math.pow(T, -X.dEta) : 1);
+    // review burden falls as AI's breadth closes the gap to its ceiling (an AI that can do the work can also check it)
+    const closure = X.beta > 0 && T > 1 ? 1 - Math.pow(T, -X.beta) : 0;
+    const eta = P.eta * (1 - clamp(X.dEta || 0, 0, 1) * closure);
     const gamma = P.gamma * (X.dGamma ? Math.pow(T, -X.dGamma) : 1);
     const a = eta * Math.log(Teff) + gamma * Math.log(T);
     const V = (1 + P.p * (S - 1)) / (1 + a * S);
@@ -434,7 +440,16 @@
     const start = state.startYear || 2027;
     const Ps = state.sectors.map((s) => sectorParams(s));
     const newDt = stepRate(X.newSpeed, dt);
-    const alphaDt = Ps.map((P) => stepRate(P.alpha, dt));
+    // diffusion speeds up with the payoff: m = (ln R / ln 1.4)^payoffResp, R = speedup on assisted work at current T
+    const hh = X.hLoop || 0, A0 = X.aiNow || 1;
+    const inv0 = 1 / A0 - hh, Araw = hh > 0 ? (inv0 > 0.01 ? (1 - hh) / inv0 : 100) : A0;
+    // measured against the evidence-based 1.4× at which today's adoption pace was observed
+    const R_REF = 1.4;
+    const payoff = (T) => {
+      if (!X.payoffResp) return 1;
+      const R = 1 / (hh + (1 - hh) / (Araw * Math.max(T, 1)));
+      return Math.pow(clamp(Math.log(Math.max(R, 1.0001)) / Math.log(R_REF), 0.3, 20), X.payoffResp);
+    };
     let T = 1, n = 0, surv = 1;
     let gs = Ps.map(() => 0);
     let fs = Ps.map((P) => X.adopt0 * P.f0);
@@ -457,17 +472,19 @@
       const raw = r0 * Math.pow(Math.max(Vrd, 1e-9), phi) * brake * drag;
       const growth = raw / Math.pow(1 + Math.pow(raw / X.growthCap, 4), 0.25);
       const hazard = X.hmax * hill0(T, X.Trisk);
+      const diffusion = payoff(T);
       if (k % steps === 0) {
         const Vexp = snap.Vmacro * (1 - (1 - surv) * X.loss);
         const trend = Math.pow(1 + (state.trendGrowth != null ? state.trendGrowth : 2) / 100, k / steps);
-        rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpNoAI: trend, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
+        rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpNoAI: trend, diffusion, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
       }
       if (k === total) break;
       // update to the next quarter (all from current-step values)
       // S-shaped (logistic) adoption: slow while few use it, fastest in the middle, slowing near the available fit
-      fs = fs.map((a, i) => { const fA = fAvail(Ps[i], T, X); return fA <= 0 ? 0 : clamp(a + X.adoptSpeed * dt * a * (1 - a / fA), 0, fA > a ? fA : a); });
-      gs = gs.map((g, i) => g + alphaDt[i] * (Ps[i].gmax * hill(T, Ps[i].Tcrit) - g));
-      n = n + newDt * (X.Nmax * hill0(T, X.Tnew) - n);
+      const m = payoff(T);
+      fs = fs.map((a, i) => { const fA = fAvail(Ps[i], T, X); return fA <= 0 ? 0 : clamp(a + Math.min(3, X.adoptSpeed * m) * dt * a * (1 - a / fA), 0, fA > a ? fA : a); });
+      gs = gs.map((g, i) => g + stepRate(Math.min(0.9, Ps[i].alpha * m), dt) * (Ps[i].gmax * hill(T, Ps[i].Tcrit) - g));
+      n = n + stepRate(Math.min(0.9, X.newSpeed * m), dt) * (X.Nmax * hill0(T, X.Tnew) - n);
       surv = surv * Math.pow(1 - hazard, dt);
       T = T * Math.pow(1 + growth, dt);
       if (X.setbackSize > 0 && (k + 1) % steps === 0 && start + (k + 1) / steps === X.setbackYear) T = Math.max(1, T * (1 - X.setbackSize));
@@ -490,7 +507,7 @@
   // Sector inputs share a common error component: z = √c · z_common + √(1−c) · z_own.
   const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 40], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
   const GLOBAL_RANGES = {
-    r0: [5, 60], phi: [0, 1], Thalf: [5, 50], dEta: [0, 1], hLoop: [5, 60], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
+    r0: [5, 60], phi: [0, 1], Thalf: [5, 50], dEta: [0, 1], hLoop: [5, 60], payoffResp: [0, 1], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
     hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], jCost: [0, 5], aiNow: [1, 5],
     // structural dials
     Wcore: [20, 80], fragility: [0, 10], cfx: [0, 3], kappa: [0, 2],

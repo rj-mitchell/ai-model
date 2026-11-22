@@ -41,8 +41,8 @@ Every V (sector, Core, Flex, macro) is a multiple of what output would be withou
 
 - `x = r_0 V_R&D^φ min(1, V_core) (1 + 1/T_half)/(1 + T/T_half)` (year-one growth equals `r_0`)
 - Speed limit: `growth = x / (1 + (x/cap)^4)^(1/4)`; `T ← T (1 + growth)^Δt`, `Δt = 1/4`
-- Adoption (S-curve): `da/dt = λ a (1 − a / f*(T))`, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks; λ = 25%/yr)
-- J-curve: `cost_i = J · max(0, rate_i − rate_i,0)`, where rate is the yearly rise in the automated share and rate_0 is today's pace; `V_i ← V_i (1 − cost_i)` (J = 2). AI adds about 0.4% to growth in 2027, peaking at about 4% a year in the mid-2030s.
+- Adoption (S-curve): `da/dt = λ m a (1 − a / f*(T))`; adoption, redesign and new-product speeds are multiplied by `m = (ln R / ln 1.4)^ν` (ν = 0.25), where `R` is the current speedup on assisted work, so diffusion speeds up as AI's advantage grows (Griliches 1957). Internal review burden falls with breadth: `η̂ = η (1 − v c)`, `c = 1 − T^(−β)`, v = 0.5, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks; λ = 25%/yr)
+- J-curve: `cost_i = J · max(0, rate_i − rate_i,0)`, where rate is the yearly rise in the automated share and rate_0 is today's pace; `V_i ← V_i (1 − cost_i)` (J = 0.25). AI adds about 0.25% to growth in 2027, peaking at about 5% a year in the mid-2030s on the median expert's timeline.
 - Redesign: `g_{t+1} = g_t + α (g_max / (1 + (T_crit/T)^2.5) − g_t)`. `T_crit` below 1× means today's AI already justifies more than half the redesign (default: Software 1×, Ad-Tech 1.5×, Banking and Law 3×, Energy 10×, Healthcare 15×).
 - New products: `n_{t+1} = n_t + s (N_max H(T, T_new) − n_t)`
 - Catastrophic risk: `survival_{t+1} = survival_t (1 − h_max H(T, T_risk))`; risk-adjusted value `= V_macro (1 − (1 − survival) × loss)`
