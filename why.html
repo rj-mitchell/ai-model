@@ -324,7 +324,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
         <li><b>Catastrophe doesn't need a growth explosion.</b> An engineered pandemic or an attack on a weak link needs one dangerous capability, not a transformed economy. The model's own cyber-attack scenario shows how damage to one essential sector spreads to everything built on it.</li>
         <li><b>Capability still compounds.</b> Useful AI work growing about <span data-k="T50">–</span> by 2050 is fast enough to outrun institutions that react slowly.</li>
         <li><b>People are a risk too.</b> Misuse and concentration of power by humans don't require autonomous AI at all.</li>
-        <li><b>The model has no term for misaligned goals.</b> Its catastrophe setting is an overlay you choose, not a result.</li>
+        <li><b>The model has no term for misaligned goals.</b> It models output if things broadly go right, so it cannot put a number on catastrophic risk.</li>
       </ul>
     </div>
     <div class="card">
@@ -380,7 +380,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   const overhang = M.snapshot(full, 1, null, null, null).Vmacro;
   const N = {
     T41: fx(at(2041).T), T50: fx(at(2050).T), V41: fx(at(2041).Vmacro), V50: fx(at(2050).Vmacro),
-    GDP50: fx(at(2050).gdp), NOAI50: fx(at(2050).gdpNoAI), TG: D().trendGrowth.toFixed(1) + '%',
+    GDP50: fx(at(2050).gdp), NOAI50: fx(at(2050).gdpNoAI), TG: M.FIXED.trendGrowth.toFixed(1) + '%',
     H26: pc(at(2027).shares[2]), H41: pc(at(2041).shares[2]),
     B26: pc(at(2027).shares[1]), B41: pc(at(2041).shares[1]),
     SW26: pc(at(2027).shares[4]), SW50: pc(at(2050).shares[4]),
@@ -393,7 +393,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     A4650: '+' + pc(Math.pow(at(2050).Vmacro / at(2046).Vmacro, 1 / 4) - 1, 1),
     A4650n: pc(Math.pow(at(2050).Vmacro / at(2046).Vmacro, 1 / 4) - 1, 1),
     A2631: pc(Math.pow(at(2032).Vmacro / at(2027).Vmacro, 1 / 5) - 1, 1),
-    A2728: pc(at(2028).Vmacro / at(2027).Vmacro - 1, 1), G2728: pc((at(2028).Vmacro / at(2027).Vmacro) * (1 + D().trendGrowth / 100) - 1, 1),
+    A2728: pc(at(2028).Vmacro / at(2027).Vmacro - 1, 1), G2728: pc((at(2028).Vmacro / at(2027).Vmacro) * (1 + M.FIXED.trendGrowth / 100) - 1, 1),
     PKY: (() => { let b = 2027, bv = -1; for (let y = 2027; y < 2050; y++) { const v = at(y + 1).Vmacro / at(y).Vmacro - 1; if (v > bv) { bv = v; b = y; } } return String(b); })(),
     PKV: (() => { let bv = -1; for (let y = 2027; y < 2050; y++) bv = Math.max(bv, at(y + 1).Vmacro / at(y).Vmacro - 1); return pc(bv, 1); })(),
   };
@@ -436,7 +436,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   })();
   // growth-rate table
   (function () {
-    const tg = D().trendGrowth / 100;
+    const tg = M.FIXED.trendGrowth / 100;
     let t = `<thead><tr><th>Period</th><th>Growth AI adds each year</th><th>GDP growth with AI (incl. ${(tg * 100).toFixed(1)}% trend)</th><th>GDP growth without further AI</th></tr></thead><tbody>`;
     [[2027, 2028], [2028, 2032], [2032, 2036], [2036, 2041], [2041, 2046], [2046, 2050]].forEach(([a, c]) => {
       const ai = Math.pow(at(c).Vmacro / at(a).Vmacro, 1 / (c - a)) - 1;

@@ -5,7 +5,7 @@ An interactive simulator of how AI capability turns into economic value, sector 
 **A simplified model.** The whole economy is represented by only six broad sectors, each between 13% and 20% of US GDP (BEA 2025 value added): Physical production & energy (17.5%), Trade & logistics (15.5%), Health, education & government (19.7%) and Finance & business services (13.5%) in the essential Core; Knowledge & professional services (13.7%) and Property, hospitality & personal services (19.8%) in the flexible tier. Results are scenarios, shown to two significant figures.
 
 **Evidence-based defaults.** Sector settings come from published evidence where it exists, rounded, with judgement filling the gaps. `model.js` holds each sector's plausible range, confidence and sources (`evidence`), the economy-wide ones (`GLOBAL_EVIDENCE`) and the source list (`SOURCES`); the model page shows them under each slider.
-- Sector sizes: BEA value added 2025. Core is 65% (Physical 25 / Trade 25 / Health, education & government 30 / Finance & business 20 within Core); Flex is 35% (Knowledge 40 / Property & hospitality 60). Legal, advertising and trading sit inside larger sectors, so their arms races lower those sectors' real-wealth shares.
+- Sector sizes: BEA value added 2025, entered directly as shares of GDP. Core is about 66%, Flex about 34%. Legal, advertising and trading sit inside larger sectors, so their arms races lower those sectors' real-wealth shares.
 - Native fit today and ceiling: Eloundou et al. occupation exposure re-weighted to each sector by ACS 2023 hours worked (β 0.24–0.54; with LLM software 0.38–0.86); McKinsey Global Institute 2025 for robotics.
 - Adoption: about 6% of US work hours AI-assisted in 2026 (Real-Time Population Survey), so about a fifth of what AI could do is in use (a0 = 20%).
 - Today's AI speedup: field trials and survey evidence, about 1.4×.
@@ -17,50 +17,53 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. GDP paths (2027 = 1) add trend growth from everything except AI to both worlds: `GDP = V_macro × 1.02^t` with AI and `1.02^t` without further AI, using 2.0%/yr, the current advanced-economy average (IMF WEO, October 2026).
 
+## What you can set
+
+**Six dials:** years to simulate; the AGI year (default 2050, the median expert); the speed of AI progress `r_0` (25%/yr); adoption speed `λ` (25%/yr); the human-in-the-loop share `h` (25%); and the mature size of AI-native products `N_max` (10% of today's economy). Presets cover superforecasters (AGI 2047), forecasting sites (~2031), AI lab leaders (~2028), a robotics breakthrough, a sustained cyber-attack on finance and slow institutions.
+
+**Per sector (nine settings, each with evidence):** share of GDP, native fit today `f_0` and its ceiling `f_max`, real-wealth share `p`, review burden `η`, exposure to fraud and attack `γ`, redesign ceiling `g_max`, redesign midpoint `T_crit` and redesign speed `α`, plus the Core/Flex tier. Core's weight in the economy is the Core sectors' combined share of GDP (about two-thirds).
+
+**Fixed assumptions** (`FIXED` and `FIXED_INFO` in `model.js`, listed with evidence on the page): today's AI speedup A = 1.4×; 20% of available fit in use at end-2026; J-curve cost 0.25; payoff response ν = 0.25; R&D feedback φ = 0.4; diminishing returns T_half = 15; growth cap 200%/yr; review burden falls by half as AI broadens; defensive AI δγ = 0.1; Core–Flex complementarity ρm = −0.5; weak links inside Core ρ = −4; new products reach half size near T = 10 and close 15% of the gap a year; trend growth 2.0%/yr. These had little effect on results or have strong evidence behind them. The uncertainty band still varies them.
+
+**Removed in the simplification:** the single-snapshot mode, the catastrophe overlay, the one-off setback, the Private/Commons deployment toggle, the Flex-dependence term and the user-set uncertainty controls. Results are essentially unchanged.
+
 ## Sector level
 
-- Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)`. Capped at 95%.
-- Native fit in use `a_i` lags behind `f*_i` (see the dynamic loop); the snapshot mode assumes full adoption.
-- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`. Work done with AI splits into assisted work in old processes, `a_i (1 − g_i)`, where a human-in-the-loop share `h` (default 25%) stays human so its speedup is capped at `1/h`, and autonomous work in redesigned processes, `g_i`, which speeds up fully: `τ_i = ε_i + a_i(1 − g_i)(h + (1 − h)/(Â T_eff)) + g_i/(Â T_eff)`, with `1/A = h + (1 − h)/Â`.
-- Capability breadth β is calibrated to an AGI year (default 2050, the median expert in the Forecasting Research Institute's 2026 LEAP panel): by then available native fit has closed 90% of the gap to its ceiling. Presets cover superforecasters (2047), forecasting sites (~2031) and AI lab leaders (~2028).
-- Time per unit of work vs no AI: `τ_i = ε_i + (1 − ε_i)/(A T_eff)`; end-2026 baseline `τ_i,0 = ε_i,0 + (1 − ε_i,0)/A` with `ε_i,0 = 1 − a_0 f_0`
-- Clean speedup vs end-2026: `S_i = τ_i,0 / τ_i`. `A` (default 2×) is how much faster today's AI already is on the work it is used for, so adoption and redesign pay off even without new capability (`A = 1` switches this off).
-- Net value: `V_i = (1 + p_i (S_i − 1)) / (1 + (η_i T^(−δη) ln T_eff + γ_i T^(−δγ) ln T) S_i)`
-- Deployment: Private sectors use `T_eff = min(T, T*)`, where `T*` (the Slop Peak) is the usage level that maximises `V_i`. Commons use `T_eff = T`.
+- Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)`, capped at 95%. β is calibrated so that by the AGI year `f*` has closed 90% of the gap to its ceiling.
+- Native fit in use `a_i` lags behind `f*_i` (see the dynamic loop).
+- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`. Work done with AI splits into assisted work in old processes, `a_i (1 − g_i)`, where a share `h` stays human so its speedup is capped at `1/h`, and autonomous work in redesigned processes, `g_i`, which speeds up fully: `τ_i = ε_i + a_i(1 − g_i)(h + (1 − h)/(Â T_eff)) + g_i/(Â T_eff)`, with `1/A = h + (1 − h)/Â`.
+- End-2026 baseline `τ_i,0 = ε_i,0 + (1 − ε_i,0)/A` with `ε_i,0 = 1 − a_0 f_0`; speedup `S_i = τ_i,0 / τ_i`, so adoption and redesign around today's AI pay off even without new capability.
+- Net value: `V_i = (1 + p_i (S_i − 1)) / (1 + (η̂_i ln T_eff + γ_i T^(−δγ) ln T) S_i)`, with `η̂ = η (1 − 0.5 c)`, `c = 1 − T^(−β)`.
+- Deployment: every sector uses `T_eff = min(T, T*)`, where `T*` (the Slop Peak) is the usage level that maximises `V_i`. Fraud and attack scale with the full `T`.
 
 ## Macro level
 
-- `V_core = (Σ w̃_i V_i^ρ)^(1/ρ)` (weak link), `V_flex = Σ w̃_j V_j`
-- `D = min(1, V_core)^κ`, `V_macro = (Wc V_core^ρm + Wf (D V_flex)^ρm)^(1/ρm) + D n_t`
-  - `Wc` is the true weight of Core in any change in the total.
-  - `ρm < 0` makes Core and Flex complements (Baumol effect; spending shares are shown).
-  - `n_t` is new AI-native products.
+- `V_core = (Σ w̃_i V_i^ρ)^(1/ρ)` (weak link, ρ = −4), `V_flex = Σ w̃_j V_j`
+- `V_macro = (Wc V_core^ρm + Wf V_flex^ρm)^(1/ρm) + n_t`, ρm = −0.5, so spending shifts toward the slower tier (Baumol effect; spending shares are shown). `n_t` is AI-native products.
 - A tier with no sectors is left out.
 
 ## Dynamic loop (quarterly steps, reported yearly)
 
-- `x = r_0 V_R&D^φ min(1, V_core) (1 + 1/T_half)/(1 + T/T_half)` (year-one growth equals `r_0`)
+- `x = r_0 V_R&D^φ min(1, V_core) (1 + 1/T_half)/(1 + T/T_half)` (year-one growth equals `r_0`); `V_R&D` is Knowledge & professional services.
 - Speed limit: `growth = x / (1 + (x/cap)^4)^(1/4)`; `T ← T (1 + growth)^Δt`, `Δt = 1/4`
-- Adoption (S-curve): `da/dt = λ m a (1 − a / f*(T))`; adoption, redesign and new-product speeds are multiplied by `m = (ln R / ln 1.4)^ν` (ν = 0.25), where `R` is the current speedup on assisted work, so diffusion speeds up as AI's advantage grows (Griliches 1957). Internal review burden falls with breadth: `η̂ = η (1 − v c)`, `c = 1 − T^(−β)`, v = 0.5, `a_0 = a0 · f_0` (default 30% of native fit in use at end-2026, about 15% of all tasks; λ = 25%/yr)
-- J-curve: `cost_i = J · max(0, rate_i − rate_i,0)`, where rate is the yearly rise in the automated share and rate_0 is today's pace; `V_i ← V_i (1 − cost_i)` (J = 0.25). AI adds about 0.25% to growth in 2027, peaking at about 5% a year in the mid-2030s on the median expert's timeline.
-- Redesign: `g_{t+1} = g_t + α (g_max / (1 + (T_crit/T)^2.5) − g_t)`. `T_crit` below 1× means today's AI already justifies more than half the redesign (default: Software 1×, Ad-Tech 1.5×, Banking and Law 3×, Energy 10×, Healthcare 15×).
-- New products: `n_{t+1} = n_t + s (N_max H(T, T_new) − n_t)`
-- Catastrophic risk: `survival_{t+1} = survival_t (1 − h_max H(T, T_risk))`; risk-adjusted value `= V_macro (1 − (1 − survival) × loss)`
-- Setback: in a chosen year `T ← max(1, T (1 − size))`
+- Adoption (S-curve): `da/dt = λ m a (1 − a / f*(T))`, `a_0 = 0.2 f_0`. Adoption, redesign and new-product speeds are multiplied by `m = (ln R / ln 1.4)^0.25`, where `R` is the current speedup on assisted work, so diffusion speeds up as AI's advantage grows (Griliches 1957).
+- J-curve: `cost_i = 0.25 · max(0, rate_i − rate_i,0)`, where rate is the yearly rise in the automated share and rate_0 is today's pace; `V_i ← V_i (1 − cost_i)`. AI adds about 0.3% to growth in 2027, peaking at about 5% a year in the late 2030s on the median expert's timeline.
+- Redesign: `g_{t+1} = g_t + α m (g_max / (1 + (T_crit/T)^2.5) − g_t)`.
+- New products: `n_{t+1} = n_t + s m (N_max H(T, 10) − n_t)`, s = 15%/yr
 - `H(T, m) = (T^k − 1)/(T^k − 1 + m^k)`, `k = 2.5`
-- Annual gap-closing rates (λ, α, s) are applied per quarter as `1 − (1 − rate)^(1/4)`.
+- Annual gap-closing rates are applied per quarter as `1 − (1 − rate)^(1/4)`.
 
 ## Outputs
 
-Economy, Core and Flex over time. The headline is the median of the Monte Carlo runs, with the 80% range and the central run beside it. Every input, including the structural dials, is randomly varied by ±spread (clamped to its slider range), and sector errors are partly shared (adjustable correlation); useful AI work T; sector values; redesign; spending shares; share of tasks automated, weighted both by the 2026 economy and by current spending; cumulative catastrophe probability; year-by-year table (copy as CSV). The snapshot mode shows the sector and macro equations with T as a dial.
+GDP with and without further AI; useful AI work T; sector values; redesign; spending shares; share of tasks done with AI; a year-by-year table (copy as CSV). The headline is the median of 150 Monte Carlo runs, with the 80% range. Every input, including the fixed assumptions, is varied by ±25% (clamped to its plausible range), with sector errors partly shared (correlation 0.5).
 
 ## Robotics
 
-Robotics is only partly included. The native-fit ceilings for hands-on sectors include the robotics allowance in exposure studies and McKinsey's estimate (2025) that robots with demonstrated technology could take about 13% of US work hours, and capability breadth lets AI reach more of each ceiling. Robots are not modelled as their own technology with their own costs and build-out, and the ceilings are fixed. `applyRobotics()` in `model.js` (the "Robotics breakthrough" preset) raises the ceilings of the four hands-on sectors to at least 85%, redesign ceilings by 20 points and breadth to 0.3: output vs no further AI in 2050 rises from about 1.7× to 2.4×, the peak boost from about 4% to 6.5% a year, and the ceiling with slop and arms races from 2.2× to 3.4×. The explainer compares the two.
+Robotics is only partly included. The native-fit ceilings for hands-on sectors include the robotics allowance in exposure studies and McKinsey's estimate (2025) that robots with demonstrated technology could take about 13% of US work hours. Robots are not modelled as their own technology with their own costs and build-out, and the ceilings are fixed. `applyRobotics()` in `model.js` (the "Robotics breakthrough" preset) raises the native-fit ceilings of the four hands-on sectors to at least 85% and their redesign ceilings by 20 points: output vs no further AI in 2050 rises from about 1.8× to 2.3×, and the peak boost from about 5% to 7% a year. The explainer compares the two.
 
 ## Known limitations (also listed on the page)
 
-Fixed ceilings by design (irreducibility); not calibrated; no labour market (automation is a task measure, not jobs or wages); catastrophic risk is a user-set overlay with no feedback; Red Queen sectors lose from every speedup (by design); new products, capability breadth and defensive AI are the most speculative mechanisms; strong Core–Flex complementarity makes a whole-tier collapse costly; deterministic central run with one optional shock.
+Fixed ceilings by design (irreducibility); only partly calibrated; six broad sectors; no labour market (automation is a task measure, not jobs or wages); catastrophic risk not modelled; Red Queen sectors lose from every speedup (by design); new products, capability breadth and defensive AI are the most speculative mechanisms; some assumptions fixed for simplicity; deterministic central run with no shocks.
 
 ## Files
 

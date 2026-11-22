@@ -33,8 +33,9 @@
 
   // ---------------- Default economy (UI units) ----------------
   // f, fmax, p, g, gmax in %; eta, gamma on 0–10 (÷20); Tcrit in ×; alpha in %/yr.
-  function sec(name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd, basis) {
-    return { name, tier, weight, f, fmax, p, eta, gamma, g, gmax, Tcrit, alpha, deploy, rd: !!rd, basis: basis || '' };
+  // weight = share of US GDP (%); f, fmax, p, gmax in %; eta, gamma on 0–10 (÷200); Tcrit in ×; alpha in %/yr
+  function sec(name, tier, weight, f, fmax, p, eta, gamma, gmax, Tcrit, alpha, rd, basis) {
+    return { name, tier, weight, f, fmax, p, eta, gamma, gmax, Tcrit, alpha, rd: !!rd, basis: basis || '' };
   }
   // A simplified economy of six broad sectors that together cover the whole US economy (BEA 2025
   // value added), each between 13.5% and 20% of GDP. Defaults are drawn from published evidence where it exists (see SOURCES and each
@@ -90,9 +91,9 @@
 
   function defaultSectors() {
     return [
-      Object.assign(sec('Physical production & energy', 'core', 25, 25, 55, 90, 3, 4, 30, 30, 5, 8, 'private', false,
+      Object.assign(sec('Physical production & energy', 'core', 17.5, 25, 55, 90, 3, 4, 30, 5, 8, false,
         'Manufacturing, construction, utilities, mining and agriculture: 17.5% of US GDP. Mostly hands-on work; essential, regulated and slow to reorganise.'), { evidence: {
-        weight: e(25, 28, 'high', ['bea'], 'Value added 17.5% of GDP, 26% of the four Core sectors.'),
+        weight: e(17, 18, 'high', ['bea'], 'Value added in 2025: 17.5% of US GDP.'),
         f: e(24, 29, 'medium', ['eloundou'], 'Exposure β 0.24 (human raters) to 0.29 (GPT-4 raters), weighted by 2023 hours.'),
         fmax: e(40, 65, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.38–0.48, plus robotics for some physical tasks.'),
         p: e(80, 100, 'medium', [], 'Judgement: cheaper physical output is mostly real wealth; some rent-seeking in regulated utilities.'),
@@ -102,9 +103,9 @@
         Tcrit: e(2, 15, 'low', ['david'], 'Judgement anchored on slow historical reorganisation of physical industries.'),
         alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; full redesign is slower.'),
       } }),
-      Object.assign(sec('Trade & logistics', 'core', 25, 30, 60, 80, 3, 5, 45, 45, 3, 12, 'private', false,
+      Object.assign(sec('Trade & logistics', 'core', 15.5, 30, 60, 80, 3, 5, 45, 3, 12, false,
         'Wholesale, retail, transport and warehousing: 15.5% of US GDP. Supply chains everything else depends on; already digitised and partly automated, but much of the work is physical.'), { evidence: {
-        weight: e(20, 25, 'high', ['bea'], 'Value added 15.5% of GDP, 23% of the four Core sectors.'),
+        weight: e(15, 16, 'high', ['bea'], 'Value added in 2025: 15.5% of US GDP.'),
         f: e(31, 35, 'medium', ['eloundou'], 'Exposure β 0.31–0.35, weighted by 2023 hours.'),
         fmax: e(47, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.47–0.55, plus warehouse and vehicle automation.'),
         p: e(65, 95, 'low', [], 'Judgement: logistics efficiency is real value; some retail competition is business-stealing.'),
@@ -114,9 +115,9 @@
         Tcrit: e(1.5, 8, 'low', [], 'Judgement.'),
         alpha: e(8, 20, 'low', [], 'Judgement: competitive, lightly regulated, but with large physical networks.'),
       } }),
-      Object.assign(sec('Health, education & government', 'core', 30, 35, 60, 70, 5, 6, 35, 35, 5, 8, 'private', false,
+      Object.assign(sec('Health, education & government', 'core', 19.7, 35, 60, 70, 5, 6, 35, 5, 8, false,
         'Health care, social assistance, education and government: 19.7% of US GDP. People-facing and rule-bound; mistakes are costly, outputs need expert review, and institutions change slowly.'), { evidence: {
-        weight: e(28, 32, 'high', ['bea'], 'Value added 19.7% of GDP, 30% of the four Core sectors.'),
+        weight: e(19, 20, 'high', ['bea'], 'Value added in 2025: 19.7% of US GDP.'),
         f: e(34, 37, 'medium', ['eloundou'], 'Exposure β 0.34–0.37, weighted by 2023 hours.'),
         fmax: e(52, 70, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.52–0.61; much caregiving and teaching stays hands-on.'),
         p: e(50, 85, 'low-medium', ['shrank'], 'Clinical and educational gains are real; billing, coding and compliance contests are arms races.'),
@@ -126,9 +127,9 @@
         Tcrit: e(2, 12, 'low', ['onc'], 'Judgement: redesign waits for more reliable AI.'),
         alpha: e(5, 15, 'medium-low', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians and public bodies slower.'),
       } }),
-      Object.assign(sec('Finance & business services', 'core', 20, 40, 75, 50, 4, 7, 50, 50, 2, 10, 'private', false,
+      Object.assign(sec('Finance & business services', 'core', 13.5, 40, 75, 50, 4, 7, 50, 2, 10, false,
         'Finance and insurance, management of companies and administrative support: 13.5% of US GDP. Mostly information work and a prime target for fraud; part of the activity is trading and competition rather than new wealth.'), { evidence: {
-        weight: e(18, 22, 'high', ['bea'], 'Value added 13.5% of GDP, 20% of the four Core sectors.'),
+        weight: e(13, 14, 'high', ['bea'], 'Value added in 2025: 13.5% of US GDP.'),
         f: e(40, 44, 'medium', ['eloundou'], 'Exposure β 0.40–0.44, weighted by 2023 hours.'),
         fmax: e(61, 85, 'medium', ['eloundou'], 'Exposure with LLM software 0.61–0.72; finance alone 0.78–0.93.'),
         p: e(35, 65, 'medium', ['philippon', 'budish'], 'Unit cost of finance has not fallen despite IT; trading races absorb gains.'),
@@ -138,9 +139,9 @@
         Tcrit: e(1, 5, 'low', ['bcgcloud'], 'Judgement: much of the redesign is justified by today\'s AI.'),
         alpha: e(5, 15, 'low', ['bcgcloud'], 'Core systems move slowly: most banks run at most 15% of core workloads in the cloud after 15 years.'),
       } }),
-      Object.assign(sec('Knowledge & professional services', 'flex', 40, 50, 85, 70, 3, 6, 65, 65, 1, 22, 'private', true,
+      Object.assign(sec('Knowledge & professional services', 'flex', 13.7, 50, 85, 70, 3, 6, 65, 1, 22, true,
         'Software, information, media, R&D, consulting, legal and advertising: 13.7% of US GDP. Digital work AI suits best, already being reorganised, and its output feeds AI progress; legal and advertising add arms races and review burden.'), { evidence: {
-        weight: e(35, 45, 'high', ['bea'], 'Value added 13.7% of GDP, 41% of the two Flex sectors.'),
+        weight: e(13, 14, 'high', ['bea'], 'Value added in 2025: 13.7% of US GDP.'),
         f: e(47, 54, 'medium-high', ['eloundou'], 'Exposure β 0.47–0.54, weighted by 2023 hours.'),
         fmax: e(74, 90, 'medium', ['eloundou'], 'Exposure with LLM software 0.74–0.86.'),
         p: e(55, 85, 'medium', ['bsv', 'rand', 'sht'], 'Software and R&D are strongly positive-sum; legal and advertising (about a fifth of hours) are largely zero-sum.'),
@@ -150,9 +151,9 @@
         Tcrit: e(0.5, 3, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the redesign.'),
         alpha: e(12, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving and lightly regulated, but systems lag behind tools.'),
       } }),
-      Object.assign(sec('Property, hospitality & personal services', 'flex', 60, 25, 50, 75, 2, 4, 30, 30, 4, 10, 'private', false,
+      Object.assign(sec('Property, hospitality & personal services', 'flex', 19.8, 25, 50, 75, 2, 4, 30, 4, 10, false,
         'Real estate, hotels, restaurants, recreation and personal services: 19.8% of US GDP. Much of it is housing (largely rent) and hands-on service work that AI barely touches.'), { evidence: {
-        weight: e(55, 65, 'high', ['bea'], 'Value added 19.8% of GDP, 59% of the two Flex sectors.'),
+        weight: e(19, 20, 'high', ['bea'], 'Value added in 2025: 19.8% of US GDP.'),
         f: e(27, 28, 'medium', ['eloundou'], 'Exposure β 0.27–0.28, weighted by 2023 hours.'),
         fmax: e(39, 60, 'low', ['eloundou', 'mgi'], 'Exposure with LLM software 0.39–0.47; cooking, cleaning and care stay hands-on.'),
         p: e(60, 90, 'low', [], 'Judgement: hospitality and personal services are real value; some brokerage is competition for commissions.'),
@@ -178,64 +179,85 @@
       if (!x) return;
       x.fmax = Math.max(x.fmax, 85);
       x.gmax = Math.min(90, x.gmax + 20);
-      x.g = Math.min(90, x.g + 20);
     });
     return s;
   }
 
-  // Evidence for the economy-wide defaults
+  // ---------------- Economy-wide settings ----------------
+  // Six dials are user settings (defaultState). Everything else is a fixed assumption: FIXED holds
+  // its value, FIXED_INFO its evidence. Presets and the explainer can still override a fixed value
+  // by setting it on the state.
+  const FIXED = {
+    aiNow: 1.4,        // how much faster end-2026 AI does assisted work (×)
+    adopt0: 20,        // share of native fit already in use at end-2026 (%)
+    jCost: 0.25,       // J-curve: output diverted per unit/yr rise in automated share, above today's pace
+    payoffResp: 0.25,  // how strongly adoption, redesign and new products speed up with AI's advantage
+    phi: 0.4,          // AI R&D feedback: growth × V_R&D^φ
+    Thalf: 15,         // diminishing returns: growth halves at T_half
+    growthCap: 200,    // speed limit on growth in useful AI work (%/yr)
+    dEta: 0.5,         // share of review burden gone once AI reaches full breadth
+    dGamma: 0.1,       // defensive AI: ambient attack exposure × T^(−δγ)
+    cfx: 1.5,          // Core–Flex complementarity: ρm = 1 − cfx (Baumol)
+    fragility: 5,      // weak links inside Core: ρ = 1 − fragility
+    Tnew: 10,          // AI-native products reach half their mature size at T_new
+    newSpeed: 15,      // build-out speed of AI-native products (%/yr of gap)
+    trendGrowth: 2.0,  // growth from everything except AI, both worlds (%/yr)
+  };
+  const FIXED_INFO = {
+    aiNow: { label: 'Speedup from today\'s AI', value: '1.4×', ev: e(1.1, 2, 'medium', ['fredtime', 'peng', 'blr', 'metr', 'berkeley', 'scribe'], 'Field trials range from slower (METR) to 2.3× (Copilot); workers report saving about a third of assisted time.') },
+    adopt0: { label: 'Native fit already in use, end-2026', value: '20%', ev: e(10, 35, 'medium', ['rps', 'btos'], 'About 6% of US work hours were AI-assisted in 2026, against about 33% of work AI could do: roughly a fifth.') },
+    jCost: { label: 'Cost of adopting (J-curve)', value: '0.25', ev: e(0, 2, 'low', ['jcurve'], 'Intangible investment delays measured gains. Set so AI adds a little to growth in 2027, as current measurements suggest.') },
+    payoffResp: { label: 'Adoption responds to payoff', value: '0.25', ev: e(0, 0.5, 'low', ['griliches'], 'Technologies spread faster where the payoff is bigger; the strength of the response is judgement.') },
+    phi: { label: 'AI R&D feedback', value: '0.4', ev: e(0, 1, 'low', [], 'Judgement. With the AGI year fixed, it barely changes the results.') },
+    Thalf: { label: 'Diminishing returns midpoint', value: '15×', ev: e(5, 50, 'low', [], 'Judgement. With the AGI year fixed, it barely changes the results.') },
+    growthCap: { label: 'Speed limit on AI progress', value: '200%/yr', ev: e(50, 500, 'low', [], 'Judgement: compute, chips and energy can only be built so fast. Binds only in extreme scenarios.') },
+    dEta: { label: 'Review burden gone at full breadth', value: '50%', ev: e(0.2, 0.8, 'low', [], 'Judgement: an AI that can do nearly all of a task can check much of it, but accountability keeps some human review.') },
+    dGamma: { label: 'Defensive AI', value: '0.1', ev: e(0, 0.5, 'low', ['ic3'], 'Judgement: attackers and defenders both use AI.') },
+    cfx: { label: 'Core–Flex complementarity', value: '1.5 (σ ≈ 0.67)', ev: e(1, 2, 'medium', [], 'Spending shifts toward slower sectors when goods are complements (Baumol); elasticity below 1 is typical across broad sectors.') },
+    fragility: { label: 'Weak links inside Core', value: '5 (ρ = −4)', ev: e(3, 8, 'medium', [], 'Essential sectors are close complements: a shortfall in one limits the rest (Jones, weak links).') },
+    newProducts: { label: 'AI-native products: midpoint and build-out', value: '10×, 15%/yr', ev: e(0, 0, 'low', [], 'Judgement.') },
+    trendGrowth: { label: 'Growth without further AI', value: '2.0%/yr', ev: e(1.8, 2.1, 'high', [], 'IMF World Economic Outlook, October 2026: advanced economies 2.0% (2025), 2.1% (2026), 1.8% (2027).') },
+  };
+
+  // Evidence for the six user dials
   const GLOBAL_EVIDENCE = {
-    Wcore: e(60, 70, 'high', ['bea'], 'The four Core sectors are 66% of 2025 value added; the six sectors together cover the whole economy.'),
-    adopt0: e(10, 35, 'medium', ['rps', 'btos'], 'About 6% of US work hours were AI-assisted in 2026, against about 33% of work AI could do: roughly a fifth.'),
-    aiNow: e(1.1, 2, 'medium', ['fredtime', 'peng', 'blr', 'metr', 'berkeley', 'scribe'], 'Field trials range from slower (METR) to 2.3× (Copilot); workers report saving about a third of assisted time.'),
-    jCost: e(0, 2, 'low', ['jcurve'], 'Intangible investment around general-purpose technologies is large and delays measured gains. Set so AI adds a little to growth in 2027, as current measurements suggest.'),
     agiYear: e(2039, 2065, 'medium', ['leap8'], 'Median expert 2050, middle half 2039–2065; superforecasters 2047. Forecasting sites and AI lab leaders expect the early 2030s or sooner.'),
     r0: e(15, 60, 'medium', ['leap8', 'metr'], 'The median expert expects reliable 8-hour software tasks by about 2030, up from about 3.4 hours at end-2026: roughly 25% a year.'),
-    payoffResp: e(0, 0.5, 'low', ['griliches'], 'Technologies spread faster where the payoff is bigger; the strength of the response is judgement, set so the median-expert path stays near expert growth expectations.'),
-    dEta: e(0.2, 0.8, 'low', [], 'Judgement: an AI that can do nearly all of a task can also check much of it, but accountability keeps some human review.'),
     hLoop: e(20, 35, 'medium', ['metrsurvey', 'anthropicprod', 'fredtime'], 'Assisted work tops out at about 3–5× faster: a median self-reported 3× (METR survey) and about 5× for tasks done in conversation.'),
+    adoptSpeed: e(15, 40, 'low-medium', ['onc', 'eia', 'rps'], 'Recent technologies closed roughly 8–20% of the adoption gap a year; AI use in work hours grew from 4% to 6% in a year.'),
+    Nmax: e(0, 30, 'low', [], 'Judgement: value from goods and services that do not exist today. No data.'),
   };
 
   function defaultState() {
     return {
-      mode: 'dynamic', years: 15, startYear: 2027,
-      r0: 25, phi: 0.4, Thalf: 15, growthCap: 200, trendGrowth: 2.0, agiYear: 2050, hLoop: 25,
-      Tstatic: 20, Wcore: 65, fragility: 5,
-      beta: 0.1, dEta: 0.5, dGamma: 0.1, cfx: 1.5, kappa: 1, payoffResp: 0.25,
-      adopt0: 20, adoptSpeed: 25, jCost: 0.25, aiNow: 1.4,
-      Nmax: 10, Tnew: 10, newSpeed: 15,
-      hmax: 0, Trisk: 30, loss: 100,
-      setbackYear: 0, setbackSize: 0,
-      spread: 25, runs: 150, corr: 50,
+      years: 15, startYear: 2027,
+      agiYear: 2050, r0: 25, adoptSpeed: 25, hLoop: 25, Nmax: 10,
       sectors: defaultSectors(), sel: 4, preset: 'dyn-base',
     };
   }
 
   // ---------------- Global parameters ----------------
+  const val = (state, k) => (state[k] != null ? state[k] : FIXED[k]);
   function globalsFor(state) {
     return {
-      beta: state._beta != null ? state._beta : (state.agiYear ? calibratedBeta(state) : state.beta), // capability breadth: f rises toward f_max
-      hLoop: clamp((state.hLoop != null ? state.hLoop : 25) / 100, 0, 0.9),    // human-in-the-loop share of AI-assisted work in old processes
-      dEta: state.dEta,                          // share of review burden removed as AI reaches full breadth
-      payoffResp: state.payoffResp != null ? state.payoffResp : 0.25, // how strongly adoption and redesign speed up with the payoff
-      dGamma: state.dGamma,                      // defensive AI
-      rhoM: 1 - state.cfx,                       // Core–Flex complementarity (Baumol between tiers)
-      kappa: state.kappa,                        // Flex dependence on Core shortfall
-      Nmax: state.Nmax / 100,                    // mature size of AI-native products (share of 2026 economy)
-      Tnew: state.Tnew,
-      newSpeed: (state.newSpeed != null ? state.newSpeed : 15) / 100,
-      adopt0: clamp((state.adopt0 != null ? state.adopt0 : 20) / 100, 0, 1),   // share of native fit in use at end-2026
-      aiNow: Math.max(1, state.aiNow != null ? state.aiNow : 1.4),                // how much faster end-2026 AI does the work it is used for
-      adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,     // logistic adoption rate per year
-      jCost: state.jCost != null ? state.jCost : 0.25,                              // output diverted per unit/yr rise in automated share (J-curve)
-      growthCap: Math.max(0.05, (state.growthCap != null ? state.growthCap : 200) / 100), // max yearly growth in T
-      hmax: state.hmax / 100,                    // annual catastrophe hazard at maturity
-      Trisk: state.Trisk,
-      loss: state.loss / 100,
-      setbackYear: state.setbackYear,
-      setbackSize: state.setbackSize / 100,
-      fragility: state.fragility,
-      Wcore: state.Wcore,
+      beta: state._beta != null ? state._beta : (state.agiYear ? calibratedBeta(state) : (state.beta || 0)), // capability breadth
+      hLoop: clamp((state.hLoop != null ? state.hLoop : 25) / 100, 0, 0.9),   // human-in-the-loop share of assisted work
+      adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,  // logistic adoption rate per year
+      Nmax: (state.Nmax != null ? state.Nmax : 10) / 100,                     // mature size of AI-native products
+      aiNow: Math.max(1, val(state, 'aiNow')),
+      adopt0: clamp(val(state, 'adopt0') / 100, 0, 1),
+      jCost: val(state, 'jCost'),
+      payoffResp: val(state, 'payoffResp'),
+      phi: val(state, 'phi'),
+      Thalf: Math.max(1, val(state, 'Thalf')),
+      growthCap: Math.max(0.05, val(state, 'growthCap') / 100),
+      dEta: val(state, 'dEta'),
+      dGamma: val(state, 'dGamma'),
+      rhoM: 1 - val(state, 'cfx'),
+      fragility: val(state, 'fragility'),
+      Tnew: val(state, 'Tnew'),
+      newSpeed: val(state, 'newSpeed') / 100,
+      trendGrowth: val(state, 'trendGrowth') / 100,
     };
   }
 
@@ -249,10 +271,8 @@
       eta: Math.max(0, s.eta / 200),
       gamma: Math.max(0, s.gamma / 200),
       gmax: clamp(s.gmax / 100, 0, G_CAP),
-      gStatic: clamp(s.g / 100, 0, G_CAP),
       Tcrit: Math.max(0.1, s.Tcrit),
       alpha: clamp(s.alpha / 100, 0, 1),
-      private: s.deploy !== 'commons',
     };
   }
 
@@ -291,8 +311,7 @@
     return { f, eps, S, V, slop: a, assisted, autonomous };
   }
 
-  // Private → T_eff = min(T, T*), T* = usage level that maximises V_i (the Slop Peak).
-  // Commons → T_eff = T.
+  // Sectors use AI up to their Slop Peak: T_eff = min(T, T*), T* = usage level that maximises V_i.
   function slopPeak(P, g, T, X, fUsed) {
     if (T <= 1) return 1;
     const N = 40, lnT = Math.log(T);
@@ -315,9 +334,9 @@
 
   function evalSector(P, g, T, X, fUsed) {
     const Tstar = slopPeak(P, g, T, X, fUsed);
-    const Teff = P.private ? Math.min(T, Tstar) : T;
+    const Teff = Math.min(T, Tstar);
     const r = sectorValueAt(P, g, T, Teff, X, fUsed);
-    return { f: r.f, fAvail: fAvail(P, T, X), eps: r.eps, S: r.S, V: r.V, slop: r.slop, assisted: r.assisted, autonomous: r.autonomous, Teff, Tstar, capped: P.private && Tstar < T - 1e-6 };
+    return { f: r.f, fAvail: fAvail(P, T, X), eps: r.eps, S: r.S, V: r.V, slop: r.slop, assisted: r.assisted, autonomous: r.autonomous, Teff, Tstar, capped: Tstar < T - 1e-6 };
   }
 
   // ---------------- 2. Macro level ----------------
@@ -342,28 +361,28 @@
     return { idx, w };
   }
 
-  // D = min(1, V_core)^κ;  V_base = ( Wc V_core^ρm + Wf (D V_flex)^ρm )^(1/ρm)
-  // V_macro = V_base + D · n_t     (n_t = AI-native products, share of 2026 economy)
+  // V_base = ( Wc V_core^ρm + Wf V_flex^ρm )^(1/ρm),  Wc = Core sectors' share of GDP
+  // V_macro = V_base + n_t     (n_t = AI-native products, share of today's economy)
   // Empty tier: the other tier alone.
   function macro(sectors, Vs, X, n) {
     const rho = 1 - X.fragility;
-    const Wc0 = clamp(X.Wcore / 100, 0, 1);
     const C = tierIdx(sectors, 'core'), F = tierIdx(sectors, 'flex');
     const hasC = C.idx.length > 0, hasF = F.idx.length > 0;
+    const wsum = (I) => I.idx.reduce((a, i) => a + Math.max(0, sectors[i].weight), 0);
+    const totC = wsum(C), totF = wsum(F);
     const Vcore = hasC ? ces(C.idx.map((i) => Vs[i]), C.w, rho) : NaN;
     const Vflex = hasF ? F.idx.reduce((a, i, k) => a + F.w[k] * Vs[i], 0) : NaN;
-    const Wc = hasC && hasF ? Wc0 : hasC ? 1 : 0, Wf = 1 - Wc;
+    const Wc = hasC && hasF ? (totC + totF > 0 ? totC / (totC + totF) : 0.5) : hasC ? 1 : 0, Wf = 1 - Wc;
     const coreShares = hasC ? cesShares(C.idx.map((i) => Vs[i]), C.w, rho) : [];
     const flexShares = hasF ? (() => { const raw = F.idx.map((i, k) => F.w[k] * Vs[i]); const t = raw.reduce((a, b) => a + b, 0) || 1; return raw.map((x) => x / t); })() : [];
-    const D = hasC && X.kappa > 0 ? Math.pow(Math.min(1, Vcore), X.kappa) : 1;
     let Vbase, tierShareCore;
     if (hasC && hasF) {
-      Vbase = ces([Vcore, D * Vflex], [Wc, Wf], X.rhoM);
-      tierShareCore = cesShares([Vcore, D * Vflex], [Wc, Wf], X.rhoM)[0];
-    } else { Vbase = hasC ? Vcore : D * Vflex; tierShareCore = hasC ? 1 : 0; }
-    const newGoods = D * (n || 0);
+      Vbase = ces([Vcore, Vflex], [Wc, Wf], X.rhoM);
+      tierShareCore = cesShares([Vcore, Vflex], [Wc, Wf], X.rhoM)[0];
+    } else { Vbase = hasC ? Vcore : Vflex; tierShareCore = hasC ? 1 : 0; }
+    const newGoods = n || 0;
     const Vmacro = Vbase + newGoods;
-    // spending shares across sectors (+ new products), and fixed 2026 shares
+    // spending shares across sectors (+ new products), and fixed starting shares
     const shares = new Array(sectors.length).fill(0);
     const shares0 = new Array(sectors.length).fill(0);
     const baseShare = Vbase / Vmacro;
@@ -372,18 +391,18 @@
     const weights = {};
     C.idx.forEach((i, k) => { weights[i] = C.w[k]; });
     F.idx.forEach((i, k) => { weights[i] = F.w[k]; });
-    return { Vcore, Vflex, Vbase, newGoods, Vmacro, D, rho, shares, shares0, newShare: newGoods / Vmacro, weights, hasC, hasF };
+    return { Vcore, Vflex, Vbase, newGoods, Vmacro, Wc, rho, shares, shares0, newShare: newGoods / Vmacro, weights, hasC, hasF };
   }
 
   // ---------------- Snapshot (one moment / static) ----------------
-  // gs: redesign per sector (null → static g); fs: native fit in use (null → full available fit); n: new products (null → steady state)
+  // gs: redesign per sector (null → full redesign, g = g_max); fs: native fit in use (null → full available fit); n: new products (null → steady state)
   // costs: share of each sector's output diverted into adoption and redesign (J-curve), null → none
   function snapshot(state, T, gs, n, fs, costs) {
     const X = globalsFor(state);
     const sectors = state.sectors;
     const out = sectors.map((s, i) => {
       const P = sectorParams(s);
-      const g = gs ? gs[i] : P.gStatic;
+      const g = gs ? gs[i] : P.gmax;
       const r = Object.assign({ g }, evalSector(P, g, T, X, fs ? fs[i] : null));
       r.cost = costs ? costs[i] : 0;
       r.Vgross = r.V;
@@ -402,13 +421,11 @@
   // raw     = r0 · V_RD^φ · min(1, V_core) · (1 + 1/T_half) / (1 + T/T_half)
   // growth  = raw / (1 + (raw/cap)^4)^(1/4)                   (smooth speed limit; ≈ raw well below the cap)
   // T      ← T (1 + growth)^dt                                 (so a constant rate r gives exactly r per year)
-  // setback: at the start of the chosen year, T ← max(1, T (1 − size))
   // a_i    ← a_i + λ dt · a_i (1 − a_i / f*_i(T)),  a_i,0 = adopt0 · f_0   (S-shaped adoption of native fit)
   // cost_i = J · max(0, rate_i − rate_i,0), rate = yearly rise in automated share 1 − ε   (J-curve: output
   //          diverted into adoption and redesign beyond today's pace; V_i ← V_i (1 − cost_i))
   // g_i    ← g_i + α_dt (g_max / (1 + (T_crit/T)^k) − g_i)
   // n      ← n + s_dt (N_max · hill0(T, T_new) − n)
-  // survival ← survival (1 − h_max · hill0(T, T_risk))^dt
   // where x_dt = 1 − (1 − x)^dt converts annual gap-closing rates to per-step rates.
   // Capability breadth calibrated to an AGI year: β is set so that, on the model's own capability path,
   // available native fit has closed 90% of the gap from today to its ceiling in that year
@@ -417,7 +434,7 @@
   function calibratedBeta(state) {
     const start = state.startYear || 2027;
     const Y = Math.max(start + 1, Math.round(state.agiYear));
-    const key = JSON.stringify(state, (k, v) => (['sel', 'preset', 'mode', 'Tstatic', 'spread', 'runs', 'corr', '_beta', 'beta', 'years'].includes(k) ? undefined : v));
+    const key = JSON.stringify(state, (k, v) => (['sel', 'preset', '_beta', 'beta', 'years', 'basis', 'evidence'].includes(k) ? undefined : v));
     if (betaCache.has(key)) return betaCache.get(key);
     let b = 0.5;
     for (let k = 0; k < 4; k++) {
@@ -435,11 +452,10 @@
     const X = globalsFor(state);
     const years = Math.max(1, Math.round(state.years));
     const steps = STEPS_PER_YEAR, dt = 1 / steps;
-    const r0 = state.r0 / 100, phi = state.phi, Thalf = Math.max(1, state.Thalf);
+    const r0 = state.r0 / 100, phi = X.phi, Thalf = X.Thalf;
     const rdIdx = state.sectors.findIndex((s) => s.rd);
     const start = state.startYear || 2027;
     const Ps = state.sectors.map((s) => sectorParams(s));
-    const newDt = stepRate(X.newSpeed, dt);
     // diffusion speeds up with the payoff: m = (ln R / ln 1.4)^payoffResp, R = speedup on assisted work at current T
     const hh = X.hLoop || 0, A0 = X.aiNow || 1;
     const inv0 = 1 / A0 - hh, Araw = hh > 0 ? (inv0 > 0.01 ? (1 - hh) / inv0 : 100) : A0;
@@ -450,7 +466,7 @@
       const R = 1 / (hh + (1 - hh) / (Araw * Math.max(T, 1)));
       return Math.pow(clamp(Math.log(Math.max(R, 1.0001)) / Math.log(R_REF), 0.3, 20), X.payoffResp);
     };
-    let T = 1, n = 0, surv = 1;
+    let T = 1, n = 0;
     let gs = Ps.map(() => 0);
     let fs = Ps.map((P) => X.adopt0 * P.f0);
     const autoOf = () => fs.map((a, i) => 1 - (1 - a) * (1 - gs[i]));
@@ -471,12 +487,10 @@
       const drag = (1 + 1 / Thalf) / (1 + T / Thalf);
       const raw = r0 * Math.pow(Math.max(Vrd, 1e-9), phi) * brake * drag;
       const growth = raw / Math.pow(1 + Math.pow(raw / X.growthCap, 4), 0.25);
-      const hazard = X.hmax * hill0(T, X.Trisk);
       const diffusion = payoff(T);
       if (k % steps === 0) {
-        const Vexp = snap.Vmacro * (1 - (1 - surv) * X.loss);
-        const trend = Math.pow(1 + (state.trendGrowth != null ? state.trendGrowth : 2) / 100, k / steps);
-        rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpNoAI: trend, diffusion, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag, hazard, survival: surv, pCat: 1 - surv, Vexp }, snap));
+        const trend = Math.pow(1 + X.trendGrowth, k / steps);
+        rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpNoAI: trend, diffusion, growth, rawGrowth: raw, capped: raw > growth * 1.02, Vrd, brake, drag }, snap));
       }
       if (k === total) break;
       // update to the next quarter (all from current-step values)
@@ -485,32 +499,22 @@
       fs = fs.map((a, i) => { const fA = fAvail(Ps[i], T, X); return fA <= 0 ? 0 : clamp(a + Math.min(3, X.adoptSpeed * m) * dt * a * (1 - a / fA), 0, fA > a ? fA : a); });
       gs = gs.map((g, i) => g + stepRate(Math.min(0.9, Ps[i].alpha * m), dt) * (Ps[i].gmax * hill(T, Ps[i].Tcrit) - g));
       n = n + stepRate(Math.min(0.9, X.newSpeed * m), dt) * (X.Nmax * hill0(T, X.Tnew) - n);
-      surv = surv * Math.pow(1 - hazard, dt);
       T = T * Math.pow(1 + growth, dt);
-      if (X.setbackSize > 0 && (k + 1) % steps === 0 && start + (k + 1) / steps === X.setbackYear) T = Math.max(1, T * (1 - X.setbackSize));
     }
     return rows;
-  }
-
-  function sweep(state, Tlo, Thi, n) {
-    const pts = [];
-    for (let k = 0; k <= n; k++) {
-      const T = Math.exp(Math.log(Tlo) + (Math.log(Thi) - Math.log(Tlo)) * k / n);
-      const s = snapshot(state, T, null, null, null);
-      pts.push({ T, Vmacro: s.Vmacro, Vcore: s.Vcore, Vflex: s.Vflex });
-    }
-    return pts;
   }
 
   // ---------------- 4. Uncertainty (Monte Carlo) ----------------
   // Each uncertain input is multiplied by exp(spread · z), then clamped to its slider range.
   // Sector inputs share a common error component: z = √c · z_common + √(1−c) · z_own.
-  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 40], gmax: [0, 90], g: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
+  // Settings used by every run: ±25% (1σ), 150 runs, errors half shared across sectors.
+  const MC = { spread: 0.25, runs: 150, corr: 0.5 };
+  const SECTOR_RANGES = { f: [0, 95], fmax: [0, 95], p: [0, 100], eta: [0, 10], gamma: [0, 40], gmax: [0, 90], Tcrit: [0.5, 30], alpha: [5, 30] };
+  // the dials and the fixed assumptions are all varied
   const GLOBAL_RANGES = {
-    r0: [5, 60], phi: [0, 1], Thalf: [5, 50], dEta: [0, 1], hLoop: [5, 60], payoffResp: [0, 1], dGamma: [0, 1], Nmax: [0, 100], Tnew: [2, 50],
-    hmax: [0, 20], Trisk: [2, 100], adopt0: [0, 100], adoptSpeed: [5, 60], jCost: [0, 5], aiNow: [1, 5],
-    // structural dials
-    Wcore: [20, 80], fragility: [0, 10], cfx: [0, 3], kappa: [0, 2],
+    r0: [5, 60], hLoop: [5, 60], adoptSpeed: [5, 60], Nmax: [0, 100],
+    aiNow: [1, 5], adopt0: [0, 100], jCost: [0, 5], payoffResp: [0, 1], phi: [0, 1], Thalf: [5, 50], dEta: [0, 1], dGamma: [0, 1],
+    cfx: [0, 3], fragility: [0, 10], Tnew: [2, 50],
   };
 
   function rng(seed) {
@@ -523,7 +527,7 @@
     const c = clamp(corr != null ? corr : 0.5, 0, 1), a = Math.sqrt(c), b = Math.sqrt(1 - c);
     const s = JSON.parse(JSON.stringify(state));
     const j = (v, [lo, hi], z) => clamp(v * Math.exp(spread * z), lo, hi);
-    Object.keys(GLOBAL_RANGES).forEach((k) => { if (typeof s[k] === 'number' && s[k] !== 0) s[k] = j(s[k], GLOBAL_RANGES[k], gauss(r)); });
+    Object.keys(GLOBAL_RANGES).forEach((k) => { const v0 = s[k] != null ? s[k] : FIXED[k]; if (typeof v0 === 'number' && v0 !== 0) s[k] = j(v0, GLOBAL_RANGES[k], gauss(r)); });
     const common = {};
     Object.keys(SECTOR_RANGES).forEach((k) => { common[k] = gauss(r); });
     s.sectors.forEach((sec) => {
@@ -550,7 +554,7 @@
   // One Monte Carlo run → the series the UI summarises
   function mcRun(state, r, spread, corr) {
     const rows = simulate(perturb(state, r, spread, corr));
-    return { Vmacro: rows.map((x) => x.Vmacro), Vexp: rows.map((x) => x.Vexp), T: rows.map((x) => x.T) };
+    return { Vmacro: rows.map((x) => x.Vmacro), T: rows.map((x) => x.T) };
   }
 
   // fix the calibrated breadth once for the base state, so uncertainty in AI progress shifts the AGI year
@@ -559,21 +563,12 @@
   function monteCarlo(state, runs, spread, seed, corr) {
     state = withBeta(state);
     const r = rng(seed || 12345);
-    const m = { Vmacro: [], Vexp: [], T: [] };
-    for (let k = 0; k < runs; k++) { const o = mcRun(state, r, spread, corr); m.Vmacro.push(o.Vmacro); m.Vexp.push(o.Vexp); m.T.push(o.T); }
-    return { Vmacro: summarise(m.Vmacro), Vexp: summarise(m.Vexp), T: summarise(m.T) };
+    const m = { Vmacro: [], T: [] };
+    for (let k = 0; k < (runs || MC.runs); k++) { const o = mcRun(state, r, spread != null ? spread : MC.spread, corr != null ? corr : MC.corr); m.Vmacro.push(o.Vmacro); m.T.push(o.T); }
+    return { Vmacro: summarise(m.Vmacro), T: summarise(m.T) };
   }
 
-  function monteCarloSnapshot(state, T, runs, spread, seed, corr) {
-    state = withBeta(state);
-    const r = rng(seed || 12345);
-    const vals = [];
-    for (let k = 0; k < runs; k++) vals.push(snapshot(perturb(state, r, spread, corr), T, null, null, null).Vmacro);
-    vals.sort((a, b) => a - b);
-    return { p10: quantile(vals, 0.1), p50: quantile(vals, 0.5), p90: quantile(vals, 0.9) };
-  }
-
-  const api = { defaultState, defaultSectors, applyRobotics, SOURCES, GLOBAL_EVIDENCE, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, sweep, rng, perturb, summarise, quantile, mcRun, monteCarlo, monteCarloSnapshot, calibratedBeta, withBeta };
+  const api = { defaultState, defaultSectors, applyRobotics, FIXED, FIXED_INFO, SOURCES, GLOBAL_EVIDENCE, MC, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, rng, perturb, summarise, quantile, mcRun, monteCarlo, calibratedBeta, withBeta };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AIModel = api;
 })(typeof window !== 'undefined' ? window : this);
