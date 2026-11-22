@@ -17,6 +17,10 @@ Open `index.html` in a browser, or serve the folder (`python3 -m http.server`). 
 
 Every V (sector, Core, Flex, macro) is a multiple of what output would be without further AI: real output relative to a world where AI stays at its end-2026 level and use. 1.0× is that world. GDP paths (2027 = 1) add trend growth from everything except AI to both worlds: `GDP = V_macro × 1.02^t` with AI and `1.02^t` without further AI, using 2.0%/yr, the current advanced-economy average (IMF WEO, October 2026).
 
+## Plain-English names on the pages
+
+The pages avoid jargon: Core and Flex sectors are called **essential** and **flexible**; slop or review burden is **checking costs**; the real-wealth share is **new wealth vs arms race**; workflow redesign is **rebuilding around AI**; native fit is **work AI can speed up**; the Monte Carlo 80% band is the **likely range**. The equations are in a collapsible "How the model works" section, and each slider's evidence is a collapsible note.
+
 ## What you can set
 
 **Six dials:** years to simulate; the AGI year (default 2050, the median expert); the speed of AI progress `r_0` (25%/yr); adoption speed `λ` (25%/yr); the human-in-the-loop share `h` (25%); and the mature size of AI-native products `N_max` (10% of today's economy). Presets cover superforecasters (AGI 2047), forecasting sites (~2031), AI lab leaders (~2028), a robotics breakthrough, a sustained cyber-attack on finance and slow institutions.

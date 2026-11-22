@@ -51,14 +51,14 @@
     if (!ev) return '';
     const u = EV_UNIT[key] != null ? EV_UNIT[key] : '';
     const links = srcLinks(ev.src);
-    return `<div class="ev"><b>Evidence:</b> ${ev.lo}–${ev.hi}${u} · ${esc(ev.c)} confidence. ${esc(ev.note)}${links ? ` <span class="ev-src">${links}</span>` : ''}</div>`;
+    return `<details class="ev"><summary><b>Evidence:</b> ${ev.lo}–${ev.hi}${u} · ${esc(ev.c)} confidence</summary><div>${esc(ev.note)}${links ? ` <span class="ev-src">${links}</span>` : ''}</div></details>`;
   }
 
   function slider(o) {
     const wrap = document.createElement('div');
     wrap.className = 'ctl';
     wrap.innerHTML =
-      `<label for="${o.id}">${o.label}${o.sym ? `<span class="sym">${o.sym}</span>` : ''}</label>` +
+      `<label for="${o.id}">${o.label}</label>` +
       `<output for="${o.id}" id="${o.id}-out"></output>` +
       `<input type="range" id="${o.id}" min="${o.min}" max="${o.max}" step="${o.step}">` +
       (o.hint ? `<div class="hint">${o.hint}</div>` : '') + (o.ev ? evidenceHTML(o.evKey, o.ev) : '');
@@ -112,14 +112,14 @@
     const host = $('controls');
     host.innerHTML = '';
     const E = M.GLOBAL_EVIDENCE;
-    const g = group(host, 'Settings', true);
+    const g = group(host, 'Settings', matchMedia('(min-width: 901px)').matches);
     g.append(
-      slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 40, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
-      slider({ ev: E.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => String(v), hint: 'AI that beats a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost. By this year, AI can do 90% of the work it could ever do in each sector.' }),
-      slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth in useful AI work (verified work per $) at the start.' }),
-      slider({ ev: E.adoptSpeed, evKey: 'adoptSpeed', id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. An S-curve that speeds up as AI’s advantage grows.' }),
-      slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before rebuilding', sym: 'h', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×`, hint: 'In existing processes, people still direct and check AI’s work, which caps the speedup until the work itself is rebuilt around AI.' }),
-      slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', sym: 'N', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}% of today's economy`, hint: 'Goods and services that don’t exist yet.' })
+      slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 40, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `to ${state.startYear + v}` }),
+      slider({ ev: E.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => String(v), hint: 'AI that beats a top-10% professional on 90% of non-physical tasks, at no more than 5× the cost. By then AI can do 90% of the work it ever could in each sector.' }),
+      slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth at the start in useful AI work: verified work AI does per dollar.' }),
+      slider({ ev: E.adoptSpeed, evKey: 'adoptSpeed', id: 'g-adoptspeed', label: 'Adoption speed', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. It speeds up as AI’s advantage grows.' }),
+      slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before rebuilding', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}%`, hint: 'Until work is rebuilt around AI, people still direct and check it, so AI-assisted work gets at most 1 ÷ this share faster (4× at 25%).' }),
+      slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}%`, hint: 'Goods and services that don’t exist yet, as a share of today’s economy.' })
     );
     const fixed = group(host, 'Fixed assumptions', false, 'Held constant, with the evidence behind each. They are still varied in the uncertainty band.');
     const list = document.createElement('dl');
@@ -165,7 +165,7 @@
       b.type = 'button';
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(i === state.sel));
-      b.innerHTML = `<span class="dot" style="background:${seriesColor(i)}"></span>${esc(s.name)}<span class="tier">${s.tier}</span>`;
+      b.innerHTML = `<span class="dot" style="background:${seriesColor(i)}"></span>${esc(s.name)}<span class="tier">${s.tier === 'core' ? 'essential' : 'flexible'}</span>`;
       b.addEventListener('click', () => { state.sel = i; buildSectorTabs(); buildSectorEditor(); update(); });
       tabs.appendChild(b);
     });
@@ -189,25 +189,25 @@
     const tierF = document.createElement('div');
     tierF.className = 'field';
     tierF.innerHTML = '<span class="lab">Tier</span>';
-    tierF.append(segmented('s-tier', [['core', 'Core · weak link'], ['flex', 'Flex · substitutable']], () => s.tier, (v) => { s.tier = v; }, buildSectorTabs));
+    tierF.append(segmented('s-tier', [['core', 'Essential'], ['flex', 'Flexible']], () => s.tier, (v) => { s.tier = v; }, buildSectorTabs));
 
     ed.append(nameF, tierF);
     if (s.basis) {
       const b = document.createElement('div');
       b.className = 'basis';
-      b.innerHTML = `<span class="pill info">Basis</span> ${esc(s.basis)} Settings come from published evidence where it exists, shown under each slider, rounded; the rest is judgement anchored on that evidence.`;
+      b.innerHTML = `<span class="pill info">Covers</span> ${esc(s.basis)}`;
       ed.append(b);
     }
     ed.append(
-      slider({ ev: ev('weight'), evKey: 'weight', id: 's-weight', label: 'Size', sym: 'share of GDP', min: 1, max: 40, step: 0.5, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => `${v}% of GDP`, hint: 'Value added at the start. Core sectors’ combined share sets how much of the economy is Core.' }),
-      slider({ ev: ev('f'), evKey: 'f', id: 's-f', label: 'Work AI can speed up today', sym: 'f₀', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: 'About 25% for physical and hands-on work, about 50% for knowledge work.' }),
-      slider({ ev: ev('fmax'), evKey: 'fmax', id: 's-fmax', label: 'Work AI could ever speed up', sym: 'f_max', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The ceiling as capability broadens (agents, some robotics). The rest stays human.' }),
-      slider({ ev: ev('p'), evKey: 'p', id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum competition · 100% = pure wealth creation.' }),
-      slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Review burden (slop)', sym: 'η', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = auto-verified · 2 = mostly checkable (code) · 5 = needs expert review · 7 = error-prone and costly to check · 10 = unverifiable.' }),
-      slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', sym: 'γ', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = air-gapped · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis scenario.' }),
-      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck can be removed by rebuilding around AI: plant, equipment, sites, systems, rules, contracts and roles.' }),
-      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the rebuilding is worth the cost.' }),
-      slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Rebuilding speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast the sector closes the gap to the rebuilding worth doing. Slow where capital is long-lived, sites are fixed and rules, contracts and habits change slowly.' })
+      slider({ ev: ev('weight'), evKey: 'weight', id: 's-weight', label: 'Size', min: 1, max: 40, step: 0.5, get: () => s.weight, set: (v) => (s.weight = v), fmt: (v) => `${v}% of GDP`, hint: 'Share of GDP at the start.' }),
+      slider({ ev: ev('f'), evKey: 'f', id: 's-f', label: 'Work AI can speed up today', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: 'About 25% for hands-on work, about 50% for knowledge work.' }),
+      slider({ ev: ev('fmax'), evKey: 'fmax', id: 's-fmax', label: 'Work AI could ever speed up', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The ceiling as AI broadens (agents, some robotics). The rest stays human.' }),
+      slider({ ev: ev('p'), evKey: 'p', id: 's-p', label: 'New wealth vs arms race', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: 'Share of a speedup that creates real wealth. 0% = pure competition, where one side’s gain is another’s loss · 100% = all new wealth.' }),
+      slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Checking costs', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'How much AI output people must check and fix. 0 = checks itself · 2 = mostly checkable (code) · 5 = needs expert review · 10 = can’t be verified.' }),
+      slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = sealed off · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis.' }),
+      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the bottleneck can be removed by rebuilding plant, sites, systems, rules, contracts and roles around AI.' }),
+      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the rebuilding is worth the cost.' }),
+      slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Rebuilding speed', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'Share of the gap to the rebuilding worth doing closed each year. Slow where machines last decades, sites are fixed and rules change slowly.' })
     );
   }
 
@@ -430,42 +430,37 @@
     const worst = best[best.length - 1];
     const head = mc ? mc.Vmacro.p50[L] : last.Vmacro;
     const annual = Math.pow(head, 1 / Math.max(1, last.t)) - 1;
-    const gdpTxt = ` · GDP ${fx(head * last.trend)} its ${startY} level, against ${fx(last.trend)} without further AI`;
     const econSub = mc
-      ? `times what output would be without further AI · median of ${M.MC.runs} runs · adds ${(annual * 100).toFixed(1)}%/yr · 80% range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])}${gdpTxt}`
-      : `times what output would be without further AI · central run · adds ${(annual * 100).toFixed(1)}%/yr${gdpTxt} · ${mcPending()}`;
+      ? `adds ${(annual * 100).toFixed(1)}% a year · likely range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])}`
+      : `adds ${(annual * 100).toFixed(1)}% a year · ${mcPending()}`;
     $('kpis').innerHTML =
       kpi(`Output vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
-      kpi(`Useful AI work ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `${mc ? `median · 80% range ${fx(mc.T.p10[L])}–${fx(mc.T.p90[L])} · ` : ''}growth now ${(last.growth * 100).toFixed(1)}%/yr`) +
-      kpi('Core infrastructure', fx(last.Vcore), !last.hasC ? 'No Core sectors' : last.Vcore < 1 ? 'Below baseline: braking AI progress' : 'Above baseline: no brake', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
+      kpi(`Useful AI work, ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `times end-2026 · growing ${(last.growth * 100).toFixed(0)}% a year`) +
+      kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off than without further AI', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
-      kpi('Tasks done with AI', pc(last.automationFixed), `of ${startY}'s work (${pc(rows[0].automationFixed)} in ${startY})`) +
-      kpi('AI-native products', pc(last.newShare), `of the economy in ${last.year}`);
+      kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(rows[0].automationFixed)} in ${startY}`) +
+      kpi('AI-native products', pc(last.newShare), `of the economy`);
 
     // Chart 1: GDP with and without further AI (start year = 1, both include trend growth)
-    const c = [css('--s1'), css('--s2'), css('--s3')];
+    const c = css('--s1');
     const tr = rows.map((r) => r.trend);
+    const mid = mc ? mc.Vmacro.p50 : rows.map((r) => r.Vmacro);
     const ser = [
-      { name: 'With AI, whole economy (central run)', label: 'With AI', color: c[0], ys: rows.map((r, i) => r.Vmacro * tr[i]), width: 3 },
-      { name: 'With AI, Core sectors', label: 'Core', color: c[1], ys: rows.map((r, i) => r.Vcore * tr[i]), width: 2 },
-      { name: 'With AI, Flex sectors', label: 'Flex', color: c[2], ys: rows.map((r, i) => r.Vflex * tr[i]), width: 2 },
-      { name: `Without further AI (${tg.toFixed(1)}%/yr trend)`, label: 'No further AI', color: css('--ink-2'), ys: tr.slice(), width: 2, dash: '6 4' },
-    ].filter((se) => se.ys.every(Number.isFinite));
-    if (mc) ser.push({ name: 'With AI, median of runs', label: 'Median', color: c[0], ys: mc.Vmacro.p50.map((v, i) => v * tr[i]), width: 1.5, dash: '2 3' });
-    const band = mc ? { lo: mc.Vmacro.p10.map((v, i) => v * tr[i]), hi: mc.Vmacro.p90.map((v, i) => v * tr[i]), color: c[0], name: 'With AI, 80% range' } : null;
-    $('c1-title').textContent = 'GDP with and without further AI';
-    $('c1-sub').textContent = `Real GDP, ${startY} = 1. Both worlds grow ${tg.toFixed(1)}% a year from everything except AI, the current average for advanced economies (IMF). The gap is what AI adds.`;
-    legend($('c1-legend'), ser.concat(band ? [{ name: 'With AI, 80% range', color: c[0], band: true }] : []));
+      { name: 'With AI', label: 'With AI', color: c, ys: mid.map((v, i) => v * tr[i]), width: 3 },
+      { name: 'Without further AI', label: 'No further AI', color: css('--ink-2'), ys: tr.slice(), width: 2, dash: '6 4' },
+    ];
+    const band = mc ? { lo: mc.Vmacro.p10.map((v, i) => v * tr[i]), hi: mc.Vmacro.p90.map((v, i) => v * tr[i]), color: c, name: 'Likely range' } : null;
+    $('c1-sub').textContent = `${startY} = 1. Both lines include ${tg.toFixed(1)}% a year of growth from everything except AI, the current average for advanced economies. The gap is what AI adds.`;
+    legend($('c1-legend'), ser.concat(band ? [{ name: 'Likely range (80% of runs)', color: c, band: true }] : []));
     lineChart($('c1'), {
-      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`, yLabel: `GDP, ${startY} = 1`,
-      tipX: (x, i) => `${x} · with AI ${fx(rows[i].Vmacro)} of no further AI · T = ${fx(rows[i].T)}`, height: 300, directLabels: true, aria: 'GDP with and without further AI over time',
+      xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
+      tipX: (x, i) => `${x} · output ${fx(mid[i])} of no further AI`, height: 300, directLabels: true, aria: 'GDP with and without further AI over time',
     });
 
     // Chart 2: T over time (log)
-    $('c2-title').textContent = 'Useful AI work, T';
-    $('c2-sub').textContent = 'Multiple of end-2026 verified work per $ (log scale).';
-    const tBand = mc ? { lo: mc.T.p10, hi: mc.T.p90, color: css('--s7'), name: '80% range' } : null;
-    legend($('c2-legend'), tBand ? [{ name: 'Useful AI work', color: css('--s7') }, { name: '80% range', color: css('--s7'), band: true }] : []);
+    $('c2-sub').textContent = 'Verified work AI does per dollar, times end-2026 (log scale).';
+    const tBand = mc ? { lo: mc.T.p10, hi: mc.T.p90, color: css('--s7'), name: 'Likely range' } : null;
+    legend($('c2-legend'), tBand ? [{ name: 'Useful AI work', color: css('--s7') }, { name: 'Likely range', color: css('--s7'), band: true }] : []);
     lineChart($('c2'), {
       xs, series: [{ name: 'Useful AI work', color: css('--s7'), ys: rows.map((r) => r.T), width: 2.5 }], band: tBand,
       yLog: true, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : tickFmtX(v)),
@@ -475,10 +470,9 @@
 
     // Chart 3: sector V
     const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].V), width: i === state.sel ? 3 : 2 }));
-    $('c3-title').textContent = 'Sector output vs no further AI';
-    $('c3-sub').textContent = 'Each sector after bottlenecks, arms races and slop. Below 1.0 means AI made the sector worse off.';
+    $('c3-sub').textContent = 'After bottlenecks, arms races and checking costs. Below 1.0 means AI left the sector worse off.';
     legend($('c3-legend'), sser);
-    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× sector output without further AI', tipX: (x) => String(x), height: 240, aria: 'Sector output over time' });
+    lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', tipX: (x) => String(x), height: 240, aria: 'Sector output over time' });
 
     // Chart 4: rebuilding around AI
     const gser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].g * 100), width: i === state.sel ? 3 : 2 }));
@@ -488,14 +482,14 @@
     // Chart 5: spending shares (Baumol)
     const shser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.shares[i] * 100), width: i === state.sel ? 3 : 2 }));
     if (state.Nmax > 0) shser.push({ name: 'AI-native products', color: css('--s7'), ys: rows.map((r) => r.newShare * 100), width: 2, dash: '5 4' });
-    $('c5-sub').textContent = 'Share of total spending. When sectors are complements, spending shifts toward the ones AI speeds up least (the Baumol effect).';
+    $('c5-sub').textContent = 'Spending shifts toward the essential sectors AI speeds up least, because people still need them.';
     legend($('c5-legend'), shser);
     lineChart($('c5'), { xs, series: shser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, tipX: (x) => String(x), height: 240, aria: 'Spending shares over time' });
 
     // Chart 6: tasks done with AI
-    const aser = [{ name: `Whole economy (${startY} mix of work)`, color: css('--s1'), ys: rows.map((r) => r.automationFixed * 100), width: 2.5 }];
+    const aser = [{ name: 'Whole economy', color: css('--s1'), ys: rows.map((r) => r.automationFixed * 100), width: 2.5 }];
     state.sectors.forEach((s, i) => { if (i === state.sel) aser.push({ name: s.name, color: seriesColor(i), ys: rows.map((r) => (1 - r.sectors[i].eps) * 100), width: 2, dash: '2 3' }); });
-    $('c6-sub').textContent = 'Share of work time AI handles, weighted by the starting economy. A task measure, not a forecast of jobs or wages.';
+    $('c6-sub').textContent = 'Share of work time AI handles, by the starting mix of work. A measure of tasks, not jobs or wages.';
     legend($('c6-legend'), aser);
     lineChart($('c6'), { xs, series: aser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, yCeil: 100, tipX: (x) => String(x), height: 240, aria: 'Tasks done with AI over time' });
 
@@ -509,12 +503,12 @@
     if (!s) { $('sector-status').innerHTML = ''; return; }
     const pills = [];
     const fitTxt = s.fAvail - s.f > 0.005 ? `AI used for ${pc(s.f)} of the ${pc(s.fAvail)} it can do` : `AI used for ${pc(s.f)}`;
-    pills.push(`<span class="pill info">${when}: output ≈ ${fx(s.V)} · speedup ≈ ${fx(s.S)} · ${fitTxt} · rebuilt ${pc(s.g)}</span>`);
-    if (s.capped) pills.push(`<span class="pill warn">Holding back at its Slop Peak (${fx(s.Tstar)})</span>`);
+    pills.push(`<span class="pill info">${when}: output ${fx(s.V)} · work ${fx(s.S)} faster · ${fitTxt} · ${pc(s.g)} rebuilt</span>`);
+    if (s.capped) pills.push(`<span class="pill warn">Holding AI use back: more would cost more in errors than it saves</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);
     else if (s.V >= 2) pills.push(`<span class="pill good">More than doubled</span>`);
     const P = M.sectorParams(cfg);
-    if (P.p < 0.5 && s.slop > 0 && P.p <= s.slop * (1 - P.p)) pills.push(`<span class="pill warn">Arms-race regime: any further speedup lowers this sector's value</span>`);
+    if (P.p < 0.5 && s.slop > 0 && P.p <= s.slop * (1 - P.p)) pills.push(`<span class="pill warn">Arms race: any further speedup lowers this sector's value</span>`);
     $('sector-status').innerHTML = pills.join('');
   }
 
@@ -522,10 +516,10 @@
   function renderTable(rows) {
     $('tbl-title').textContent = 'Year by year';
     const names = state.sectors.map((s) => esc(s.name));
-    let h = '<thead><tr><th>Year</th><th>T</th><th>V core</th><th>V flex</th><th>New products</th><th>Whole economy (× no further AI)</th><th>GDP with AI (' + state.startYear + ' = 1)</th><th>GDP without further AI</th><th>Tasks done with AI</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+    let h = '<thead><tr><th>Year</th><th>Useful AI work</th><th>Whole economy (× no further AI)</th><th>Essential sectors</th><th>Flexible sectors</th><th>AI-native products</th><th>GDP with AI (' + state.startYear + ' = 1)</th><th>GDP without further AI</th><th>Tasks done with AI</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
     rows.forEach((r) => {
-      h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
-        `<td>${f2(r.newGoods)}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td><td>${f2(r.gdp)}</td><td>${f2(r.gdpNoAI)}</td><td>${pc(r.automationFixed)}</td>` +
+      h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
+        `<td>${f2(r.newGoods)}</td><td>${f2(r.gdp)}</td><td>${f2(r.gdpNoAI)}</td><td>${pc(r.automationFixed)}</td>` +
         r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
     });
     $('tbl').innerHTML = h + '</tbody>';
@@ -534,7 +528,7 @@
   function toCSV() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
     const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
-    const head = ['year', 'T', 'V_core', 'V_flex', 'new_products', 'V_macro_vs_no_further_AI', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `rebuilt ${s.name}`, `ai_in_use ${s.name}`, `spending_share ${s.name}`]));
+    const head = ['year', 'useful_ai_work', 'V_essential', 'V_flexible', 'new_products', 'V_macro_vs_no_further_AI', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `rebuilt ${s.name}`, `ai_in_use ${s.name}`, `spending_share ${s.name}`]));
     const lines = lastRows.map((r) => [r.year, r.T, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.g, s.f, r.shares[i]])).map(n).join(','));
     return [head.map(q).join(',')].concat(lines).join('\n');
   }

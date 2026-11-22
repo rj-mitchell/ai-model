@@ -214,16 +214,27 @@ tr:last-child td { border-bottom: 0; }
 .fixed-list { margin: 0; display: grid; gap: 8px; font-size: 13px; }
 .fixed-list dt { font-weight: 600; color: var(--ink); }
 .fixed-list dd { margin: 0 0 4px; color: var(--ink-2); line-height: 1.45; }
+details.maths > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.sum-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+details.maths > summary::-webkit-details-marker { display: none; }
+details.maths > summary::after { content: "+"; margin-left: auto; font-family: var(--font-mono); color: var(--muted); font-size: 18px; }
+details.maths[open] > summary::after { content: "−"; }
+.maths-body { display: flex; flex-direction: column; gap: 18px; padding-top: 16px; }
+details.ev > summary { cursor: pointer; list-style: none; color: var(--ink-2); }
+details.ev > summary::-webkit-details-marker { display: none; }
+details.ev > summary::before { content: "▸ "; color: var(--muted); }
+details.ev[open] > summary::before { content: "▾ "; }
+details.ev > div { padding-top: 4px; }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="titles">
-      <span class="eyebrow">Bottlenecks · Slop · Red Queen · Weak links</span>
+      <span class="eyebrow">Bottlenecks · Arms races · Checking costs · Weakest links</span>
       <h1>AI Transformation Model</h1>
-      <p class="lede" id="lede">Each quarter the model works out every sector's output given how capable AI is, how widely it is used and how far the plant, systems, rules and roles work runs on have been rebuilt around it. That output then feeds back into how fast AI improves. Six dials set the scenario; each sector has its own evidence-based settings. See whether the economy compounds, stalls, or drowns in slop.</p>
-      <p class="simplified"><b>A simplified model of an advanced economy.</b> The whole economy is represented by only six broad sectors, each between 13% and 20% of GDP. Sector sizes and much of the evidence come from the US, whose data are the most detailed, used as a template for advanced economies. Their settings come from published evidence where it exists (exposure studies, adoption surveys, field trials, GDP data), rounded, with judgement filling the gaps, so read the results as scenarios.</p>
-      <a class="why-link" href="why.html">Why doesn't it go exponential? Read the explainer →</a>
+      <p class="lede" id="lede">How much richer could AI make an advanced economy, and why doesn't it explode? Pick a scenario or move the dials to see whether output compounds, stalls, or is eaten up by errors and arms races.</p>
+      <p class="simplified"><b>A simplified model.</b> Six broad sectors, each 13–20% of GDP, sized from US data as a template for advanced economies. Settings come from published evidence where it exists, with judgement filling the gaps, so read the results as scenarios, not forecasts.</p>
+      <a class="why-link" href="why.html">Why doesn't it explode? Read the explainer →</a>
     </div>
   </header>
 
@@ -244,7 +255,7 @@ tr:last-child td { border-bottom: 0; }
 
       <div class="panel chart-card">
         <div class="chart-head">
-          <h2 id="c1-title">Economy-wide value</h2>
+          <h2 id="c1-title">GDP with and without further AI</h2>
           <p id="c1-sub"></p>
         </div>
         <div class="legend" id="c1-legend"></div>
@@ -259,7 +270,7 @@ tr:last-child td { border-bottom: 0; }
           <div class="chart" id="c2"></div>
         </div>
         <div class="panel chart-card">
-          <div class="chart-head"><h2 id="c3-title">Sector net value</h2></div>
+          <div class="chart-head"><h2 id="c3-title">Sector output vs no further AI</h2></div>
           <p class="eq-note" id="c3-sub"></p>
           <div class="legend" id="c3-legend"></div>
           <div class="chart" id="c3"></div>
@@ -269,7 +280,7 @@ tr:last-child td { border-bottom: 0; }
       <div class="panel chart-card" id="c4-card">
         <div class="chart-head">
           <h2>Rebuilding around AI</h2>
-          <p>Share of each sector's remaining bottleneck removed by rebuilding plant, equipment, systems, rules, contracts and roles around AI</p>
+          <p>How much of each sector's bottleneck has been removed by rebuilding plant, systems, rules and roles around AI</p>
         </div>
         <div class="legend" id="c4-legend"></div>
         <div class="chart" id="c4"></div>
@@ -283,7 +294,7 @@ tr:last-child td { border-bottom: 0; }
           <div class="chart" id="c5"></div>
         </div>
         <div class="panel chart-card" id="c6-card">
-          <div class="chart-head"><h2>Automation and risk</h2></div>
+          <div class="chart-head"><h2>Tasks done with AI</h2></div>
           <p class="eq-note" id="c6-sub"></p>
           <div class="legend" id="c6-legend"></div>
           <div class="chart" id="c6"></div>
@@ -296,7 +307,7 @@ tr:last-child td { border-bottom: 0; }
     <div class="row" style="justify-content:space-between">
       <div style="display:flex;flex-direction:column;gap:4px">
         <h2>Sectors</h2>
-        <p class="eq-note">Six broad sectors that together cover the whole economy, each 13–20% of GDP. Pick one to see why its settings are what they are, or to change them. Core sectors are combined as a weakest-link average. Flex sectors are a plain weighted average.</p>
+        <p class="eq-note">Pick a sector to see the evidence behind its settings, or to change them. <b>Essential</b> sectors depend on each other, so the weakest holds the rest back. <b>Flexible</b> sectors can stand in for each other.</p>
       </div>
       <div class="row">
         <button class="btn" id="add-sector">Add sector</button>
@@ -316,79 +327,58 @@ tr:last-child td { border-bottom: 0; }
     <div class="tbl-wrap tbl-scroll"><table id="tbl"></table></div>
   </section>
 
-  <section class="panel" aria-label="Sources for the default settings" style="display:flex;flex-direction:column;gap:12px">
-    <h2>Sources for the default settings</h2>
-    <p class="eq-note">Each sector slider shows the evidence range, confidence and sources behind its default. Exposure figures re-weight Eloundou et al.'s occupation scores by each sector's 2023 hours worked. The full list:</p>
-    <ul class="sources-list" id="sources-list"></ul>
-  </section>
+  <details class="panel maths" aria-label="Sources for the default settings">
+    <summary><div class="sum-text"><h2>Sources</h2><span class="eq-note">The studies and data behind the default settings. Each slider's evidence note links to the ones it uses.</span></div></summary>
+    <div class="maths-body"><ul class="sources-list" id="sources-list"></ul></div>
+  </details>
 
-  <section class="panel" aria-label="The equations" style="display:flex;flex-direction:column;gap:18px">
-    <div style="display:flex;flex-direction:column;gap:4px">
-      <h2>The equations</h2>
-      <p class="eq-note"><b>What the numbers measure:</b> every V is a multiple of what output would be without further AI, meaning a world where AI stays at its end-2026 level and use. 1.0× is that world; 1.6× means 60% more output than it. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds (the current advanced-economy average, IMF October 2026): \(\text{GDP}_t=V_{\text{macro},t}\,(1.02)^t\) with AI and \((1.02)^t\) without, with 2027 = 1. Settings not on a dial are fixed assumptions, listed with their evidence under the dials.</p>
-    </div>
+  <details class="panel maths" aria-label="How the model works">
+    <summary><div class="sum-text"><h2>How the model works</h2><span class="eq-note">The equations, for anyone who wants to check them</span></div></summary>
+    <div class="maths-body">
+    <p class="eq-note"><b>What the numbers measure:</b> every output figure is a multiple of output without further AI, meaning a world where AI stays at its end-2026 level and use. 1.6× means 60% more output than that world. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds: \(\text{GDP}_t=V_{t}\,(1.02)^t\) with AI and \((1.02)^t\) without, with 2027 = 1. Settings without a dial are listed under "Fixed assumptions".</p>
     <div class="eqs">
       <div class="eq-block">
-        <h3>1 · Sector level: net real economic value</h3>
+        <h3>1 · Each sector's output</h3>
         <div class="eq">\[f_i^*(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta} \qquad \epsilon_i=(1-a_i)(1-g_i)\]</div>
-        <div class="eq">\[\tau_i=\epsilon_i+\underbrace{a_i(1-g_i)}_{\text{assisted}}\Big(h+\frac{1-h}{\hat A\,T_{\text{eff}}}\Big)+\underbrace{g_i}_{\text{autonomous}}\frac{1}{\hat A\,T_{\text{eff}}} \qquad \frac{1}{A}=h+\frac{1-h}{\hat A}\]</div>
+        <div class="eq">\[\tau_i=\epsilon_i+\underbrace{a_i(1-g_i)}_{\text{assisted}}\Big(h+\frac{1-h}{\hat A\,T_{\text{eff}}}\Big)+\underbrace{g_i}_{\text{rebuilt}}\frac{1}{\hat A\,T_{\text{eff}}} \qquad \frac{1}{A}=h+\frac{1-h}{\hat A}\]</div>
         <div class="eq">\[\tau_{i,0}=\epsilon_{i,0}+\frac{1-\epsilon_{i,0}}{A},\;\; \epsilon_{i,0}=1-a_0 f_{i,0} \qquad S_i=\frac{\tau_{i,0}}{\tau_i}\]</div>
         <div class="eq">\[V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\hat\eta_i\ln T_{\text{eff}}+\gamma_iT^{-\delta_\gamma}\ln T\big)\,S_i}\]</div>
-        <p class="eq-note">Available native fit \(f_i^*\) rises with capability toward a fixed ceiling. Breadth \(\beta\) is set from the AGI year: by then \(f_i^*\) has closed 90% of the gap to its ceiling (median expert: 2050). Work done with AI inside old processes is <i>assisted</i>: people still direct and check it, so a share \(h\) of its time stays human and its speedup is capped at \(1/h\). Rebuilding the work around AI turns it into <i>autonomous</i> work, which speeds up fully with \(T\). \(A\) is today's measured speedup on assisted work and \(\hat A\) is AI's own speed implied by it. \(a_i\) is the native fit actually in use. \(\tau\) is time per unit of work relative to doing it without AI, and \(A\) is how much faster today's AI already is on the work it is used for. Speedup \(S_i\) is measured against how work was really done at end-2026, so adopting or rebuilding around today's AI pays off even if AI stops improving. Review burden falls as AI broadens toward its ceiling, and defensive AI offsets external attack. <b>Deployment rule:</b> each sector uses \(T_{\text{eff}}=\min(T,T^*)\), where the Slop Peak \(T^*\) is the usage level that maximises \(V_i\); fraud and attack scale with the full \(T\) regardless. Native fit is capped at 95% and rebuilding at 90%.</p>
+        <p class="eq-note">\(f_i^*\) is the share of a sector's work AI can do, rising with capability \(T\) toward a fixed ceiling; \(\beta\) is set so it has closed 90% of the gap by the AGI year. \(a_i\) is the share actually done with AI. \(\epsilon_i\) is the work AI doesn't touch. AI-assisted work in old setups keeps a share \(h\) human, so it gets at most \(1/h\) faster; work rebuilt around AI (\(g_i\)) speeds up fully. \(\tau\) is time per unit of work, \(A\) today's speedup on assisted work, and \(S_i\) the speedup against how work was done at end-2026. \(p_i\) is the share of the speedup that creates real wealth rather than feeding an arms race. \(\eta_i\) (checking costs inside the sector, falling as AI broadens: \(\hat\eta_i=\eta_i(1-0.5\,c_t)\), \(c_t=1-T^{-\beta}\)) and \(\gamma_i\) (spam, fraud and attack from outside, partly offset by defensive AI, \(\delta_\gamma=0.1\)) are scored 0–10 and divided by 200. Each sector uses AI only up to the level that maximises its output, \(T_{\text{eff}}=\min(T,T^*)\); outside attacks scale with the full \(T\). AI-ready work is capped at 95% and rebuilding at 90%.</p>
       </div>
       <div class="eq-block">
-        <h3>2 · Macro level: Core, Flex and new products</h3>
-        <div class="eq">\[V_{\text{core}}=\Big(\sum_{i\in\text{Core}}\tilde w_i V_i^{\rho}\Big)^{1/\rho} \qquad V_{\text{flex}}=\sum_{j\in\text{Flex}}\tilde w_j V_j\]</div>
-        <div class="eq">\[V_{\text{macro}}=\Big(W_{\text{core}}V_{\text{core}}^{\rho_m}+W_{\text{flex}}V_{\text{flex}}^{\rho_m}\Big)^{1/\rho_m}+n_t\]</div>
-        <p class="eq-note">\(W_{\text{core}}\) is the Core sectors' combined share of GDP (about two-thirds by default). \(\rho=-4\) makes Core a weak link: its worst sector dominates. \(\rho_m=-0.5\) makes Core and Flex complements, so spending shifts toward the slower tier (the Baumol effect). \(n_t\) is AI-native products. A tier with no sectors is left out.</p>
+        <h3>2 · The whole economy</h3>
+        <div class="eq">\[V_{\text{ess}}=\Big(\sum_{i\in\text{ess}}\tilde w_i V_i^{\rho}\Big)^{1/\rho} \qquad V_{\text{flex}}=\sum_{j\in\text{flex}}\tilde w_j V_j\]</div>
+        <div class="eq">\[V=\Big(W_{\text{ess}}V_{\text{ess}}^{\rho_m}+W_{\text{flex}}V_{\text{flex}}^{\rho_m}\Big)^{1/\rho_m}+n_t\]</div>
+        <p class="eq-note">\(\tilde w\) are sector shares within each group and \(W_{\text{ess}}\) the essential sectors' share of GDP (about two-thirds). \(\rho=-4\) makes the weakest essential sector dominate. \(\rho_m=-0.5\) means people need both groups, so spending shifts toward whichever AI speeds up least. \(n_t\) is AI-native products.</p>
       </div>
       <div class="eq-block">
-        <h3>3 · Dynamic loop: tech power</h3>
-        <div class="eq">\[x_t=r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{core},t})\,\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\]</div>
+        <h3>3 · How fast AI improves</h3>
+        <div class="eq">\[x_t=r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{ess},t})\,\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\]</div>
         <div class="eq">\[\text{growth}_t=\frac{x_t}{\big(1+(x_t/\text{cap})^4\big)^{1/4}} \qquad T_{t+\Delta t}=T_t\,(1+\text{growth}_t)^{\Delta t}\]</div>
-        <p class="eq-note">The \(1+1/T_{\text{half}}\) factor makes year-one growth equal \(r_0\). The speed limit leaves normal rates of AI progress untouched and bends very fast progress toward the cap, standing in for how fast chips, data centres and power can be built. \(V_{\text{R\&D}}\) is the output of the sectors that do AI research (knowledge and professional services), \(\phi=0.4\), \(T_{\text{half}}=15\) and the cap is 200%/yr. The model steps quarterly (\(\Delta t=\tfrac14\)) and reports yearly.</p>
+        <p class="eq-note">\(T\) is useful AI work: verified work per dollar, end-2026 = 1. It grows at \(r_0\) in year one, faster when the AI research sector (knowledge and professional services) is more productive (\(\phi=0.4\)), slower when essential sectors fall below baseline, and with diminishing returns (\(T_{\text{half}}=15\)). A speed limit of 200% a year stands in for how fast chips, data centres and power can be built. The model steps quarterly and reports yearly.</p>
       </div>
       <div class="eq-block">
-        <h3>4 · Dynamic loop: adoption, rebuilding, new products</h3>
-        <div class="eq">\[\dot a_i=\lambda\,a_i\Big(1-\frac{a_i}{f_i^*(T)}\Big),\quad a_{i,0}=a_0\,f_{i,0}\]</div>
-        <div class="eq">\[c_i=J\,\max\!\big(0,\;\dot u_i-\dot u_{i,0}\big),\quad u_i=1-\epsilon_i \qquad V_i\leftarrow V_i\,(1-c_i)\]</div>
-        <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{k}}-g_{i,t}\Big)\]</div>
-        <div class="eq">\[n_{t+1}=n_t+s\big(N_{\max}H(T_t,T_{\text{new}})-n_t\big)\]</div>
-        <div class="eq">\[\lambda_t,\ \alpha_{i,t},\ s_t\ \times\ m_t,\qquad m_t=\Big(\frac{\ln R_t}{\ln 1.4}\Big)^{\nu},\qquad R_t=\Big(h+\frac{1-h}{\hat A\,T_t}\Big)^{-1}\]</div>
-        <p class="eq-note">Adoption follows an S-curve, and adoption, rebuilding and new products all spread faster as AI's advantage on assisted work grows (\(\nu=0.25\)). Internal review burden falls as AI broadens: \(\hat\eta_i=\eta_i\,(1-0.5\,c_t)\), where \(c_t=1-T_t^{-\beta}\) is the share of the gap to the ceiling AI has closed. \(c_i\) is the productivity J-curve: while the automated share \(u_i\) rises faster than today's pace \(\dot u_{i,0}\), output is diverted into training, integration and process change, so gains arrive later (\(J=0.25\)). Defensive AI offsets attack: \(\delta_\gamma=0.1\). New products reach half their mature size near \(T_{\text{new}}=10\) and close \(s=15\%\) of the gap a year. Today, \(A=1.4\) and \(a_0=20\%\) of available fit is in use. Rates \(\alpha_i,s\) are shares of the gap closed per year, applied per quarter as \(1-(1-\text{rate})^{1/4}\). \(k=2.5\). \(H(T,m)=\frac{T^k-1}{T^k-1+m^k}\) is an S-curve that is 0 at \(T=1\) and reaches ½ near \(m\).</p>
+        <h3>4 · Adoption, rebuilding and new products</h3>
+        <div class="eq">\[\dot a_i=\lambda\,m_t\,a_i\Big(1-\frac{a_i}{f_i^*(T)}\Big),\quad a_{i,0}=0.2\,f_{i,0}\]</div>
+        <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i m_t\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{2.5}}-g_{i,t}\Big) \qquad n_{t+1}=n_t+0.15\,m_t\big(N_{\max}H(T_t,10)-n_t\big)\]</div>
+        <div class="eq">\[m_t=\Big(\frac{\ln R_t}{\ln 1.4}\Big)^{0.25},\quad R_t=\Big(h+\frac{1-h}{\hat A\,T_t}\Big)^{-1} \qquad V_i\leftarrow V_i\big(1-0.25\max(0,\dot u_i-\dot u_{i,0})\big)\]</div>
+        <p class="eq-note">Use of AI spreads along an S-curve; adoption, rebuilding and new products all move faster as AI's advantage \(R_t\) grows. The last term is the up-front cost of change: while the share of work done with AI, \(u_i=1-\epsilon_i\), rises faster than today's pace, some output goes into training and reorganising, so gains arrive later. Yearly rates are applied per quarter. \(H(T,m)=\frac{T^{2.5}-1}{T^{2.5}-1+m^{2.5}}\) is an S-curve that is 0 at \(T=1\) and ½ near \(m\).</p>
       </div>
     </div>
-    <dl class="key">
-      <dt>T</dt><dd>Useful AI work: verified work per $ on the compressible slice of a job, as a multiple of end-2026 (1×). Not raw tokens.</dd>
-      <dt>A</dt><dd>Today's AI speedup: how much faster end-2026 AI does the tasks it is used for than people without it.</dd>
-      <dt>h</dt><dd>Human-in-the-loop share: the part of AI-assisted work that stays human (directing, checking) until the work is rebuilt around AI.</dd>
-      <dt>AGI year</dt><dd>When AI can beat a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost (median expert 2050). Sets capability breadth β.</dd>
-      <dt>f<sub>i</sub>*, a<sub>i</sub></dt><dd>Native fit: the share of a sector's work AI can compress (f*, rising from f₀ toward the fixed ceiling f_max), and the share actually being done with AI (a, which lags behind).</dd>
-      <dt>g<sub>i</sub></dt><dd>Rebuilding around AI (Gustafson): share of the remaining bottleneck removed by rebuilding the physical and institutional setup work runs on, from plant, equipment, sites and software systems to rules, contracts, roles and habits (capped at 90%). It is slow and sticky because capital is long-lived, sites are fixed and institutions change slowly.</dd>
-      <dt>p<sub>i</sub></dt><dd>Real wealth share: 1 means the speedup creates wealth, 0 means a zero-sum Red Queen arms race.</dd>
-      <dt>η<sub>i</sub>, γ<sub>i</sub></dt><dd>Internal slop and ambient exposure, scored 0–10 from sector evidence and divided by 200. The scale is calibrated so slop and fraud cost about 1% of output by 2028, the high end of survey and fraud-loss estimates.</dd>
-      <dt>ρ, ρ<sub>m</sub></dt><dd>Complementarity inside Core (ρ = −4) and between Core and Flex (ρ<sub>m</sub> = −0.5). Both are fixed.</dd>
-      <dt>w̃, W</dt><dd>Sector weights within each tier (normalised), and the Core / Flex split, taken from the sectors' shares of GDP.</dd>
-    </dl>
-  </section>
+    </div>
+  </details>
 
   <section class="panel" aria-label="Known limitations" style="display:flex;flex-direction:column;gap:12px">
-    <h2>What this model still can't tell you</h2>
+    <h2>What this model can't tell you</h2>
     <ul class="limits">
-      <li><b>Output figures are relative to no further AI.</b> "1.6×" means 60% more output than if AI stayed at its end-2026 level and use. The GDP chart adds the same 2.0% trend to both worlds, which assumes trend growth and AI's effect are independent.</li>
-      <li><b>Six sectors stand in for a whole economy, sized like the US.</b> The model represents advanced economies, but its sector sizes are US shares of GDP and much of its evidence (adoption, robotics, fraud) is from the US, where data are most detailed. Manufacturing-heavy economies such as Germany and Japan have a larger physical sector, which lowers their gains only slightly in the model. It is not a model of the world economy, where farming, informal work and slower adoption would change the picture. The default sectors are broad groups of BEA industries (physical production and energy; trade and logistics; health, education and government; finance and business services; knowledge and professional services; property, hospitality and personal services). Each blends industries with very different settings, so arms-race activity like litigation, advertising and trading is averaged into larger sectors. The results show how the mechanisms interact, not how any actual industry will fare.</li>
-      <li><b>Robotics is only partly included.</b> The ceilings on hands-on work include the robotics allowance in exposure studies and McKinsey's estimate that robots could take about 13% of US work hours with demonstrated technology. Robots are not modelled as their own technology with their own costs and build-out, and the fixed ceilings assume they never take over most physical work. The "Robotics breakthrough" preset shows what changes if they do.</li>
-      <li><b>It is only partly calibrated.</b> Sector sizes, exposure, adoption and today's speedup come from data; zero-sum shares, review burden, fraud exposure and rebuilding speed are judgement anchored on evidence, and their ranges are wide. Results depend most on native fit and the real-wealth share, so use the uncertainty band and read results as scenarios.</li>
-      <li><b>Jobs and wages are not modelled.</b> "Tasks automated" measures how much work AI handles. Whether that means lost jobs, higher wages or shorter hours depends on a labour market this model doesn't contain. Adding one would double the number of unanchored inputs.</li>
-      <li><b>Catastrophic risk is not modelled.</b> The model asks what AI does to output if things broadly go right. The explainer's corollary explains why the same bottlenecks make a fast takeover less likely, but it can't put a number on that risk.</li>
-      <li><b>Red Queen sectors lose from every speedup.</b> When a sector's real-wealth share p is below a/(1 + a), where a is its slop term (η ln T_eff + γ ln T), anything that makes it faster lowers its value. That is the intended arms-race logic, but it is a strong claim. The sector status flags when a sector is in this regime.</li>
-      <li><b>New products, capability breadth and defensive AI are the most speculative mechanisms.</b> They have the least evidence behind them and push results up. Setting them to zero gives a deliberately conservative model.</li>
-      <li><b>Some assumptions are fixed to keep it simple.</b> Settings with little effect on the results, or with strong evidence behind them, are held constant rather than put on dials. They are listed with their evidence under the dials and are still varied in the uncertainty band.</li>
-      <li><b>Some limits are irreducible by design.</b> Native fit, rebuilding and new products all have fixed ceilings, so the economy levels off however capable AI becomes. That is deliberate: the model shows which bottlenecks capability alone does not remove. Raising the ceilings is a different claim, not a correction.</li>
-      <li><b>The uncertainty band covers inputs, not structure.</b> It varies every setting, including the fixed assumptions, by about ±25%, with errors partly shared across sectors. It cannot cover equations that are wrong in form. The headline shows the median of the runs, which sits below the central run because outcomes are curved and several inputs start at their upper limits.</li>
-      <li><b>Each run is deterministic apart from the uncertainty runs.</b> Shocks, business cycles and policy responses are not represented.</li>
+      <li><b>It is a sketch, not a forecast.</b> Six broad sectors stand in for a whole economy, each blending industries with very different settings. Sizes come from data; how much is an arms race, checking costs and rebuilding speed are judgement anchored on evidence, with wide ranges. The shaded band shows how much the results move when every setting is varied by about ±25%; it can't catch equations that are wrong in form.</li>
+      <li><b>It is sized like the US.</b> Manufacturing-heavy economies such as Germany and Japan have a larger physical sector, which lowers their gains only slightly here. It is not a model of the world economy, where farming, informal work and slower adoption would change the picture.</li>
+      <li><b>Robotics is only partly included.</b> Ceilings on hands-on work allow for robots that use demonstrated technology (about 13% of US work hours, McKinsey 2025), but not for a robotics breakthrough. The "Robotics breakthrough" scenario shows what changes if one comes.</li>
+      <li><b>Some limits are fixed on purpose.</b> The ceilings on what AI can do, on rebuilding and on new products don't rise however capable AI becomes, so the economy levels off. That is the point: it shows which bottlenecks capability alone doesn't remove. Raising the ceilings is a different claim, not a correction.</li>
+      <li><b>Arms-race sectors lose from every speedup.</b> Where most of a sector's activity is competition rather than new wealth, making it faster lowers its value. The sector status flags when that happens.</li>
+      <li><b>Jobs, wages and catastrophic risk are not modelled.</b> "Tasks done with AI" measures work, not jobs. The model asks what AI does to output if things broadly go right; it has no shocks, business cycles or policy responses.</li>
     </ul>
-    <p class="foot">Developed from the Gemini conversation <a href="https://share.gemini.google/WyXAFP6PUBY5" target="_blank" rel="noopener">Evaluating AI Doomer Math Predictions</a> and a stress test of the model it produced. The default sectors are broad groups of BEA industries. Your settings are saved in this browser.</p>
+    <p class="foot">Your settings are saved in this browser.</p>
   </section>
 </div>
 
