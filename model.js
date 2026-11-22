@@ -20,7 +20,7 @@
   'use strict';
 
   const K = 2.5;              // Hill-curve steepness used for every S-curve
-  const G_CAP = 0.9;          // redesign hard cap (prevents eps = 0)
+  const G_CAP = 0.9;          // rebuilding hard cap (prevents eps = 0)
   const F_CAP = 0.95;         // native-fit hard cap (prevents runaway R&D feedback)
   const STEPS_PER_YEAR = 4;   // internal time step: quarterly
 
@@ -99,9 +99,9 @@
         p: e(80, 100, 'medium', [], 'Judgement: cheaper physical output is mostly real wealth; some rent-seeking in regulated utilities.'),
         eta: e(2, 5, 'low', ['workslop'], 'No direct study. Simulation and physics checks help, but much work is safety-critical.'),
         gamma: e(3, 6, 'medium', ['cisa'], 'Targeted state and criminal attacks on grids and plants; operational systems are partly segmented.'),
-        gmax: e(15, 45, 'low', ['eia', 'david'], 'Physical assets limit how far workflows can be redesigned.'),
+        gmax: e(15, 45, 'low', ['eia', 'david'], 'Long-lived plant, fixed sites and grid rules limit how far the work can be rebuilt around AI.'),
         Tcrit: e(2, 15, 'low', ['david'], 'Judgement anchored on slow historical reorganisation of physical industries.'),
-        alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; full redesign is slower.'),
+        alpha: e(5, 14, 'low', ['eia'], 'Smart-meter rollout closed about 14% of the gap a year; rebuilding plant and sites is slower.'),
       } }),
       Object.assign(sec('Trade & logistics', 'core', 15.5, 30, 60, 80, 3, 5, 45, 3, 12, false,
         'Wholesale, retail, transport and warehousing: 15.5% of US GDP. Supply chains everything else depends on; already digitised and partly automated, but much of the work is physical.'), { evidence: {
@@ -123,8 +123,8 @@
         p: e(50, 85, 'low-medium', ['shrank'], 'Clinical and educational gains are real; billing, coding and compliance contests are arms races.'),
         eta: e(4, 7, 'medium', ['scribe'], 'Clinical and administrative outputs need expert review; errors occur in a minority of AI-drafted notes.'),
         gamma: e(5, 8, 'medium', ['ibm'], 'Healthcare is the costliest sector for data breaches; public bodies are frequent ransomware targets.'),
-        gmax: e(20, 55, 'low', ['onc'], 'Regulation, liability and public procurement limit redesign.'),
-        Tcrit: e(2, 12, 'low', ['onc'], 'Judgement: redesign waits for more reliable AI.'),
+        gmax: e(20, 55, 'low', ['onc'], 'Regulation, liability, public procurement and buildings limit rebuilding.'),
+        Tcrit: e(2, 12, 'low', ['onc'], 'Judgement: rebuilding waits for more reliable AI.'),
         alpha: e(5, 15, 'medium-low', ['onc'], 'Hospital EHR adoption closed about 20% of the gap a year with subsidies; physicians and public bodies slower.'),
       } }),
       Object.assign(sec('Finance & business services', 'core', 13.5, 40, 75, 50, 4, 7, 50, 2, 10, false,
@@ -135,8 +135,8 @@
         p: e(35, 65, 'medium', ['philippon', 'budish'], 'Unit cost of finance has not fallen despite IT; trading races absorb gains.'),
         eta: e(3, 6, 'medium-low', ['boe'], 'Regulators require human oversight: only 2% of AI uses in UK finance are fully autonomous.'),
         gamma: e(6, 9, 'medium-high', ['ic3', 'deloitte', 'ibm'], 'Main target of AI-enabled fraud and deepfakes.'),
-        gmax: e(30, 70, 'low', ['bcgcloud'], 'Judgement; legacy core systems limit redesign.'),
-        Tcrit: e(1, 5, 'low', ['bcgcloud'], 'Judgement: much of the redesign is justified by today\'s AI.'),
+        gmax: e(30, 70, 'low', ['bcgcloud'], 'Judgement; legacy core systems and regulation limit rebuilding.'),
+        Tcrit: e(1, 5, 'low', ['bcgcloud'], 'Judgement: much of the rebuilding is justified by today\'s AI.'),
         alpha: e(5, 15, 'low', ['bcgcloud'], 'Core systems move slowly: most banks run at most 15% of core workloads in the cloud after 15 years.'),
       } }),
       Object.assign(sec('Knowledge & professional services', 'flex', 13.7, 50, 85, 70, 3, 6, 65, 1, 22, true,
@@ -147,8 +147,8 @@
         p: e(55, 85, 'medium', ['bsv', 'rand', 'sht'], 'Software and R&D are strongly positive-sum; legal and advertising (about a fifth of hours) are largely zero-sum.'),
         eta: e(2, 5, 'medium', ['metr', 'dora', 'hai'], 'Code is partly auto-verified; legal AI hallucinates 17–34% of the time.'),
         gamma: e(4, 8, 'medium', ['ibm', 'gptzero'], 'Supply-chain attacks on software; media and platforms flooded with synthetic content.'),
-        gmax: e(45, 85, 'medium', ['metrsurvey'], 'Teams are already re-architecting around agents.'),
-        Tcrit: e(0.5, 3, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the redesign.'),
+        gmax: e(45, 85, 'medium', ['metrsurvey'], 'Teams are already rebuilding their systems around agents.'),
+        Tcrit: e(0.5, 3, 'medium', ['metrsurvey'], 'Today\'s AI already justifies much of the rebuilding.'),
         alpha: e(12, 30, 'medium', ['metrsurvey', 'dora'], 'Fast-moving and lightly regulated, but systems lag behind tools.'),
       } }),
       Object.assign(sec('Property, hospitality & personal services', 'flex', 19.8, 25, 50, 75, 2, 4, 30, 4, 10, false,
@@ -159,7 +159,7 @@
         p: e(60, 90, 'low', [], 'Judgement: hospitality and personal services are real value; some brokerage is competition for commissions.'),
         eta: e(1, 4, 'low', [], 'Judgement: mostly low-stakes output.'),
         gamma: e(3, 6, 'low-medium', ['ic3'], 'Real-estate wire fraud and fake reviews are common, but most of the work is offline.'),
-        gmax: e(15, 45, 'low', [], 'Judgement: hands-on service work limits redesign.'),
+        gmax: e(15, 45, 'low', [], 'Judgement: hands-on service work and premises limit rebuilding.'),
         Tcrit: e(2, 10, 'low', [], 'Judgement.'),
         alpha: e(5, 15, 'low', [], 'Judgement: many small firms.'),
       } }),
@@ -168,7 +168,7 @@
 
   // Robotics breakthrough scenario: robots take over most hands-on work in the four sectors where it
   // dominates (physical production, trade & logistics, health/education/government, property &
-  // hospitality). Their native-fit ceilings rise to at least 85% (like information work) and redesign
+  // hospitality). Their native-fit ceilings rise to at least 85% (like information work) and rebuilding
   // ceilings rise 20 points. The defaults include only the robotics
   // allowance in exposure studies and McKinsey's 13% of US work hours robots could take with
   // demonstrated technology.
@@ -191,7 +191,7 @@
     aiNow: 1.4,        // how much faster end-2026 AI does assisted work (×)
     adopt0: 20,        // share of native fit already in use at end-2026 (%)
     jCost: 0.25,       // J-curve: output diverted per unit/yr rise in automated share, above today's pace
-    payoffResp: 0.25,  // how strongly adoption, redesign and new products speed up with AI's advantage
+    payoffResp: 0.25,  // how strongly adoption, rebuilding and new products speed up with AI's advantage
     phi: 0.4,          // AI R&D feedback: growth × V_R&D^φ
     Thalf: 15,         // diminishing returns: growth halves at T_half
     growthCap: 200,    // speed limit on growth in useful AI work (%/yr)
@@ -296,7 +296,7 @@
     const Araw = h > 0 ? (inv > 0.01 ? (1 - h) / inv : 100) : A;
     const f = fUsed != null ? fUsed : fAvail(P, T, X);
     const eps = (1 - f) * (1 - g);
-    // assisted work (old processes, people still direct and check it) and autonomous work (redesigned processes)
+    // assisted work (old processes, people still direct and check it) and autonomous work (work rebuilt around AI)
     const assisted = f * (1 - g), autonomous = g;
     const eps0 = 1 - (X.adopt0 != null ? X.adopt0 : 1) * P.f0;
     const tau0 = eps0 + (1 - eps0) / A;
@@ -395,8 +395,8 @@
   }
 
   // ---------------- Snapshot (one moment / static) ----------------
-  // gs: redesign per sector (null → full redesign, g = g_max); fs: native fit in use (null → full available fit); n: new products (null → steady state)
-  // costs: share of each sector's output diverted into adoption and redesign (J-curve), null → none
+  // gs: rebuilding per sector (null → full rebuilding, g = g_max); fs: native fit in use (null → full available fit); n: new products (null → steady state)
+  // costs: share of each sector's output diverted into adoption and rebuilding (J-curve), null → none
   function snapshot(state, T, gs, n, fs, costs) {
     const X = globalsFor(state);
     const sectors = state.sectors;
@@ -423,7 +423,7 @@
   // T      ← T (1 + growth)^dt                                 (so a constant rate r gives exactly r per year)
   // a_i    ← a_i + λ dt · a_i (1 − a_i / f*_i(T)),  a_i,0 = adopt0 · f_0   (S-shaped adoption of native fit)
   // cost_i = J · max(0, rate_i − rate_i,0), rate = yearly rise in automated share 1 − ε   (J-curve: output
-  //          diverted into adoption and redesign beyond today's pace; V_i ← V_i (1 − cost_i))
+  //          diverted into adoption and rebuilding beyond today's pace; V_i ← V_i (1 − cost_i))
   // g_i    ← g_i + α_dt (g_max / (1 + (T_crit/T)^k) − g_i)
   // n      ← n + s_dt (N_max · hill0(T, T_new) − n)
   // where x_dt = 1 − (1 − x)^dt converts annual gap-closing rates to per-step rates.

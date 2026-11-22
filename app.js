@@ -118,7 +118,7 @@
       slider({ ev: E.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => String(v), hint: 'AI that beats a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost. By this year, AI can do 90% of the work it could ever do in each sector.' }),
       slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth in useful AI work (verified work per £) at the start.' }),
       slider({ ev: E.adoptSpeed, evKey: 'adoptSpeed', id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. An S-curve that speeds up as AI’s advantage grows.' }),
-      slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before redesign', sym: 'h', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×`, hint: 'In existing processes, people still direct and check AI’s work, which caps the speedup until processes are redesigned around AI.' }),
+      slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before rebuilding', sym: 'h', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×`, hint: 'In existing processes, people still direct and check AI’s work, which caps the speedup until the work itself is rebuilt around AI.' }),
       slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', sym: 'N', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}% of today's economy`, hint: 'Goods and services that don’t exist yet.' })
     );
     const fixed = group(host, 'Fixed assumptions', false, 'Held constant, with the evidence behind each. They are still varied in the uncertainty band.');
@@ -205,9 +205,9 @@
       slider({ ev: ev('p'), evKey: 'p', id: 's-p', label: 'Real wealth vs arms race', sym: 'p', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: '0% = pure zero-sum competition · 100% = pure wealth creation.' }),
       slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Review burden (slop)', sym: 'η', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = auto-verified · 2 = mostly checkable (code) · 5 = needs expert review · 7 = error-prone and costly to check · 10 = unverifiable.' }),
       slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', sym: 'γ', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = air-gapped · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis scenario.' }),
-      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Redesign ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the work processes can be rebuilt around AI.' }),
-      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Redesign midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the redesign is worth doing.' }),
-      slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Redesign speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast institutions close the gap to the redesign worth doing.' })
+      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', sym: 'g_max', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the remaining bottleneck can be removed by rebuilding around AI: plant, equipment, sites, systems, rules, contracts and roles.' }),
+      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', sym: 'T_crit', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the rebuilding is worth the cost.' }),
+      slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Rebuilding speed', sym: 'α', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'How fast the sector closes the gap to the rebuilding worth doing. Slow where capital is long-lived, sites are fixed and rules, contracts and habits change slowly.' })
     );
   }
 
@@ -480,10 +480,10 @@
     legend($('c3-legend'), sser);
     lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', yLabel: '× sector output without further AI', tipX: (x) => String(x), height: 240, aria: 'Sector output over time' });
 
-    // Chart 4: redesign
+    // Chart 4: rebuilding around AI
     const gser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].g * 100), width: i === state.sel ? 3 : 2 }));
     legend($('c4-legend'), gser);
-    lineChart($('c4'), { xs, series: gser, xFmt: yrFmt, yFmt: (v) => Math.round(v) + '%', yFloor: 0, tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 220, aria: 'Workflow redesign over time' });
+    lineChart($('c4'), { xs, series: gser, xFmt: yrFmt, yFmt: (v) => Math.round(v) + '%', yFloor: 0, tipX: (x, i) => `${x} · T = ${fx(rows[i].T)}`, height: 220, aria: 'Rebuilding around AI over time' });
 
     // Chart 5: spending shares (Baumol)
     const shser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.shares[i] * 100), width: i === state.sel ? 3 : 2 }));
@@ -509,7 +509,7 @@
     if (!s) { $('sector-status').innerHTML = ''; return; }
     const pills = [];
     const fitTxt = s.fAvail - s.f > 0.005 ? `AI used for ${pc(s.f)} of the ${pc(s.fAvail)} it can do` : `AI used for ${pc(s.f)}`;
-    pills.push(`<span class="pill info">${when}: output ≈ ${fx(s.V)} · speedup ≈ ${fx(s.S)} · ${fitTxt} · redesigned ${pc(s.g)}</span>`);
+    pills.push(`<span class="pill info">${when}: output ≈ ${fx(s.V)} · speedup ≈ ${fx(s.S)} · ${fitTxt} · rebuilt ${pc(s.g)}</span>`);
     if (s.capped) pills.push(`<span class="pill warn">Holding back at its Slop Peak (${fx(s.Tstar)})</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);
     else if (s.V >= 2) pills.push(`<span class="pill good">More than doubled</span>`);
@@ -534,7 +534,7 @@
   function toCSV() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
     const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
-    const head = ['year', 'T', 'V_core', 'V_flex', 'new_products', 'V_macro_vs_no_further_AI', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `redesign ${s.name}`, `ai_in_use ${s.name}`, `spending_share ${s.name}`]));
+    const head = ['year', 'T', 'V_core', 'V_flex', 'new_products', 'V_macro_vs_no_further_AI', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `rebuilt ${s.name}`, `ai_in_use ${s.name}`, `spending_share ${s.name}`]));
     const lines = lastRows.map((r) => [r.year, r.T, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.g, s.f, r.shares[i]])).map(n).join(','));
     return [head.map(q).join(',')].concat(lines).join('\n');
   }
