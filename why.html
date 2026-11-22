@@ -170,7 +170,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     <div class="tbl-wrap"><table id="tCeil"></table></div>
     <figure>
       <div class="chart" id="fB"></div>
-      <figcaption><b>Amdahl's curve.</b> Maximum speedup against the share of work that stays out of AI's reach, both on log scales. Each dot is a sector in the model at its ceiling. Small irreducible shares still cap speedup in the tens, not the millions.</figcaption>
+      <figcaption><b>Amdahl's curve.</b> Maximum speedup against the share of work that stays out of AI's reach, both on log scales. Each dot is a sector in the model at its ceiling. The dots sit below the curve because AI-assisted work that is never redesigned keeps a person in the loop. Small irreducible shares still cap speedup in the tens, not the millions.</figcaption>
     </figure>
 
     <div class="miss">
@@ -220,6 +220,7 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       <div class="body">
         <h3>Adoption, redesign and building take time</h3>
         <p>About <span class="v" data-k="AU26">–</span> of the economy's tasks were done with AI at the end of 2026 in the model. Use spreads along an S-curve, slowly at first, and adopting and redesigning cost money and time before they pay off, so the gains arrive years after the capability does. Physical sectors only start re-wiring once AI is many times better than today. Chips, data centres and power stations can only be built so fast, which caps how quickly AI capability can grow at all.</p>
+        <p>Adoption also comes in two stages. First, AI speeds up tasks inside existing processes, where people still direct and check the work, so those tasks get at most about <span class="v" data-k="HCAP">–</span> faster. The bigger gains need processes rebuilt around AI, which is slower.</p>
         <p>None of these lags stops growth. Together they spread it over decades, and in the meantime the ceilings above are waiting.</p>
       </div>
     </div>
@@ -237,6 +238,16 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     <p>Robots shift the picture more than anything else in the model. The share of physical production that stays out of reach falls from <span class="v" data-k="RB_E0">–</span> to <span class="v" data-k="RB_E1">–</span>, and the peak boost rises from <span class="v" data-k="RB_P0">–</span> to <span class="v" data-k="RB_P1">–</span> a year. Even then the economy does not explode: slop, arms races and the work that stays human still cap it at <span class="v" data-k="RB_C1">–</span>.</p>
     <p>Robots also run into the same bottlenecks as everything else, and in a stronger form. They have to be manufactured, shipped, installed, powered and maintained: physical production at physical speed, paid for with capital that competes with every other investment. Care, health and food safety need certification and public trust. Much of hospitality and personal services is millions of small firms that adopt slowly. So even a robotics breakthrough reaches the economy through its slowest sectors. The model's speed limit and adoption lags stand in for this build-out, but a robot-specific build-out would likely be slower.</p>
     <p class="pull">If robots start taking over a growing share of physical work year after year, the case against explosive growth gets much weaker. That is the evidence to watch.</p>
+  </section>
+
+  <section class="prose" id="peak" aria-label="When the boom peaks">
+    <h2>When does the boom peak, compared with AGI?</h2>
+    <p>The model's capability path follows the median expert. In the Forecasting Research Institute's 2026 panel of 339 AI experts, the median expert expects AI that beats a 90th-percentile professional on 90% of non-physical tasks around 2050, with the middle half of forecasts between 2039 and 2065, and reliable 8-hour software tasks around 2030. Forecasting sites and AI lab leaders expect AGI much sooner, so the table compares their timelines too.</p>
+  </section>
+  <div class="tbl-wrap"><table id="tPeak"></table></div>
+  <section class="prose">
+    <p>Two things stand out. On the median expert's path, the boom peaks <span class="v" data-k="PK_GAP">–</span> years <i>before</i> AGI: most of the gains come from AI doing part of the work across many sectors, long before it can do nearly everything. And much earlier AGI barely moves the peak, because the timing is set by adoption, redesign and the J-curve rather than by capability. Even on lab leaders' timelines the peak comes about <span class="v" data-k="PK_LAG">–</span> years after AGI.</p>
+    <p>That matches history. Factories took about 40 years to reorganise around electric motors, and computers were famously everywhere but in the productivity statistics until the late 1990s. A technology's biggest growth effect comes when organisations finish rebuilding around it, not when it is invented.</p>
   </section>
 
   <section class="prose">
@@ -396,6 +407,23 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
       row('Peak growth AI adds', `${pc(p0[0], 1)} (${p0[1]})`, `${pc(p1[0], 1)} (${p1[1]})`) +
       row('Ceiling with unlimited AI, with slop and arms races', fx(s0.Vmacro), fx(s1.Vmacro)) +
       row('Ceiling with unlimited AI, no slop or arms races', fx(n0.Vmacro), fx(n1.Vmacro)) + '</tbody>';
+  })();
+  // timelines comparison: when does the boom peak relative to AGI?
+  (function () {
+    const peakOf = (rows) => { let b = 0, y = 0; for (let i = 0; i + 1 < rows.length; i++) { const v = rows[i + 1].Vmacro / rows[i].Vmacro - 1; if (v > b) { b = v; y = rows[i].year; } } return [b, y]; };
+    const cases = [
+      ['Median expert (FRI panel)', {}],
+      ['Superforecasters (FRI panel)', { agiYear: 2047 }],
+      ['Forecasting sites', { agiYear: 2031, r0: 45 }],
+      ['AI lab leaders', { agiYear: 2028, r0: 60, phi: 0.8 }],
+    ];
+    let t = '<thead><tr><th>Timeline</th><th>AGI year</th><th>Peak growth AI adds</th><th>Peak year</th><th>Output vs no further AI, 2050</th></tr></thead><tbody>';
+    const res = cases.map(([lab, o]) => { const s = Object.assign(D(), { years: 23 }, o); const r = M.simulate(s); const p = peakOf(r); return { lab, agi: s.agiYear, p, v50: r[r.length - 1].Vmacro }; });
+    res.forEach((x) => { t += `<tr><td class="txt">${x.lab}</td><td>${x.agi}</td><td>${pc(x.p[0], 1)} a year</td><td>${x.p[1]}</td><td>${fx(x.v50)}</td></tr>`; });
+    document.getElementById('tPeak').innerHTML = t + '</tbody>';
+    N.PK_GAP = String(res[0].agi - res[0].p[1]);
+    N.PK_LAG = String(res[3].p[1] - res[3].agi);
+    N.HCAP = fx(1 / (D().hLoop / 100));
   })();
   // growth-rate table
   (function () {

@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v14';
+  const STORE_KEY = 'ai-transformation-model:v15';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -17,8 +17,11 @@
   const PRESETS = {
     dynamic: [
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
+      { id: 'dyn-sf', label: 'Superforecaster timelines (AGI 2047)', apply: (s) => Object.assign(s, { agiYear: 2047 }) },
+      { id: 'dyn-short', label: 'Forecasting-site timelines (AGI ~2031)', apply: (s) => Object.assign(s, { agiYear: 2031, r0: 45 }) },
+      { id: 'dyn-labs', label: 'Lab-leader timelines (AGI ~2028)', apply: (s) => Object.assign(s, { agiYear: 2028, r0: 60, phi: 0.8 }) },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
-      { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
+      { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 60, phi: 1, Thalf: 50, agiYear: 2028, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
       { id: 'dyn-robotics', label: 'Robotics breakthrough', apply: (s) => M.applyRobotics(s) },
       { id: 'dyn-cyber', label: 'Sustained cyber-attack on finance', apply: (s) => { s.sectors[3].gamma = 40; return s; } },
       { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
@@ -61,7 +64,7 @@
   function touched() { state.preset = null; markPresets(); update(); }
 
   // evidence line under a slider: plausible range, confidence, note and linked sources
-  const EV_UNIT = { weight: '', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', Wcore: '%', adopt0: '%', aiNow: '×', jCost: '' };
+  const EV_UNIT = { weight: '', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', Wcore: '%', adopt0: '%', aiNow: '×', jCost: '', agiYear: '', r0: '%/yr', hLoop: '%' };
   const srcShort = (k) => (M.SOURCES[k] ? M.SOURCES[k].t.split(/[,:(]/)[0].trim() : k);
   function evidenceHTML(key, ev) {
     if (!ev) return '';
@@ -146,7 +149,7 @@
       const g = group(host, 'AI progress over time', true);
       g.append(
         slider({ id: 'g-years', label: 'Years to simulate', min: 5, max: 60, step: 1, get: () => state.years, set: (v) => (state.years = v), fmt: (v) => `${v} yrs · to ${state.startYear + v}` }),
-        slider({ id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Annual growth in useful AI work in year one, before feedbacks.' }),
+        slider({ ev: M.GLOBAL_EVIDENCE.r0, evKey: 'r0', id: 'g-r0', label: 'Baseline AI progress', sym: 'r₀', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Annual growth in useful AI work in year one, before feedbacks.' }),
         slider({ id: 'g-phi', label: 'AI R&D feedback', sym: 'φ', min: 0, max: 1, step: 0.05, get: () => state.phi, set: (v) => (state.phi = v), fmt: (v) => v.toFixed(2), hint: '0 = no recursive self-improvement · 0.5 = modest · 1 = strong.' }),
         slider({ id: 'g-thalf', label: 'Diminishing returns midpoint', sym: 'T_half', min: 5, max: 50, step: 1, get: () => state.Thalf, set: (v) => (state.Thalf = v), fmt: (v) => `${v}×`, hint: 'Where data, energy and algorithmic drag halve annual progress. Growth slows past it but never stops.' }),
         slider({ id: 'g-cap', label: 'Speed limit on AI progress', sym: 'cap', min: 50, max: 500, step: 10, get: () => state.growthCap, set: (v) => (state.growthCap = v), fmt: (v) => `${v}%/yr · ${(1 + v / 100).toFixed(1)}× a year`, hint: 'Compute, chips and energy can only be built so fast. Growth in useful AI work bends smoothly toward this ceiling; well below it, it has no effect.' })
@@ -154,6 +157,7 @@
       const ad = group(host, 'Adoption', true);
       ad.append(
         ...todaySliders(),
+        slider({ ev: M.GLOBAL_EVIDENCE.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before redesign', sym: 'h', min: 0, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => (v ? `${v}% · caps assisted work at ${(100 / v).toFixed(1)}×` : 'off'), hint: 'AI first speeds up tasks inside existing processes, where people still direct and check the work. That caps the speedup until processes are redesigned around AI, which removes the cap.' }),
         slider({ id: 'g-adoptspeed', label: 'Adoption speed', sym: 'λ', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. Adoption follows an S-curve: slow while few organisations use it, fastest in the middle, slowing as it nears what AI can do.' }),
         slider({ ev: M.GLOBAL_EVIDENCE.jCost, evKey: 'jCost', id: 'g-jcost', label: 'Cost of adopting (J-curve)', sym: 'J', min: 0, max: 5, step: 0.1, get: () => state.jCost, set: (v) => (state.jCost = v), fmt: (v) => (v ? v.toFixed(1) : 'off'), hint: 'Training, integration and process change divert output while adoption and redesign speed up beyond today\'s pace, so gains arrive later. At 2, automating one extra percentage point of work a year costs 2% of that sector\'s output that year.' })
       );
@@ -178,7 +182,7 @@
     const cap = group(host, 'Capability and slop', true);
     {
       cap.append(
-        slider({ id: 'g-beta', label: 'Capability breadth', sym: 'β', min: 0, max: 1, step: 0.05, get: () => state.beta, set: (v) => (state.beta = v), fmt: (v) => v.toFixed(2), hint: 'How fast better AI expands native fit f toward each sector\'s ceiling f_max. 0 = fixed.' }),
+        slider({ ev: M.GLOBAL_EVIDENCE.agiYear, evKey: 'agiYear', id: 'g-agi', label: 'Year AI can do most non-physical work (AGI)', min: 2028, max: 2070, step: 1, get: () => state.agiYear, set: (v) => (state.agiYear = v), fmt: (v) => `${v} · breadth β ${M.calibratedBeta(state).toFixed(2)}`, hint: 'AGI here means AI that beats a 90th-percentile professional on 90% of non-physical tasks at no more than 5× the cost. The model sets capability breadth so that, by this year, AI can do 90% of the work it could ever do in each sector.' }),
         slider({ id: 'g-deta', label: 'Verification keeps pace', sym: 'δ_η', min: 0, max: 1, step: 0.05, get: () => state.dEta, set: (v) => (state.dEta = v), fmt: (v) => v.toFixed(2), hint: 'More reliable AI needs less human review: internal slop scales with T^−δ. 0 = off.' }),
         slider({ id: 'g-dgamma', label: 'Defensive AI', sym: 'δ_γ', min: 0, max: 1, step: 0.05, get: () => state.dGamma, set: (v) => (state.dGamma = v), fmt: (v) => v.toFixed(2), hint: 'Filters and fraud detection improve with AI too: ambient slop scales with T^−δ. 0 = off (attacks keep growing with T).' })
       );
@@ -527,7 +531,7 @@
     const job = mcJob;
     mcTimer = setTimeout(() => {
       const runs = Math.round(state.runs), spread = state.spread / 100, corr = state.corr / 100;
-      const snap = JSON.parse(JSON.stringify(state));
+      const snap = M.withBeta(JSON.parse(JSON.stringify(state)));
       const r = M.rng(20261121);
       if (snap.mode !== 'dynamic') {
         mcCache = { key, data: M.monteCarloSnapshot(snap, snap.Tstatic, runs, spread, 20261121, corr) };

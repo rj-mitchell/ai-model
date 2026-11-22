@@ -19,9 +19,10 @@ Every V (sector, Core, Flex, macro) is a multiple of what output would be withou
 
 ## Sector level
 
-- Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)` (`β = 0` keeps it fixed). Capped at 95%.
+- Available native fit: `f*_i(T) = f_max − (f_max − f_0) T^(−β)`. Capped at 95%.
 - Native fit in use `a_i` lags behind `f*_i` (see the dynamic loop); the snapshot mode assumes full adoption.
-- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`
+- Bottleneck: `ε_i = (1 − a_i)(1 − g_i)`. Work done with AI splits into assisted work in old processes, `a_i (1 − g_i)`, where a human-in-the-loop share `h` (default 25%) stays human so its speedup is capped at `1/h`, and autonomous work in redesigned processes, `g_i`, which speeds up fully: `τ_i = ε_i + a_i(1 − g_i)(h + (1 − h)/(Â T_eff)) + g_i/(Â T_eff)`, with `1/A = h + (1 − h)/Â`.
+- Capability breadth β is calibrated to an AGI year (default 2050, the median expert in the Forecasting Research Institute's 2026 LEAP panel): by then available native fit has closed 90% of the gap to its ceiling. Presets cover superforecasters (2047), forecasting sites (~2031) and AI lab leaders (~2028).
 - Time per unit of work vs no AI: `τ_i = ε_i + (1 − ε_i)/(A T_eff)`; end-2026 baseline `τ_i,0 = ε_i,0 + (1 − ε_i,0)/A` with `ε_i,0 = 1 − a_0 f_0`
 - Clean speedup vs end-2026: `S_i = τ_i,0 / τ_i`. `A` (default 2×) is how much faster today's AI already is on the work it is used for, so adoption and redesign pay off even without new capability (`A = 1` switches this off).
 - Net value: `V_i = (1 + p_i (S_i − 1)) / (1 + (η_i T^(−δη) ln T_eff + γ_i T^(−δγ) ln T) S_i)`
