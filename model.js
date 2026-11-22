@@ -161,6 +161,25 @@
     ];
   }
 
+  // Robotics breakthrough scenario: robots take over most hands-on work in the four sectors where it
+  // dominates (physical production, trade & logistics, health/education/government, property &
+  // hospitality). Their native-fit ceilings rise to at least 85% (like information work), redesign
+  // ceilings rise 20 points, and capability broadens faster. The defaults include only the robotics
+  // allowance in exposure studies and McKinsey's 13% of US work hours robots could take with
+  // demonstrated technology.
+  const ROBOTIC_SECTORS = [0, 1, 2, 5];
+  function applyRobotics(s) {
+    ROBOTIC_SECTORS.forEach((i) => {
+      const x = s.sectors[i];
+      if (!x) return;
+      x.fmax = Math.max(x.fmax, 85);
+      x.gmax = Math.min(90, x.gmax + 20);
+      x.g = Math.min(90, x.g + 20);
+    });
+    s.beta = Math.max(s.beta, 0.3);
+    return s;
+  }
+
   // Evidence for the economy-wide defaults
   const GLOBAL_EVIDENCE = {
     Wcore: e(60, 70, 'high', ['bea'], 'The four Core sectors are 66% of 2025 value added; the six sectors together cover the whole economy.'),
@@ -498,7 +517,7 @@
     return { p10: quantile(vals, 0.1), p50: quantile(vals, 0.5), p90: quantile(vals, 0.9) };
   }
 
-  const api = { defaultState, defaultSectors, SOURCES, GLOBAL_EVIDENCE, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, sweep, rng, perturb, summarise, quantile, mcRun, monteCarlo, monteCarloSnapshot };
+  const api = { defaultState, defaultSectors, applyRobotics, SOURCES, GLOBAL_EVIDENCE, K, G_CAP, F_CAP, STEPS_PER_YEAR, hill, hill0, globalsFor, sectorParams, fAvail, sectorValueAt, slopPeak, evalSector, macro, snapshot, simulate, sweep, rng, perturb, summarise, quantile, mcRun, monteCarlo, monteCarloSnapshot };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AIModel = api;
 })(typeof window !== 'undefined' ? window : this);

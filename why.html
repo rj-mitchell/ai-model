@@ -225,6 +225,20 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     </div>
   </section>
 
+  <section class="prose" id="robots" aria-label="What about robots">
+    <h2>What about robots?</h2>
+    <p>Most of the work AI can't reach is physical: building, making, moving, cooking, cleaning, caring. So robotics is the biggest question for this whole argument, and the model only partly includes it.</p>
+    <p><b>What is included.</b> The ceilings on how much hands-on work AI could ever do already allow for some robotics: they combine AI exposure studies with McKinsey's 2025 estimate that robots using demonstrated technology could take on about 13% of US work hours. As AI improves, the model lets it reach more of each ceiling.</p>
+    <p><b>What is not.</b> Robots are not modelled as a technology of their own, with their own cost curve, factories and installation time, and the ceilings are fixed. That amounts to assuming robots never take over most physical work. If that assumption is wrong, it is the most likely way the conclusion breaks.</p>
+    <p>To see how much rides on it, the "Robotics breakthrough" scenario lets robots take over most hands-on work in physical production, trade and logistics, health, education and government, and property and hospitality, as much as AI can do in information work.</p>
+  </section>
+  <div class="tbl-wrap"><table id="tRobot"></table></div>
+  <section class="prose">
+    <p>Robots shift the picture more than anything else in the model. The share of physical production that stays out of reach falls from <span class="v" data-k="RB_E0">–</span> to <span class="v" data-k="RB_E1">–</span>, and the peak boost rises from <span class="v" data-k="RB_P0">–</span> to <span class="v" data-k="RB_P1">–</span> a year. Even then the economy does not explode: slop, arms races and the work that stays human still cap it at <span class="v" data-k="RB_C1">–</span>.</p>
+    <p>Robots also run into the same bottlenecks as everything else, and in a stronger form. They have to be manufactured, shipped, installed, powered and maintained: physical production at physical speed, paid for with capital that competes with every other investment. Care, health and food safety need certification and public trust. Much of hospitality and personal services is millions of small firms that adopt slowly. So even a robotics breakthrough reaches the economy through its slowest sectors. The model's speed limit and adoption lags stand in for this build-out, but a robot-specific build-out would likely be slower.</p>
+    <p class="pull">If robots start taking over a growing share of physical work year after year, the case against explosive growth gets much weaker. That is the evidence to watch.</p>
+  </section>
+
   <section class="prose">
     <h2>What you would have to believe for it to explode</h2>
     <p>The model can produce explosive growth. To get it you have to remove every bottleneck in every sector at once: no arms races, no slop, and an irreducible share of work close to zero everywhere, including energy, healthcare and law. The table shows the ceiling on output, as a multiple of no further AI, with infinitely capable AI as the irreducible share in every sector shrinks.</p>
@@ -364,6 +378,25 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
     PKY: (() => { let b = 2027, bv = -1; for (let y = 2027; y < 2050; y++) { const v = at(y + 1).Vmacro / at(y).Vmacro - 1; if (v > bv) { bv = v; b = y; } } return String(b); })(),
     PKV: (() => { let bv = -1; for (let y = 2027; y < 2050; y++) bv = Math.max(bv, at(y + 1).Vmacro / at(y).Vmacro - 1); return pc(bv, 1); })(),
   };
+  // robotics comparison (default vs robotics breakthrough)
+  (function () {
+    const R = () => M.applyRobotics(D());
+    const ceilWith = (mk, noSlop) => { const z = mk(); z.sectors.forEach((x) => { x.g = x.gmax; if (noSlop) { x.eta = 0; x.gamma = 0; } }); return M.snapshot(z, 1e6, null, null, null); };
+    const peak = (rows) => { let b = 0, y = 0; for (let i = 0; i + 1 < rows.length; i++) { const v = rows[i + 1].Vmacro / rows[i].Vmacro - 1; if (v > b) { b = v; y = rows[i].year; } } return [b, y]; };
+    const r0 = M.simulate(Object.assign(D(), { years: 23 })), r1 = M.simulate(Object.assign(R(), { years: 23 }));
+    const p0 = peak(r0), p1 = peak(r1);
+    const n0 = ceilWith(D, true), n1 = ceilWith(R, true), s0 = ceilWith(D, false), s1 = ceilWith(R, false);
+    Object.assign(N, { RB_E0: pc(n0.sectors[0].eps), RB_E1: pc(n1.sectors[0].eps), RB_P0: pc(p0[0], 1), RB_P1: pc(p1[0], 1), RB_C1: fx(s1.Vmacro) });
+    const row = (label, a, b) => `<tr><td class="txt">${label}</td><td>${a}</td><td>${b}</td></tr>`;
+    document.getElementById('tRobot').innerHTML = '<thead><tr><th></th><th>Default</th><th>Robotics breakthrough</th></tr></thead><tbody>' +
+      row('Physical production: work out of AI\'s reach', pc(n0.sectors[0].eps), pc(n1.sectors[0].eps)) +
+      row('Property and hospitality: work out of AI\'s reach', pc(n0.sectors[5].eps), pc(n1.sectors[5].eps)) +
+      row('Output vs no further AI, 2041', fx(r0[14].Vmacro), fx(r1[14].Vmacro)) +
+      row('Output vs no further AI, 2050', fx(r0[23].Vmacro), fx(r1[23].Vmacro)) +
+      row('Peak growth AI adds', `${pc(p0[0], 1)} (${p0[1]})`, `${pc(p1[0], 1)} (${p1[1]})`) +
+      row('Ceiling with unlimited AI, with slop and arms races', fx(s0.Vmacro), fx(s1.Vmacro)) +
+      row('Ceiling with unlimited AI, no slop or arms races', fx(n0.Vmacro), fx(n1.Vmacro)) + '</tbody>';
+  })();
   // growth-rate table
   (function () {
     const tg = D().trendGrowth / 100;

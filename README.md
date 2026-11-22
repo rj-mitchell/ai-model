@@ -53,6 +53,10 @@ Every V (sector, Core, Flex, macro) is a multiple of what output would be withou
 
 Economy, Core and Flex over time. The headline is the median of the Monte Carlo runs, with the 80% range and the central run beside it. Every input, including the structural dials, is randomly varied by ±spread (clamped to its slider range), and sector errors are partly shared (adjustable correlation); useful AI work T; sector values; redesign; spending shares; share of tasks automated, weighted both by the 2026 economy and by current spending; cumulative catastrophe probability; year-by-year table (copy as CSV). The snapshot mode shows the sector and macro equations with T as a dial.
 
+## Robotics
+
+Robotics is only partly included. The native-fit ceilings for hands-on sectors include the robotics allowance in exposure studies and McKinsey's estimate (2025) that robots with demonstrated technology could take about 13% of US work hours, and capability breadth lets AI reach more of each ceiling. Robots are not modelled as their own technology with their own costs and build-out, and the ceilings are fixed. `applyRobotics()` in `model.js` (the "Robotics breakthrough" preset) raises the ceilings of the four hands-on sectors to at least 85%, redesign ceilings by 20 points and breadth to 0.3: output vs no further AI in 2050 rises from about 1.7× to 2.4×, the peak boost from about 4% to 6.5% a year, and the ceiling with slop and arms races from 2.2× to 3.4×. The explainer compares the two.
+
 ## Known limitations (also listed on the page)
 
 Fixed ceilings by design (irreducibility); not calibrated; no labour market (automation is a task measure, not jobs or wages); catastrophic risk is a user-set overlay with no feedback; Red Queen sectors lose from every speedup (by design); new products, capability breadth and defensive AI are the most speculative mechanisms; strong Core–Flex complementarity makes a whole-tier collapse costly; deterministic central run with one optional shock.

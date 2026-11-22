@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v13';
+  const STORE_KEY = 'ai-transformation-model:v14';
   const MAX_SECTORS = 8;
 
   // ---------------- Default economy (the conversation's 6-sector example) ----------------
@@ -19,6 +19,7 @@
       { id: 'dyn-base', label: 'Baseline', apply: (s) => s },
       { id: 'dyn-rsi', label: 'Strong AI R&D feedback', apply: (s) => Object.assign(s, { r0: 40, phi: 1, Thalf: 30 }) },
       { id: 'dyn-explosive', label: 'Fast takeoff', apply: (s) => { Object.assign(s, { r0: 50, phi: 1, Thalf: 50, beta: 0.4, dEta: 0.4, dGamma: 0.4, Nmax: 50, adoptSpeed: 40, Tnew: 15, years: 25 }); return s; } },
+      { id: 'dyn-robotics', label: 'Robotics breakthrough', apply: (s) => M.applyRobotics(s) },
       { id: 'dyn-cyber', label: 'Sustained cyber-attack on finance', apply: (s) => { s.sectors[3].gamma = 40; return s; } },
       { id: 'dyn-winter', label: 'AI setback in 2030', apply: (s) => Object.assign(s, { setbackYear: 2030, setbackSize: 60 }) },
       { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2 + 1); }); return s; } },
@@ -28,6 +29,7 @@
     static: [
       { id: 'st-r1', label: 'Near-term 4×, no redesign', apply: (s) => { s.Tstatic = 4; s.sectors.forEach((x) => { x.g = 0; }); return s; } },
       { id: 'st-r2', label: 'Redesign wave 20×', apply: (s) => { s.Tstatic = 20; return s; } },
+      { id: 'st-robotics', label: 'Robotics breakthrough 20×', apply: (s) => { s.Tstatic = 20; return M.applyRobotics(s); } },
       { id: 'st-r3', label: 'Cyber-attack on finance 20×', apply: (s) => { s.Tstatic = 20; s.sectors[3].gamma = 40; return s; } },
     ],
   };
