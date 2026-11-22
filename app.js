@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v17';
+  const STORE_KEY = 'ai-transformation-model:v18';
   const MAX_SECTORS = 8;
   const defaultState = () => M.defaultState();
 
@@ -203,9 +203,9 @@
       slider({ ev: ev('f'), evKey: 'f', id: 's-f', label: 'Work AI can speed up today', min: 0, max: 95, step: 1, get: () => s.f, set: (v) => { s.f = v; if (s.fmax < v) s.fmax = v; }, fmt: (v) => `${v}%`, hint: 'About 25% for hands-on work, about 50% for knowledge work.' }),
       slider({ ev: ev('fmax'), evKey: 'fmax', id: 's-fmax', label: 'Work AI could ever speed up', min: 0, max: 95, step: 1, get: () => s.fmax, set: (v) => (s.fmax = Math.max(v, s.f)), fmt: (v) => `${v}%`, hint: 'The ceiling as AI broadens (agents, some robotics). The rest stays human.' }),
       slider({ ev: ev('p'), evKey: 'p', id: 's-p', label: 'New wealth vs arms race', min: 0, max: 100, step: 1, get: () => s.p, set: (v) => (s.p = v), fmt: (v) => `${v}%`, hint: 'Share of a speedup that creates real wealth. 0% = pure competition, where one side’s gain is another’s loss · 100% = all new wealth.' }),
-      slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Checking costs', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'How much AI output people must check and fix. 0 = checks itself · 2 = mostly checkable (code) · 5 = needs expert review · 10 = can’t be verified.' }),
-      slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: '0 = sealed off · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis.' }),
-      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'How much of the bottleneck can be removed by rebuilding plant, sites, systems, rules, contracts and roles around AI.' }),
+      slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Checking costs', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'Time people spend checking and fixing AI’s work. It doesn’t shrink as AI gets cheaper, so it becomes the bottleneck. 0 = checks itself · 2 = mostly checkable (code) · 5 = needs expert review · 10 = can’t be verified.' }),
+      slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'Losses to fraud and attack, which rise as AI makes them cheaper and fall as defensive AI catches up. 0 = sealed off · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis.' }),
+      slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'Share of the work done with AI that can be rebuilt to run without people directing it: new plant, sites, systems, rules, contracts and roles.' }),
       slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the rebuilding is worth the cost.' }),
       slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Rebuilding speed', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'Share of the gap to the rebuilding worth doing closed each year. Slow where machines last decades, sites are fixed and rules change slowly.' })
     );
@@ -380,14 +380,14 @@
       const { runs, spread, corr } = M.MC;
       const snap = M.withBeta(JSON.parse(JSON.stringify(state)));
       const r = M.rng(20261121);
-      const acc = { Vmacro: [], T: [] };
+      const acc = { Vmacro: [], Vuseful: [], T: [] };
       let done = 0;
       const step = () => {
         if (job !== mcJob) return; // superseded by a newer change
         const t0 = performance.now();
         while (done < runs && performance.now() - t0 < 30) {
           const o = M.mcRun(snap, r, spread, corr);
-          acc.Vmacro.push(o.Vmacro); acc.T.push(o.T);
+          acc.Vmacro.push(o.Vmacro); acc.Vuseful.push(o.Vuseful); acc.T.push(o.T);
           done++;
         }
         mcProgress = { done, runs };
@@ -396,7 +396,7 @@
           if (el) el.textContent = `running uncertainty ${done}/${runs}…`;
           setTimeout(step, 0);
         } else {
-          mcCache = { key, data: { Vmacro: M.summarise(acc.Vmacro), T: M.summarise(acc.T) } };
+          mcCache = { key, data: { Vmacro: M.summarise(acc.Vmacro), Vuseful: M.summarise(acc.Vuseful), T: M.summarise(acc.T) } };
           mcProgress = null;
           render();
         }
@@ -434,27 +434,29 @@
       ? `adds ${(annual * 100).toFixed(1)}% a year · likely range ${fx(mc.Vmacro.p10[L])}–${fx(mc.Vmacro.p90[L])}`
       : `adds ${(annual * 100).toFixed(1)}% a year · ${mcPending()}`;
     $('kpis').innerHTML =
-      kpi(`Output vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
+      kpi(`GDP vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
+      kpi(`Useful output vs no further AI`, fx(mc ? mc.Vuseful.p50[L] : last.Vuseful), 'GDP minus arms-race activity', (mc ? mc.Vuseful.p50[L] : last.Vuseful) >= 1 ? 'good' : 'bad') +
       kpi(`Useful AI work, ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `times end-2026 · growing ${(last.growth * 100).toFixed(0)}% a year`) +
       kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off than without further AI', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
-      kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(rows[0].automationFixed)} in ${startY}`) +
-      kpi('AI-native products', pc(last.newShare), `of the economy`);
+      kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(rows[0].automationFixed)} in ${startY}`);
 
     // Chart 1: GDP with and without further AI (start year = 1, both include trend growth)
     const c = css('--s1');
     const tr = rows.map((r) => r.trend);
     const mid = mc ? mc.Vmacro.p50 : rows.map((r) => r.Vmacro);
+    const midU = mc ? mc.Vuseful.p50 : rows.map((r) => r.Vuseful);
     const ser = [
-      { name: 'With AI', label: 'With AI', color: c, ys: mid.map((v, i) => v * tr[i]), width: 3 },
+      { name: 'GDP with AI', label: 'GDP with AI', color: c, ys: mid.map((v, i) => v * tr[i]), width: 3 },
+      { name: 'Useful output with AI (GDP minus arms races)', label: 'Useful output', color: css('--s3'), ys: midU.map((v, i) => v * tr[i]), width: 2, dash: '3 3' },
       { name: 'Without further AI', label: 'No further AI', color: css('--ink-2'), ys: tr.slice(), width: 2, dash: '6 4' },
     ];
     const band = mc ? { lo: mc.Vmacro.p10.map((v, i) => v * tr[i]), hi: mc.Vmacro.p90.map((v, i) => v * tr[i]), color: c, name: 'Likely range' } : null;
-    $('c1-sub').textContent = `${startY} = 1. Both lines include ${tg.toFixed(1)}% a year of growth from everything except AI, the current average for advanced economies. The gap is what AI adds.`;
+    $('c1-sub').textContent = `${startY} = 1. All lines include ${tg.toFixed(1)}% a year of growth from everything except AI, the current average for advanced economies. Useful output leaves out activity that is only an arms race, which GDP counts.`;
     legend($('c1-legend'), ser.concat(band ? [{ name: 'Likely range (80% of runs)', color: c, band: true }] : []));
     lineChart($('c1'), {
       xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
-      tipX: (x, i) => `${x} · output ${fx(mid[i])} of no further AI`, height: 300, directLabels: true, aria: 'GDP with and without further AI over time',
+      tipX: (x, i) => `${x} · GDP ${fx(mid[i])}, useful output ${fx(midU[i])} of no further AI`, height: 300, directLabels: true, aria: 'GDP with and without further AI over time',
     });
 
     // Chart 2: T over time (log)
@@ -470,7 +472,7 @@
 
     // Chart 3: sector V
     const sser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.sectors[i].V), width: i === state.sel ? 3 : 2 }));
-    $('c3-sub').textContent = 'After bottlenecks, arms races and checking costs. Below 1.0 means AI left the sector worse off.';
+    $('c3-sub').textContent = 'Useful output per worker, after bottlenecks, arms races, checking and fraud. Below 1.0 means AI left the sector worse off.';
     legend($('c3-legend'), sser);
     lineChart($('c3'), { xs, series: sser, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(1) + '×'), baseline: 1, baselineLabel: 'no further AI', tipX: (x) => String(x), height: 240, aria: 'Sector output over time' });
 
@@ -503,12 +505,12 @@
     if (!s) { $('sector-status').innerHTML = ''; return; }
     const pills = [];
     const fitTxt = s.fAvail - s.f > 0.005 ? `AI used for ${pc(s.f)} of the ${pc(s.fAvail)} it can do` : `AI used for ${pc(s.f)}`;
-    pills.push(`<span class="pill info">${when}: output ${fx(s.V)} · work ${fx(s.S)} faster · ${fitTxt} · ${pc(s.g)} rebuilt</span>`);
-    if (s.capped) pills.push(`<span class="pill warn">Holding AI use back: more would cost more in errors than it saves</span>`);
+    pills.push(`<span class="pill info">${when}: useful output per worker ${fx(s.V)} · work ${fx(s.S)} faster · ${fitTxt} · ${pc(s.g)} of it rebuilt</span>`);
+    if (s.checkShare > 0.1) pills.push(`<span class="pill warn">Checking AI's work takes ${pc(s.checkShare)} of the time</span>`);
+    if (s.loss > 0.03) pills.push(`<span class="pill warn">${pc(s.loss, 1)} of output lost to fraud and attack</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);
     else if (s.V >= 2) pills.push(`<span class="pill good">More than doubled</span>`);
-    const P = M.sectorParams(cfg);
-    if (P.p < 0.5 && s.slop > 0 && P.p <= s.slop * (1 - P.p)) pills.push(`<span class="pill warn">Arms race: any further speedup lowers this sector's value</span>`);
+    if (cfg.p < 50) pills.push(`<span class="pill warn">Mostly an arms race: little of its speedup is useful output</span>`);
     $('sector-status').innerHTML = pills.join('');
   }
 
@@ -516,9 +518,9 @@
   function renderTable(rows) {
     $('tbl-title').textContent = 'Year by year';
     const names = state.sectors.map((s) => esc(s.name));
-    let h = '<thead><tr><th>Year</th><th>Useful AI work</th><th>Whole economy (× no further AI)</th><th>Essential sectors</th><th>Flexible sectors</th><th>AI-native products</th><th>GDP with AI (' + state.startYear + ' = 1)</th><th>GDP without further AI</th><th>Tasks done with AI</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
+    let h = '<thead><tr><th>Year</th><th>Useful AI work</th><th>GDP (× no further AI)</th><th>Useful output (× no further AI)</th><th>Capital boost</th><th>Essential sectors</th><th>Flexible sectors</th><th>AI-native products</th><th>GDP with AI (' + state.startYear + ' = 1)</th><th>GDP without further AI</th><th>Tasks done with AI</th>' + names.map((n) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>';
     rows.forEach((r) => {
-      h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
+      h += `<tr><td>${r.year}</td><td>${fx(r.T).replace('×', '')}</td><td class="${cls(r.Vmacro)}"><b>${f2(r.Vmacro)}</b></td><td class="${cls(r.Vuseful)}">${f2(r.Vuseful)}</td><td>${f2(r.capMult)}</td><td class="${cls(r.Vcore)}">${f2(r.Vcore)}</td><td class="${cls(r.Vflex)}">${f2(r.Vflex)}</td>` +
         `<td>${f2(r.newGoods)}</td><td>${f2(r.gdp)}</td><td>${f2(r.gdpNoAI)}</td><td>${pc(r.automationFixed)}</td>` +
         r.sectors.map((s) => `<td class="${cls(s.V)}">${f2(s.V)}</td>`).join('') + '</tr>';
     });
@@ -528,8 +530,8 @@
   function toCSV() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
     const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
-    const head = ['year', 'useful_ai_work', 'V_essential', 'V_flexible', 'new_products', 'V_macro_vs_no_further_AI', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`V ${s.name}`, `rebuilt ${s.name}`, `ai_in_use ${s.name}`, `spending_share ${s.name}`]));
-    const lines = lastRows.map((r) => [r.year, r.T, r.Vcore, r.Vflex, r.newGoods, r.Vmacro, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.g, s.f, r.shares[i]])).map(n).join(','));
+    const head = ['year', 'useful_ai_work', 'ai_capability_closure', 'gdp_vs_no_further_ai', 'useful_output_vs_no_further_ai', 'capital_boost', 'essential_sectors', 'flexible_sectors', 'new_products', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`useful_output_per_worker ${s.name}`, `measured_output_per_worker ${s.name}`, `speedup ${s.name}`, `ai_in_use ${s.name}`, `rebuilt ${s.name}`, `fraud_loss ${s.name}`, `workers_share ${s.name}`, `spending_share ${s.name}`]));
+    const lines = lastRows.map((r) => [r.year, r.T, r.c, r.Vmacro, r.Vuseful, r.capMult, r.Vcore, r.Vflex, r.newGoods, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.Vm, s.S, s.f, s.g, s.loss, r.labour[i], r.shares[i]])).map(n).join(','));
     return [head.map(q).join(',')].concat(lines).join('\n');
   }
   $('copy-csv').addEventListener('click', () => {
@@ -558,6 +560,9 @@
     if (!el) return;
     el.innerHTML = Object.keys(M.SOURCES).map((k) => `<li><a href="${M.SOURCES[k].u}" target="_blank" rel="noopener">${esc(M.SOURCES[k].t)}</a></li>`).join('');
   }
+
+  // default settings and evidence, as plain tables (static: the defaults don't change)
+  try { const st = $('settings-tables'); if (st && window.AIExplain) st.innerHTML = window.AIExplain.settingsHTML(M); } catch (e) { /* optional */ }
 
   function rebuildAll() {
     if (state.sel >= state.sectors.length) state.sel = 0;

@@ -1,8 +1,21 @@
 <!doctype html>
+<html lang="en-GB">
+<meta charset="utf-8">
 <title>AI Transformation Model</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta charset="utf-8">
+<meta name="description" content="An interactive, evidence-based model of how much AI could add to an advanced economy, sector by sector. Default scenario: GDP {{V50}} what it would be without further AI by 2050, peaking at {{PKV}} extra growth a year around {{PKY}}, then fading.">
+<link rel="canonical" href="https://ai-transformation-model.uk-rob-mitchell.workers.dev/">
+<link rel="alternate" type="application/json" href="data.json" title="Model results as JSON">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Plain-text guide for machines">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AI Transformation Model">
+<meta property="og:description" content="How much richer could AI make an advanced economy, and why doesn't it explode? An interactive six-sector model with evidence for every setting.">
+<meta property="og:url" content="https://ai-transformation-model.uk-rob-mitchell.workers.dev/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{{JSONLD_INDEX}}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@500;700;800&display=swap">
@@ -225,9 +238,16 @@ details.ev > summary::-webkit-details-marker { display: none; }
 details.ev > summary::before { content: "▸ "; color: var(--muted); }
 details.ev[open] > summary::before { content: "▾ "; }
 details.ev > div { padding-top: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#settings-tables h3 { margin: 6px 0 0; }
+#settings-tables td.txt { white-space: normal; min-width: 18rem; text-align: left; font-size: 13px; }
+#settings-tables small { color: var(--muted); }
+.data-links { font-size: 13px; color: var(--ink-2); }
+#tbl tbody th, #settings-tables tbody th { font-weight: 500; text-align: left; white-space: normal; }
 </style>
 
 <div class="wrap">
+  <noscript><p class="simplified">This page needs JavaScript for its sliders and charts. The results below are the default scenario; every number is also in <a href="data.json">data.json</a>, the settings and evidence in <a href="model.json">model.json</a>, and a plain-text summary in <a href="llms.txt">llms.txt</a>.</p></noscript>
   <header class="top">
     <div class="titles">
       <span class="eyebrow">Bottlenecks · Arms races · Checking costs · Weakest links</span>
@@ -280,7 +300,7 @@ details.ev > div { padding-top: 4px; }
       <div class="panel chart-card" id="c4-card">
         <div class="chart-head">
           <h2>Rebuilding around AI</h2>
-          <p>How much of each sector's bottleneck has been removed by rebuilding plant, systems, rules and roles around AI</p>
+          <p>Share of each sector's AI work rebuilt to run without people directing it: new plant, systems, rules and roles</p>
         </div>
         <div class="legend" id="c4-legend"></div>
         <div class="chart" id="c4"></div>
@@ -327,6 +347,11 @@ details.ev > div { padding-top: 4px; }
     <div class="tbl-wrap tbl-scroll"><table id="tbl"></table></div>
   </section>
 
+  <details class="panel maths" aria-label="Default settings and evidence">
+    <summary><div class="sum-text"><h2>Default settings and evidence</h2><span class="eq-note">Every default in one place: the six dials, each sector's settings with plausible ranges, and the fixed assumptions.</span></div></summary>
+    <div class="maths-body" id="settings-tables"></div>
+  </details>
+
   <details class="panel maths" aria-label="Sources for the default settings">
     <summary><div class="sum-text"><h2>Sources</h2><span class="eq-note">The studies and data behind the default settings. Each slider's evidence note links to the ones it uses.</span></div></summary>
     <div class="maths-body"><ul class="sources-list" id="sources-list"></ul></div>
@@ -335,34 +360,33 @@ details.ev > div { padding-top: 4px; }
   <details class="panel maths" aria-label="How the model works">
     <summary><div class="sum-text"><h2>How the model works</h2><span class="eq-note">The equations, for anyone who wants to check them</span></div></summary>
     <div class="maths-body">
-    <p class="eq-note"><b>What the numbers measure:</b> every output figure is a multiple of output without further AI, meaning a world where AI stays at its end-2026 level and use. 1.6× means 60% more output than that world. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds: \(\text{GDP}_t=V_{t}\,(1.02)^t\) with AI and \((1.02)^t\) without, with 2027 = 1. Settings without a dial are listed under "Fixed assumptions".</p>
+    <p class="eq-note"><b>What the numbers measure:</b> every figure is a multiple of a world where AI stays at its end-2026 level and use. <b>GDP</b> counts all output, including activity that is only an arms race; <b>useful output</b> leaves that out. Both include the extra capital that higher output pays for. The GDP chart adds 2.0% a year of growth from everything except AI to both worlds, with 2027 = 1. Settings without a dial are listed under "Fixed assumptions", with their evidence.</p>
     <div class="eqs">
       <div class="eq-block">
-        <h3>1 · Each sector's output</h3>
-        <div class="eq">\[f_i^*(T)=f_{i,\max}-(f_{i,\max}-f_{i,0})\,T^{-\beta} \qquad \epsilon_i=(1-a_i)(1-g_i)\]</div>
-        <div class="eq">\[\tau_i=\epsilon_i+\underbrace{a_i(1-g_i)}_{\text{assisted}}\Big(h+\frac{1-h}{\hat A\,T_{\text{eff}}}\Big)+\underbrace{g_i}_{\text{rebuilt}}\frac{1}{\hat A\,T_{\text{eff}}} \qquad \frac{1}{A}=h+\frac{1-h}{\hat A}\]</div>
-        <div class="eq">\[\tau_{i,0}=\epsilon_{i,0}+\frac{1-\epsilon_{i,0}}{A},\;\; \epsilon_{i,0}=1-a_0 f_{i,0} \qquad S_i=\frac{\tau_{i,0}}{\tau_i}\]</div>
-        <div class="eq">\[V_i=\frac{1+p_i\,(S_i-1)}{1+\big(\hat\eta_i\ln T_{\text{eff}}+\gamma_iT^{-\delta_\gamma}\ln T\big)\,S_i}\]</div>
-        <p class="eq-note">\(f_i^*\) is the share of a sector's work AI can do, rising with capability \(T\) toward a fixed ceiling; \(\beta\) is set so it has closed 90% of the gap by the AGI year. \(a_i\) is the share actually done with AI. \(\epsilon_i\) is the work AI doesn't touch. AI-assisted work in old setups keeps a share \(h\) human, so it gets at most \(1/h\) faster; work rebuilt around AI (\(g_i\)) speeds up fully. \(\tau\) is time per unit of work, \(A\) today's speedup on assisted work, and \(S_i\) the speedup against how work was done at end-2026. \(p_i\) is the share of the speedup that creates real wealth rather than feeding an arms race. \(\eta_i\) (checking costs inside the sector, falling as AI broadens: \(\hat\eta_i=\eta_i(1-0.5\,c_t)\), \(c_t=1-T^{-\beta}\)) and \(\gamma_i\) (spam, fraud and attack from outside, partly offset by defensive AI, \(\delta_\gamma=0.1\)) are scored 0–10 and divided by 200. Each sector uses AI only up to the level that maximises its output, \(T_{\text{eff}}=\min(T,T^*)\); outside attacks scale with the full \(T\). AI-ready work is capped at 95% and rebuilding at 90%.</p>
+        <h3>1 · Each sector</h3>
+        <div class="eq">\[f_i^*=f_{i,0}+(f_{i,\max}-f_{i,0})\,c_t \qquad a_i\le f_i^* \qquad g_i\le g_{i,\max}\]</div>
+        <div class="eq">\[\tau_i=(1-a_i)+a_i(1-g_i)\Big(h+\frac{1-h}{\hat A E_t}\Big)+\frac{a_i g_i}{\hat A E_t}+\hat\kappa_i a_i \qquad S_i=\frac{\tau_{i,0}}{\tau_i}\]</div>
+        <div class="eq">\[L_i=\ell_i\big(1-E_t^{-\nu}\big)\big(1-D\,c_t\big) \qquad V^{\text{GDP}}_i=S_i(1-L_i) \qquad V_i=\big(1+p_i(S_i-1)\big)(1-L_i)\]</div>
+        <p class="eq-note">\(c_t\in[0,1)\) is AI's capability: the share of the gap to each sector's ceiling it has closed, reaching 0.9 in the AGI year. \(E_t\) is useful AI work per dollar (end-2026 = 1). \(f_i^*\) is the work AI can do, \(a_i\) the work done with AI, and \(g_i\) the share of that rebuilt to run without people directing it. In \(\tau_i\), time per unit of work: untouched work, AI-assisted work where a share \(h\) stays human, rebuilt work, and checking, \(\hat\kappa_i=\kappa_i(1-0.5\,c_t)\), people's time verifying AI's output, which doesn't shrink as AI gets cheaper. \(\hat A\) is AI's own speed implied by today's 1.4× speedup, and \(\tau_{i,0}\) is how work was done at end-2026. \(L_i\) is the share lost to fraud and attack: it rises as cheaper AI makes attacks cheaper (\(\nu=0.5\)) and falls as defensive AI broadens (\(D=0.5\)). \(p_i\) is the share of the speedup that creates real wealth rather than feeding an arms race; GDP counts all of it.</p>
       </div>
       <div class="eq-block">
         <h3>2 · The whole economy</h3>
-        <div class="eq">\[V_{\text{ess}}=\Big(\sum_{i\in\text{ess}}\tilde w_i V_i^{\rho}\Big)^{1/\rho} \qquad V_{\text{flex}}=\sum_{j\in\text{flex}}\tilde w_j V_j\]</div>
-        <div class="eq">\[V=\Big(W_{\text{ess}}V_{\text{ess}}^{\rho_m}+W_{\text{flex}}V_{\text{flex}}^{\rho_m}\Big)^{1/\rho_m}+n_t\]</div>
-        <p class="eq-note">\(\tilde w\) are sector shares within each group and \(W_{\text{ess}}\) the essential sectors' share of GDP (about two-thirds). \(\rho=-4\) makes the weakest essential sector dominate. \(\rho_m=-0.5\) means people need both groups, so spending shifts toward whichever AI speeds up least. \(n_t\) is AI-native products.</p>
+        <div class="eq">\[Q_i=V_i\,\frac{l_i}{w_i} \qquad V_{\text{ess}}=\Big(\sum_{\text{ess}}\tilde w_i Q_i^{\rho}\Big)^{\frac1\rho} \qquad V_{\text{flex}}=\Big(\sum_{\text{flex}}\tilde w_j Q_j^{\rho_f}\Big)^{\frac1{\rho_f}}\]</div>
+        <div class="eq">\[Y_t=\Big[\Big(W_{\text{ess}}V_{\text{ess}}^{\rho_m}+W_{\text{flex}}V_{\text{flex}}^{\rho_m}\Big)^{\frac1{\rho_m}}+n_t\Big]\,k_t^{\alpha}\]</div>
+        <p class="eq-note">\(w_i\) is each sector's starting share of GDP and \(l_i\) its share of workers now; \(\tilde w\) are shares within each group and \(W_{\text{ess}}\) the essential sectors' share (about two-thirds). \(\rho=-4\) (\(\sigma\approx0.2\)) makes the weakest essential sector hold the rest back; \(\rho_f=1/3\) (\(\sigma=1.5\)) lets flexible sectors partly stand in for each other; \(\rho_m=-0.5\) means people need both groups, so spending shifts toward whichever AI speeds up least. \(n_t\) is AI-native products and \(k_t\) the capital stock relative to no further AI, with capital's share \(\alpha=0.35\). GDP uses \(V^{\text{GDP}}_i\), useful output \(V_i\).</p>
       </div>
       <div class="eq-block">
         <h3>3 · How fast AI improves</h3>
-        <div class="eq">\[x_t=r_0\,\big(V_{\text{R\&D},t}\big)^{\phi}\,\min(1,V_{\text{ess},t})\,\frac{1+1/T_{\text{half}}}{1+T_t/T_{\text{half}}}\]</div>
-        <div class="eq">\[\text{growth}_t=\frac{x_t}{\big(1+(x_t/\text{cap})^4\big)^{1/4}} \qquad T_{t+\Delta t}=T_t\,(1+\text{growth}_t)^{\Delta t}\]</div>
-        <p class="eq-note">\(T\) is useful AI work: verified work per dollar, end-2026 = 1. It grows at \(r_0\) in year one, faster when the AI research sector (knowledge and professional services) is more productive (\(\phi=0.4\)), slower when essential sectors fall below baseline, and with diminishing returns (\(T_{\text{half}}=15\)). A speed limit of 200% a year stands in for how fast chips, data centres and power can be built. The model steps quarterly and reports yearly.</p>
+        <div class="eq">\[F_t=V_{\text{R\&D},t}^{\,\phi}\;V_{\text{ess},t}^{\,\psi}\;Y_t^{\,\lambda} \qquad \text{growth}_t=\frac{x_t}{\big(1+(x_t/\text{cap})^4\big)^{1/4}},\;\; x_t=r_0\,F_t\,E_t^{-\theta}\]</div>
+        <div class="eq">\[E_{t+\Delta t}=E_t(1+\text{growth}_t)^{\Delta t} \qquad \ell_{t+\Delta t}=\ell_t+F_t\Delta t,\;\; c_t=1-e^{-k_c\ell_t}\]</div>
+        <p class="eq-note">The economy feeds back into AI progress three ways: a more productive AI research sector (knowledge and professional services, \(\phi=0.4\)), more productive essential sectors that build chips, power and data centres (\(\psi=0.5\), in both directions), and higher output that funds more compute and research (\(\lambda=0.5\)). Progress gets harder as AI improves (\(\theta=0.22\), from evidence that research productivity falls about 5% a year), and a speed limit of 200% a year stands in for how fast chips and power can be built. Capability \(c_t\) advances with the same feedback; \(k_c\) is set so it reaches 0.9 in the AGI year. The model steps quarterly and reports yearly.</p>
       </div>
       <div class="eq-block">
-        <h3>4 · Adoption, rebuilding and new products</h3>
-        <div class="eq">\[\dot a_i=\lambda\,m_t\,a_i\Big(1-\frac{a_i}{f_i^*(T)}\Big),\quad a_{i,0}=0.2\,f_{i,0}\]</div>
-        <div class="eq">\[g_{i,t+1}=g_{i,t}+\alpha_i m_t\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/T_t)^{2.5}}-g_{i,t}\Big) \qquad n_{t+1}=n_t+0.15\,m_t\big(N_{\max}H(T_t,10)-n_t\big)\]</div>
-        <div class="eq">\[m_t=\Big(\frac{\ln R_t}{\ln 1.4}\Big)^{0.25},\quad R_t=\Big(h+\frac{1-h}{\hat A\,T_t}\Big)^{-1} \qquad V_i\leftarrow V_i\big(1-0.25\max(0,\dot u_i-\dot u_{i,0})\big)\]</div>
-        <p class="eq-note">Use of AI spreads along an S-curve; adoption, rebuilding and new products all move faster as AI's advantage \(R_t\) grows. The last term is the up-front cost of change: while the share of work done with AI, \(u_i=1-\epsilon_i\), rises faster than today's pace, some output goes into training and reorganising, so gains arrive later. Yearly rates are applied per quarter. \(H(T,m)=\frac{T^{2.5}-1}{T^{2.5}-1+m^{2.5}}\) is an S-curve that is 0 at \(T=1\) and ½ near \(m\).</p>
+        <h3>4 · Adoption, rebuilding, workers and capital</h3>
+        <div class="eq">\[\dot a_i=\lambda_a m_t\,a_i\Big(1-\frac{a_i}{f_i^*}\Big),\;\; a_{i,0}=0.2\,f_{i,0} \qquad \dot g_i=\alpha_i m_t\Big(\frac{g_{i,\max}}{1+(T_{\text{crit},i}/E_t)^{2.5}}-g_i\Big)\]</div>
+        <div class="eq">\[\dot n=0.15\,m_t\big(N_{\max}H(E_t,10)-n\big) \qquad \dot l_i=\mu\,(l_i^*-l_i) \qquad \dot k=\delta\,(Y_t-k)\]</div>
+        <div class="eq">\[m_t=\Big(\frac{\ln R_t}{\ln 1.4}\Big)^{0.25},\; R_t=\Big(h+\frac{1-h}{\hat A E_t}\Big)^{-1} \qquad V_i\leftarrow V_i\big(1-1.5\max(0,\dot u_i-\dot u_{i,0})\big)\]</div>
+        <p class="eq-note">Use of AI spreads along an S-curve, and adoption, rebuilding and new products all move faster as AI's advantage \(R_t\) grows. Workers move toward the allocation that maximises GDP, \(l^*\), closing \(\mu=20\%\) of the gap a year. Capital catches up with output at the depreciation rate \(\delta=5\%\), so the boost from capital builds over decades. The last term is the up-front cost of change: while AI's share of work, \(u_i=a_i(1+g_i)\), rises faster than today's pace, some output goes into training and reorganising. Yearly rates are applied per quarter. \(H(E,m)=\frac{E^{2.5}-1}{E^{2.5}-1+m^{2.5}}\).</p>
       </div>
     </div>
     </div>
@@ -371,14 +395,14 @@ details.ev > div { padding-top: 4px; }
   <section class="panel" aria-label="Known limitations" style="display:flex;flex-direction:column;gap:12px">
     <h2>What this model can't tell you</h2>
     <ul class="limits">
-      <li><b>It is a sketch, not a forecast.</b> Six broad sectors stand in for a whole economy, each blending industries with very different settings. Sizes come from data; how much is an arms race, checking costs and rebuilding speed are judgement anchored on evidence, with wide ranges. The shaded band shows how much the results move when every setting is varied by about ±25%; it can't catch equations that are wrong in form.</li>
+      <li><b>It is a sketch, not a forecast.</b> Six broad sectors stand in for a whole economy, each blending industries with very different settings. Sizes come from data; how much is an arms race, checking time and rebuilding speed are judgement anchored on evidence, with wide ranges. The shaded band shows how much the results move when every setting is varied by about ±25%; it can't catch equations that are wrong in form.</li>
       <li><b>It is sized like the US.</b> Manufacturing-heavy economies such as Germany and Japan have a larger physical sector, which lowers their gains only slightly here. It is not a model of the world economy, where farming, informal work and slower adoption would change the picture.</li>
       <li><b>Robotics is only partly included.</b> Ceilings on hands-on work allow for robots that use demonstrated technology (about 13% of US work hours, McKinsey 2025), but not for a robotics breakthrough. The "Robotics breakthrough" scenario shows what changes if one comes.</li>
-      <li><b>Some limits are fixed on purpose.</b> The ceilings on what AI can do, on rebuilding and on new products don't rise however capable AI becomes, so the economy levels off. That is the point: it shows which bottlenecks capability alone doesn't remove. Raising the ceilings is a different claim, not a correction.</li>
-      <li><b>Arms-race sectors lose from every speedup.</b> Where most of a sector's activity is competition rather than new wealth, making it faster lowers its value. The sector status flags when that happens.</li>
+      <li><b>Some limits are fixed on purpose.</b> The ceilings on what AI can do, on rebuilding and on new products don't rise however capable AI becomes, so the economy levels off. That is the point: it shows which bottlenecks capability alone doesn't remove. The explainer shows what each limit costs, and what happens if they are all removed.</li>
+      <li><b>Capital and workers are treated simply.</b> Capital is one economy-wide stock that catches up with output; workers move between sectors at a fixed pace. Neither has its own sector detail, and AI is not modelled as replacing labour outright.</li>
       <li><b>Jobs, wages and catastrophic risk are not modelled.</b> "Tasks done with AI" measures work, not jobs. The model asks what AI does to output if things broadly go right; it has no shocks, business cycles or policy responses.</li>
     </ul>
-    <p class="foot">Your settings are saved in this browser.</p>
+    <p class="foot">Your settings are saved in this browser. For machines: <a href="data.json">data.json</a> (results), <a href="data.csv">data.csv</a> (year by year), <a href="model.json">model.json</a> (settings and evidence), <a href="llms.txt">llms.txt</a> (plain-text guide).</p>
   </section>
 </div>
 
@@ -387,4 +411,5 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
 <script src="model.js"></script>
+<script src="explain.js"></script>
 <script src="app.js"></script>
