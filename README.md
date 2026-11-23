@@ -37,7 +37,7 @@ The pages avoid jargon: essential and flexible sectors (CES weak-link and substi
 
 ## Changes after the November 2026 critique
 
-A critique of the earlier version led to: capital accumulation; workers moving between sectors; GDP and useful output reported separately; checking as people's time rather than a cost that grew with speed (removing a forced peak); bounded attack losses with defence that catches up; separate capability and cost variables; rebuilding limited to work AI already does; essential sectors able to speed AI up as well as slow it; partial substitution within flexible sectors; evidence-based elasticities and diminishing returns. The explainer's "Which limits matter" table and "Objections" section show the effect of each.
+A critique of the earlier version led to: capital accumulation; workers moving between sectors; GDP and useful output reported separately; checking as people's time rather than a cost that grew with speed (removing a forced peak); bounded attack losses with defence that catches up; separate capability and cost variables; rebuilding limited to work AI already does; essential sectors able to speed AI up as well as slow it; partial substitution within flexible sectors; evidence-based elasticities and diminishing returns. A later fix made the AGI year matter properly: people's directing role in AI-assisted work now shrinks as AI becomes more capable, and rebuilding pays once AI is capable enough or cheap enough. The explainer's "Which limits matter" table and "Objections" section show the effect of each.
 
 ## Robotics
 

@@ -206,7 +206,7 @@
       slider({ ev: ev('eta'), evKey: 'eta', id: 's-eta', label: 'Checking costs', min: 0, max: 10, step: 0.1, get: () => s.eta, set: (v) => (s.eta = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'Time people spend checking and fixing AI’s work. It doesn’t shrink as AI gets cheaper, so it becomes the bottleneck. 0 = checks itself · 2 = mostly checkable (code) · 5 = needs expert review · 10 = can’t be verified.' }),
       slider({ ev: ev('gamma'), evKey: 'gamma', id: 's-gamma', label: 'Exposure to spam, fraud and attack', min: 0, max: 40, step: 0.1, get: () => s.gamma, set: (v) => (s.gamma = v), fmt: (v) => `${v.toFixed(1)} / 10`, hint: 'Losses to fraud and attack, which rise as AI makes them cheaper and fall as defensive AI catches up. 0 = sealed off · 4 = targeted attacks · 7 = prime fraud target · 9 = flooded with bots · above 10 = crisis.' }),
       slider({ ev: ev('gmax'), evKey: 'gmax', id: 's-gmax', label: 'Rebuilding ceiling', min: 0, max: 90, step: 1, get: () => s.gmax, set: (v) => (s.gmax = v), fmt: (v) => `${v}%`, hint: 'Share of the work done with AI that can be rebuilt to run without people directing it: new plant, sites, systems, rules, contracts and roles.' }),
-      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much better than today AI must be before half the rebuilding is worth the cost.' }),
+      slider({ ev: ev('Tcrit'), evKey: 'Tcrit', id: 's-tcrit', label: 'Rebuilding midpoint', min: 0.5, max: 30, step: 0.5, get: () => s.Tcrit, set: (v) => (s.Tcrit = v), fmt: (v) => `${v}×`, hint: 'How much more useful work per dollar than today AI must deliver before half the rebuilding pays. Very capable AI makes it pay sooner.' }),
       slider({ ev: ev('alpha'), evKey: 'alpha', id: 's-alpha', label: 'Rebuilding speed', min: 5, max: 30, step: 1, get: () => s.alpha, set: (v) => (s.alpha = v), fmt: (v) => `${v}% of gap/yr`, hint: 'Share of the gap to the rebuilding worth doing closed each year. Slow where machines last decades, sites are fixed and rules change slowly.' })
     );
   }
@@ -437,7 +437,7 @@
       kpi(`GDP vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
       kpi(`Useful output vs no further AI`, fx(mc ? mc.Vuseful.p50[L] : last.Vuseful), 'GDP minus arms-race activity', (mc ? mc.Vuseful.p50[L] : last.Vuseful) >= 1 ? 'good' : 'bad') +
       kpi(`Useful AI work, ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `times end-2026 · growing ${(last.growth * 100).toFixed(0)}% a year`) +
-      kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off than without further AI', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
+      kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off: speeding AI progress', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
       kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(rows[0].automationFixed)} in ${startY}`);
 
@@ -484,7 +484,7 @@
     // Chart 5: spending shares (Baumol)
     const shser = state.sectors.map((s, i) => ({ name: s.name, color: seriesColor(i), ys: rows.map((r) => r.shares[i] * 100), width: i === state.sel ? 3 : 2 }));
     if (state.Nmax > 0) shser.push({ name: 'AI-native products', color: css('--s7'), ys: rows.map((r) => r.newShare * 100), width: 2, dash: '5 4' });
-    $('c5-sub').textContent = 'Spending shifts toward the essential sectors AI speeds up least, because people still need them.';
+    $('c5-sub').textContent = 'Shares move far less than productivity: what AI makes more productive gets cheaper rather than bigger, and people keep spending on the essentials.';
     legend($('c5-legend'), shser);
     lineChart($('c5'), { xs, series: shser, xFmt: yrFmt, yFmt: (v, t) => (t ? v.toFixed(1) + '%' : Math.round(v) + '%'), yFloor: 0, tipX: (x) => String(x), height: 240, aria: 'Spending shares over time' });
 

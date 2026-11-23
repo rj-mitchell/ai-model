@@ -335,7 +335,8 @@
   // f*_i   = f_0 + (f_max − f_0) c                 work AI can do
   // a_i    ≤ f*_i                                  work done with AI (adoption lags)
   // g_i    ≤ g_max                                 share of that work rebuilt to run without people directing it
-  // τ_i    = (1 − a) + a(1 − g)(h + (1 − h)/(Â E)) + a g/(Â E) + κ̂ a      time per unit of work
+  // τ_i    = (1 − a) + a(1 − g)(ĥ + (1 − ĥ)/(Â E)) + a g/(Â E) + κ̂ a      time per unit of work
+  //          ĥ = h (1 − hFall·c): people's share of AI-assisted work, falling as AI becomes more capable
   //          κ̂ = κ (1 − dEta·c): human checking time per unit of AI work, falling as AI broadens
   // S_i    = τ_i,0 / τ_i                           speedup against how work was done at end-2026
   // L_i    = loss · (1 − E^(−ν)) · (1 − D c)       share of output lost to fraud and attack (bounded)
@@ -461,8 +462,8 @@
   // F      = V_R&D^φ · clamp(V_ess^ψ) · Y^λ            feedback from the economy to AI progress
   // growth = r0 · F · E^(−θ), smoothly capped            E ← E (1 + growth)^dt
   // ℓ     += F dt;  c = 1 − exp(−k_c ℓ)                 capability: k_c set so c = 0.9 in the AGI year
-  // a_i   += λ m dt a (1 − a/f*_i)                      adoption (S-curve), m = payoff multiplier
-  // g_i   += α_i m (g_max hill(E, T_crit) − g_i)        rebuilding
+  // a_i   += λ m dt a (1 − a/f*_i)                      adoption (S-curve), m = (ln R / ln 1.4)^0.25, R = 1/(ĥ + (1 − ĥ)/(Â E))
+  // g_i   += α_i m (g_max [1 − (1 − hill(E, T_crit))(1 − c)] − g_i)   rebuilding: worth it once AI is cheap or capable enough
   // n     += s m (N_max hill0(E, T_new) − n)            AI-native products
   // l     += μ (l* − l)                                 workers move toward the best allocation
   // k     += δ (Y − k)                                  capital catches up with output

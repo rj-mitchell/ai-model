@@ -65,7 +65,7 @@
 
     // ---------- cyber-attack scenario ----------
     const cy = (() => { const s = DK(); s.sectors[3].gamma = 40; return sim(s, 14); })();
-    Object.assign(N, { CYflex: fx(yr(cy, 2041).Vflex), CYcore: fx(yr(cy, 2041).Vcore), CYV: fx(yr(cy, 2041).Vmacro), CYT: fx(yr(cy, 2041).T), CYL: pc(yr(cy, 2041).sectors[3].loss) });
+    Object.assign(N, { ESS41: fx(at(2041).Vcore), CYflex: fx(yr(cy, 2041).Vflex), CYcore: fx(yr(cy, 2041).Vcore), CYV: fx(yr(cy, 2041).Vmacro), CYT: fx(yr(cy, 2041).T), CYL: pc(yr(cy, 2041).sectors[3].loss) });
 
     // ---------- AI research feedback ----------
     const rsi0 = yr(sim(Object.assign(DK(), { phi: 0 })), 2050), rsi1 = yr(sim(Object.assign(DK(), { phi: 1 })), 2050);
