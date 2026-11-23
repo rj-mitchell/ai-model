@@ -35,10 +35,6 @@ The pages avoid jargon: essential and flexible sectors (CES weak-link and substi
 
 **Dynamics.** Quarterly steps, yearly rows. Adoption, rebuilding and new products speed up with AI's payoff `m = (ln R / ln 1.4)^0.25`. Up-front cost of change: `V ← V (1 − 1.5 max(0, u̇ − u̇0))`, `u = a(1 + g)`.
 
-## Changes after the November 2026 critique
-
-A critique of the earlier version led to: capital accumulation; workers moving between sectors; GDP and useful output reported separately; checking as people's time rather than a cost that grew with speed (removing a forced peak); bounded attack losses with defence that catches up; separate capability and cost variables; rebuilding limited to work AI already does; essential sectors able to speed AI up as well as slow it; partial substitution within flexible sectors; evidence-based elasticities and diminishing returns. A later fix made the AGI year matter properly: people's directing role in AI-assisted work now shrinks as AI becomes more capable, and rebuilding pays once AI is capable enough or cheap enough. The explainer's "Which limits matter" table and "Objections" section show the effect of each.
-
 ## Robotics
 
 Robotics is only partly included: the ceilings on hands-on work allow for robots using demonstrated technology (about 13% of US work hours, McKinsey 2025). `applyRobotics()` (the "Robotics breakthrough" preset) raises the four hands-on sectors' ceilings to at least 85% and their rebuilding ceilings by 20 points: 2050 GDP rises from about 2.5× to 3.9×, peak growth from about 6.1% to 9.4% a year, and the ceiling from 4.1× to 9.7×.

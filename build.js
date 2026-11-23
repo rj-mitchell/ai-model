@@ -193,7 +193,7 @@ ${tl}
 ## Pages
 
 - [Model](${SITE}/): six dials, sector settings with evidence, charts, uncertainty band, year-by-year table.
-- [Explainer: Capability compounds. Value doesn't.](${SITE}/why): why the model never goes exponential, the limits that matter, objections and responses, robotics, and AI risk.
+- [Explainer: Capability compounds. Value doesn't.](${SITE}/why): why the model never goes exponential, the limits that matter, robotics, and AI risk.
 
 ## Data
 

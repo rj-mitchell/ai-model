@@ -123,7 +123,6 @@ tr.hl td { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   td.txt, tbody th { white-space: normal; min-width: 9rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-ol.objections { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
 tr.sep th, tr.sep td { border-top: 2px solid var(--line); }
 tbody th { background: none; font-weight: 400; color: var(--ink); text-align: left; white-space: normal; vertical-align: middle; }
 tr.hl th { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
@@ -300,25 +299,6 @@ tr.hl th { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
   <section class="prose">
     <p>One limit dominates: how much of each sector's work AI can ever do. Lift it so AI can eventually do 95% of every sector's work and 2050 GDP rises to <span class="v" data-k="BR_FIT">–</span>, with a ceiling of <span class="v" data-k="BR_FITC">–</span>. Everything else moves the 2050 figure by less than 0.6×, and most by less than 0.1×. Remove every limit at once and the model does take off: <span class="v" data-k="BR_ALL">–</span> by 2050, growing <span class="v" data-k="BR_ALLP">–</span> a year at the peak, with a ceiling of <span class="v" data-k="BR_ALLC">–</span>. The model can explode. It just needs nearly every kind of work, physical and social as well as digital, to become something AI can do.</p>
   </section>
-
-  <section class="prose" id="objections" aria-label="Objections">
-    <h2>Objections, and how the model answers them</h2>
-    <p>A critique of an earlier version of this model, and readers' feedback, raised the points below. Several were right, and the model has changed because of them.</p>
-    <ol class="objections">
-      <li><b>"It hard-codes the plateau."</b> Partly true, and deliberate: the ceilings on what AI can do are fixed, because the point is to show which limits capability alone doesn't remove. The table above shows exactly what each one costs. Only the ceiling on AI-ready work matters much.</li>
-      <li><b>"Essential sectors are far too complementary."</b> The model treats them as near-perfect complements. Studies of broad sectors and of industries' inputs to each other find very low substitutability, so this is in line with the evidence, and it barely matters: letting sectors substitute freely leaves 2050 GDP at about <span class="v" data-k="BR_SUB">–</span>, the same as the default, because AI raises every sector's productivity by broadly similar amounts.</li>
-      <li><b>"Freed-up workers would move into the bottleneck sectors."</b> Right, and now modelled: workers drift toward the sectors that need them, closing about a fifth of the gap a year. It changes little (<span class="v" data-k="BR_NOL">–</span> without it), because moving people into slow work doesn't speed that work up. That is the cost disease, not a cure for it.</li>
-      <li><b>"There is no capital accumulation."</b> Right, and the most important correction. Higher output now pays for more machines, buildings and data centres. That raises 2050 GDP from <span class="v" data-k="BR_NOK">–</span> to <span class="v" data-k="V50">–</span> and the long-run ceiling from <span class="v" data-k="CEILNK">–</span> to <span class="v" data-k="CEIL">–</span>. It amplifies the boost without making it explode, because capital can't make the slow work fast either.</li>
-      <li><b>"Arms races count in GDP."</b> Right. The model now reports both: GDP, which counts rival advertising and litigation as output, and useful output, which doesn't.</li>
-      <li><b>"Diminishing returns rule out self-improvement by assumption."</b> They are now set from evidence that research gets harder over time, and AI research feeds back into progress. Removing them entirely makes AI far more capable but leaves 2050 GDP at about <span class="v" data-k="BR_RD">–</span>: the economy can't absorb capability faster than it can rebuild around it.</li>
-      <li><b>"Checking and attack costs grew with your own speed, forcing a peak."</b> Right, and fixed. Checking is now people's time spent verifying AI's work, and attacks take a bounded share of output that defensive AI partly offsets. Output now levels off as AI improves, instead of peaking and falling.</li>
-      <li><b>"Defence never catches up with offence."</b> Fixed: defensive AI now removes up to half of attack losses as AI broadens. Even perfect defence leaves 2050 GDP at about <span class="v" data-k="BR_DEF">–</span>, barely changed.</li>
-      <li><b>"One number did too much."</b> Right. What AI can do (set by the AGI year) and how cheaply it does it (set by the speed of AI progress) are now separate.</li>
-      <li><b>Two problems the critique missed.</b> Rebuilding work around AI could push a sector past the ceiling on what AI can do, and essential sectors could slow AI progress but never speed it up. Both are fixed: rebuilding now applies only to work AI already does, and cheaper energy, chips and construction now speed AI's build-out.</li>
-      <li><b>"An earlier AGI year made too little difference."</b> Right. Even once AI could beat top professionals at most tasks, people still had to direct every AI-assisted task, and rebuilding waited for AI to get cheap. Now people's directing role shrinks as AI becomes more capable, and rebuilding pays once AI is capable enough or cheap enough. On lab leaders' timelines growth from AI now peaks at <span class="v" data-k="PK_LP">–</span> a year, against <span class="v" data-k="PK_MP">–</span> on the median expert's.</li>
-    </ol>
-  </section>
-
   <section class="cols" aria-label="What the explosion side gets right">
     <div class="card">
       <h3>What the explosion side gets right</h3>
