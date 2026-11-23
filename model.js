@@ -210,6 +210,8 @@
   const FIXED = {
     aiNow: 1.4,        // how much faster end-2026 AI does assisted work (×)
     adopt0: 20,        // share of AI-ready work already done with AI at end-2026 (%)
+    hFall: 0.75,       // share of people's directing role in AI-assisted work gone once AI reaches its full breadth
+    capRebuild: 1,     // 1: rebuilding becomes worth doing when AI is capable enough or cheap enough; 0: cost only
     jCost: 1.5,        // up-front cost of change: output diverted per unit/yr rise in AI's share of work, above today's pace
     payoffResp: 0.25,  // how strongly adoption, rebuilding and new products speed up with AI's advantage
     phi: 0.4,          // AI research feedback: progress × V_R&D^φ
@@ -235,6 +237,7 @@
   const FIXED_INFO = {
     aiNow: { label: 'Speedup from today\'s AI', value: '1.4×', ev: e(1.1, 2, 'medium', ['fredtime', 'peng', 'blr', 'metr', 'berkeley', 'scribe'], 'Field trials range from slower (METR) to 2.3× (Copilot); workers report saving about a third of assisted time.') },
     adopt0: { label: 'Share of AI-ready work using AI, end-2026', value: '20%', ev: e(10, 35, 'medium', ['rps', 'btos'], 'About 6% of US work hours were AI-assisted in 2026, against about 33% of work AI could do: roughly a fifth.') },
+    hFall: { label: 'Direction AI needs once it can do nearly everything', value: '75% less than today', ev: e(40, 90, 'low', ['leap8'], 'With AI that beats top professionals at 90% of tasks, people no longer need to direct each step of AI-assisted work, though accountability keeps some oversight. Judgement; this is what makes an earlier AGI year matter.') },
     jCost: { label: 'Up-front cost of change', value: '1.5', ev: e(0, 2, 'low', ['jcurve'], 'Training, integration and reorganising cost output before they pay off. Set so AI adds a little to growth in 2027, as current measurements suggest.') },
     payoffResp: { label: 'Adoption responds to payoff', value: '0.25', ev: e(0, 0.5, 'low', ['griliches'], 'Technologies spread faster where the payoff is bigger; the strength of the response is judgement.') },
     phi: { label: 'AI research speeding up AI', value: '0.4', ev: e(0, 1, 'low', [], 'Judgement: more productive research work speeds AI progress, with diminishing returns.') },
@@ -280,6 +283,8 @@
     return {
       kc: state._kc != null ? state._kc : (state.agiYear ? calibratedKc(state) : 0.1),   // capability pace (per baseline year)
       hLoop: clamp((state.hLoop != null ? state.hLoop : 25) / 100, 0, 0.9),
+      hFall: clamp(val(state, 'hFall'), 0, 1),
+      capRebuild: clamp(val(state, 'capRebuild'), 0, 1),
       adoptSpeed: (state.adoptSpeed != null ? state.adoptSpeed : 25) / 100,
       Nmax: (state.Nmax != null ? state.Nmax : 10) / 100,
       aiNow: Math.max(1, val(state, 'aiNow')),
@@ -341,8 +346,10 @@
     const A = X.aiNow || 1, h = X.hLoop || 0, inv = 1 / A - h;
     return h > 0 ? (inv > 0.01 ? (1 - h) / inv : 100) : A;     // AI's own speed implied by today's measured speedup
   }
+  // people's share of AI-assisted work (directing and checking it) falls as AI becomes more capable
+  const hEff = (X, c) => (X.hLoop || 0) * (1 - (X.hFall || 0) * clamp(c, 0, 1));
   function sectorValueAt(P, g, E, c, X, aUsed) {
-    const A = X.aiNow || 1, h = X.hLoop || 0, Ar = rawSpeed(X);
+    const A = X.aiNow || 1, h = hEff(X, c), Ar = rawSpeed(X);
     const a = aUsed != null ? aUsed : fAvail(P, c);
     const assisted = a * (1 - g), autonomous = a * g;
     const check = P.check * (1 - X.dEta * clamp(c, 0, 1));
@@ -489,9 +496,10 @@
     const Ps = state.sectors.map((s) => sectorParams(s, X));
     const hh = X.hLoop || 0, Ar = rawSpeed(X);
     const R_REF = 1.4;
-    const payoff = (E) => {
+    const payoff = (E, c) => {
       if (!X.payoffResp) return 1;
-      const R = 1 / (hh + (1 - hh) / (Ar * Math.max(E, 1)));
+      const he = hEff(X, c);
+      const R = 1 / (he + (1 - he) / (Ar * Math.max(E, 1)));
       return Math.pow(clamp(Math.log(Math.max(R, 1.0001)) / Math.log(R_REF), 0.3, 20), X.payoffResp);
     };
     // ℓ starts at one year of progress (end-2026 capability relative to the c = 0 reference)
@@ -521,9 +529,9 @@
         rows.push(Object.assign({ t: k / steps, year: start + k / steps, trend, gdp: snap.Vmacro * trend, gdpUseful: snap.Vuseful * trend, gdpNoAI: trend, growth, rawGrowth: raw, capped: raw > growth * 1.02, feedback: F, ell }, snap));
       }
       if (k === total) break;
-      const m = payoff(E);
+      const m = payoff(E, c);
       fs = fs.map((a, i) => { const fA = fAvail(Ps[i], c); return fA <= 0 ? 0 : clamp(a + Math.min(3, X.adoptSpeed * m) * dt * a * (1 - a / fA), 0, fA > a ? fA : a); });
-      gs = gs.map((g, i) => g + stepRate(Math.min(0.9, Ps[i].alpha * m), dt) * (Ps[i].gmax * hill(E, Ps[i].Tcrit) - g));
+      gs = gs.map((g, i) => g + stepRate(Math.min(0.9, Ps[i].alpha * m), dt) * (Ps[i].gmax * (1 - (1 - hill(E, Ps[i].Tcrit)) * (1 - X.capRebuild * c)) - g));
       n = n + stepRate(Math.min(0.9, X.newSpeed * m), dt) * (X.Nmax * hill0(E, X.Tnew) - n);
       if (X.labourMob > 0) { const target = optimalLabour(state.sectors, snap.sectors.map((r) => r.Vm), X); const sr = stepRate(X.labourMob, dt); labour = labour.map((l, i) => l + sr * (target[i] - l)); }
       kcap = kcap + X.delta * dt * (snap.Vmacro - kcap);
@@ -544,7 +552,7 @@
     r0: [5, 60], hLoop: [5, 60], adoptSpeed: [5, 60], Nmax: [0, 100],
     aiNow: [1, 5], adopt0: [0, 100], jCost: [0, 5], payoffResp: [0, 1], phi: [0, 1], theta: [0, 1], invElast: [0, 1], psiEss: [0, 1],
     checkMax: [0, 1], dEta: [0, 100], lossMax: [0, 50], attackVol: [0.05, 2], defence: [0, 100],
-    cfx: [1.05, 3], fragility: [1.05, 10], flexSigma: [0.5, 10], capShare: [20, 50], depreciation: [2, 12], labourMob: [0, 50], Tnew: [2, 50],
+    hFall: [0, 1], cfx: [1.05, 3], fragility: [1.05, 10], flexSigma: [0.5, 10], capShare: [20, 50], depreciation: [2, 12], labourMob: [0, 50], Tnew: [2, 50],
   };
 
   function rng(seed) {

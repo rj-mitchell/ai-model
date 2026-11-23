@@ -137,7 +137,7 @@
     data.timelines = res.map((x) => ({ timeline: x.lab, agiYear: x.agi, peakGrowthAIAdds: x.p[0], peakYear: x.p[1], gdpVsNoFurtherAI2035: x.v35, gdpVsNoFurtherAI2050: x.v50 }));
     res.forEach((x) => { t += `<tr><th scope="row" class="txt">${x.lab}</th><td>${x.agi}</td><td>${pc(x.p[0], 1)} a year</td><td>${x.p[1]}</td><td>${fx(x.v35)}</td><td>${fx(x.v50)}</td></tr>`; });
     T.tPeak = t + '</tbody>';
-    Object.assign(N, { PK_GAP: String(res[0].agi - res[0].p[1]), PK_LAG: String(res[3].p[1] - res[3].agi), PK_L35: fx(res[3].v35), PK_M35: fx(res[0].v35) });
+    Object.assign(N, { PK_MP: pc(res[0].p[0], 1), PK_LP: pc(res[3].p[0], 1), PK_GAP: String(res[0].agi - res[0].p[1]), PK_LAG: String(res[3].p[1] - res[3].agi), PK_L35: fx(res[3].v35), PK_M35: fx(res[0].v35) });
 
     // ---------- which limits matter: remove one at a time ----------
     const brakes = [

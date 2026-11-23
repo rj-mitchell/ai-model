@@ -205,7 +205,7 @@ ${tl}
 ## How the model works
 
 - Each sector: work AI can do f* = f0 + (fmax − f0)·c, where capability c reaches 0.9 in the AGI year. Work done with AI a ≤ f* (S-curve adoption); a share g of it is rebuilt to run without people directing it.
-- Time per unit of work τ = (1 − a) + a(1 − g)(h + (1 − h)/(Â·E)) + a·g/(Â·E) + κ̂·a, where E is useful AI work per dollar, h the human-in-the-loop share, and κ̂ people's time checking AI's work. Speedup S = τ0/τ.
+- Time per unit of work τ = (1 − a) + a(1 − g)(h + (1 − h)/(Â·E)) + a·g/(Â·E) + κ̂·a, where E is useful AI work per dollar, h the human-in-the-loop share (falling by 75% as capability c reaches 1), and κ̂ people's time checking AI's work. Rebuilding becomes worth doing once AI is cheap enough or capable enough. Speedup S = τ0/τ.
 - Fraud and attack take a bounded share L of output, rising as AI gets cheaper and partly offset by defensive AI. GDP per worker = S(1 − L); useful output per worker = (1 + p(S − 1))(1 − L), where p is the share of the speedup that creates real wealth rather than feeding an arms race.
 - Economy: essential sectors are near-perfect complements (σ ≈ 0.2), flexible sectors partial substitutes (σ = 1.5), the two groups complements (σ ≈ 0.67); plus AI-native products; times capital k^0.35, with k catching up with output at 5% a year. Workers move toward the best allocation at 20% of the gap a year.
 - AI progress: E grows at r0·F·E^−0.22 (capped at 200% a year), where F feeds back the AI research sector, essential sectors and output.

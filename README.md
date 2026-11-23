@@ -6,7 +6,7 @@ Live at https://ai-transformation-model.uk-rob-mitchell.workers.dev. Every numbe
 
 **A simplified model.** Six broad sectors, each 13–20% of GDP, sized from US data (BEA 2025 value added) as a template for advanced economies: Physical production & energy (17.5%), Trade & logistics (15.5%), Health, education & government (19.7%) and Finance & business services (13.5%) are **essential**; Knowledge & professional services (13.7%) and Property, hospitality & personal services (19.8%) are **flexible**. Results are scenarios, shown to two significant figures.
 
-**Default result (median expert, AGI 2050):** GDP about 2.1× what it would be without further AI by 2050 (useful output about 1.9×). AI adds about 0.3% to growth in 2027, peaks at about 5.3% a year around 2039, and fades to under 1% a year by the 2060s while useful AI work keeps compounding. The long-run ceiling is about 3.2×, or 2.2× without the extra capital that higher output pays for.
+**Default result (median expert, AGI 2050):** GDP about 2.5× what it would be without further AI by 2050 (useful output about 2.1×). AI adds about 0.3% to growth in 2027, peaks at about 6.1% a year around 2039, and fades to under 1% a year by the 2060s while useful AI work keeps compounding. The long-run ceiling is about 4.1×, or 2.5× without the extra capital that higher output pays for. On AI lab leaders' timeline (AGI 2028, faster progress) growth from AI peaks at about 13% a year around 2035.
 
 ## What you can set
 
@@ -14,7 +14,7 @@ Live at https://ai-transformation-model.uk-rob-mitchell.workers.dev. Every numbe
 
 **Per sector (each with evidence, shown under its slider):** share of GDP, work AI can speed up today and ever, new wealth vs arms race, checking costs, exposure to fraud and attack, rebuilding ceiling, midpoint and speed, and whether it is essential or flexible.
 
-**Fixed assumptions** (`FIXED` and `FIXED_INFO` in `model.js`, listed with evidence and sources on the page): today's AI speedup (1.4×); AI-ready work already using AI (20%); up-front cost of change (1.5); adoption responding to payoff (0.25); AI research feedback (φ 0.4); diminishing returns in AI progress (θ 0.22, from research productivity falling ~5% a year); output funding AI progress (λ 0.5); essential sectors speeding or slowing AI (ψ 0.5); speed limit (200%/yr); checking time (0.3 per unit of AI work at a score of 10, halving as AI broadens); fraud and attack losses (5% at a score of 10, rising with attack volume 1 − E^−0.5, half offset by defence at full breadth); elasticities of substitution (≈0.2 within essential sectors, 1.5 within flexible, ≈0.67 between them); capital share 35% and depreciation 5%; workers closing 20% of the gap to the best allocation a year; new products; trend growth 2.0%/yr. The uncertainty band varies all of them by about ±25%.
+**Fixed assumptions** (`FIXED` and `FIXED_INFO` in `model.js`, listed with evidence and sources on the page): today's AI speedup (1.4×); direction AI needs falling 75% as it reaches full capability; AI-ready work already using AI (20%); up-front cost of change (1.5); adoption responding to payoff (0.25); AI research feedback (φ 0.4); diminishing returns in AI progress (θ 0.22, from research productivity falling ~5% a year); output funding AI progress (λ 0.5); essential sectors speeding or slowing AI (ψ 0.5); speed limit (200%/yr); checking time (0.3 per unit of AI work at a score of 10, halving as AI broadens); fraud and attack losses (5% at a score of 10, rising with attack volume 1 − E^−0.5, half offset by defence at full breadth); elasticities of substitution (≈0.2 within essential sectors, 1.5 within flexible, ≈0.67 between them); capital share 35% and depreciation 5%; workers closing 20% of the gap to the best allocation a year; new products; trend growth 2.0%/yr. The uncertainty band varies all of them by about ±25%.
 
 ## Plain-English names
 
@@ -24,7 +24,8 @@ The pages avoid jargon: essential and flexible sectors (CES weak-link and substi
 
 **Each sector.** Capability c ∈ [0, 1) is the share of the gap to each sector's ceiling AI has closed; it reaches 0.9 in the AGI year. E is useful AI work per dollar (end-2026 = 1).
 - Work AI can do: `f* = f0 + (fmax − f0) c`; work done with AI `a ≤ f*` (S-curve adoption); share of that rebuilt to run without people directing it `g ≤ gmax`.
-- Time per unit of work: `τ = (1 − a) + a(1 − g)(h + (1 − h)/(Â E)) + a g/(Â E) + κ̂ a`, with checking `κ̂ = κ (1 − 0.5 c)`; speedup `S = τ0/τ` against end-2026.
+- Time per unit of work: `τ = (1 − a) + a(1 − g)(ĥ + (1 − ĥ)/(Â E)) + a g/(Â E) + κ̂ a`, where people's share of assisted work `ĥ = h (1 − 0.75 c)` falls as AI becomes more capable and checking `κ̂ = κ (1 − 0.5 c)`; speedup `S = τ0/τ` against end-2026.
+- Rebuilding target: `gmax [1 − (1 − H(E, Tcrit))(1 − c)]`: worth doing once AI is cheap enough or capable enough.
 - Fraud and attack: `L = loss · (1 − E^−0.5) · (1 − 0.5 c)`, bounded.
 - Measured output `Vm = S (1 − L)`; useful output `V = (1 + p (S − 1)) (1 − L)`.
 
@@ -40,7 +41,7 @@ A critique of the earlier version led to: capital accumulation; workers moving b
 
 ## Robotics
 
-Robotics is only partly included: the ceilings on hands-on work allow for robots using demonstrated technology (about 13% of US work hours, McKinsey 2025). `applyRobotics()` (the "Robotics breakthrough" preset) raises the four hands-on sectors' ceilings to at least 85% and their rebuilding ceilings by 20 points: 2050 GDP rises from about 2.1× to 3.0×, peak growth from about 5.3% to 7.6% a year, and the ceiling from 3.2× to 6.5×.
+Robotics is only partly included: the ceilings on hands-on work allow for robots using demonstrated technology (about 13% of US work hours, McKinsey 2025). `applyRobotics()` (the "Robotics breakthrough" preset) raises the four hands-on sectors' ceilings to at least 85% and their rebuilding ceilings by 20 points: 2050 GDP rises from about 2.5× to 3.9×, peak growth from about 6.1% to 9.4% a year, and the ceiling from 4.1× to 9.7×.
 
 ## Limitations
 
