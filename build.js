@@ -98,9 +98,9 @@ const worst = last.sectors.map((s, i) => ({ s, i })).sort((a, b) => a.s.V - b.s.
 const annual = Math.pow(last.Vmacro, 1 / last.t) - 1;
 const kpis =
   kpi(`GDP vs no further AI, ${last.year}`, fx(last.Vmacro), `adds ${(annual * 100).toFixed(1)}% a year · central run`, 'good') +
-  kpi('Useful output vs no further AI', fx(last.Vuseful), 'GDP minus arms-race activity', 'good') +
+  kpi('Useful output vs no further AI', fx(last.Vuseful), `${pc(1 - last.Vuseful / last.Vmacro)} of GDP is racing or lost value`, 'good') +
   kpi(`Useful AI work, ${last.year}`, fx(last.T), `times end-2026 · growing ${(last.growth * 100).toFixed(0)}% a year`) +
-  kpi('Essential sectors', fx(last.Vcore), last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off: speeding AI progress', last.Vcore >= 1 ? 'good' : 'bad') +
+  kpi('Essential sectors', fx(last.Vcore), last.Vcore < 1 ? 'Worse off than without further AI' : 'Better off than without further AI', last.Vcore >= 1 ? 'good' : 'bad') +
   kpi('Weakest sector', fx(worst.s.V), esc(D.sectors[worst.i].name)) +
   kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(main[0].automationFixed)} in ${D.startYear}`);
 let tbl = `<caption class="sr">Default scenario, year by year</caption><thead><tr><th scope="col">Year</th><th scope="col">Useful AI work</th><th scope="col">GDP (× no further AI)</th><th scope="col">Useful output (× no further AI)</th><th scope="col">Capital boost</th><th scope="col">Essential sectors</th><th scope="col">Flexible sectors</th><th scope="col">AI-native products</th><th scope="col">GDP with AI (${D.startYear} = 1)</th><th scope="col">GDP without further AI</th><th scope="col">Tasks done with AI</th>` + D.sectors.map((s) => `<th scope="col">${esc(s.name)}</th>`).join('') + '</tr></thead><tbody>';
@@ -128,7 +128,7 @@ const data = clean({
   units: 'Multiples (×) are relative to a world where AI stays at its end-2026 level and use (1 = no change). Shares are fractions (0.05 = 5%). GDP index: 2027 = 1, including 2% a year trend growth in both worlds.',
   definitions: {
     gdpVsNoFurtherAI: 'GDP, counting all output including arms-race activity, as a multiple of GDP with no further AI; includes extra capital built from higher output.',
-    usefulOutputVsNoFurtherAI: 'Like GDP but leaving out activity that is only an arms race (rival advertising, litigation, trading).',
+    usefulOutputVsNoFurtherAI: 'Like GDP but leaving out activity that is only an arms race (rival advertising, litigation, trading), spending on defence against attack, and the value people lose when human service they preferred is replaced.',
     usefulAIWork: 'Verified work AI does per dollar, end-2026 = 1.',
     capability: 'Share of the gap to each sector’s ceiling AI has closed (0–1); 0.9 in the AGI year.',
     capitalBoost: 'Multiplier on output from extra capital built because output is higher.',
@@ -139,6 +139,7 @@ const data = clean({
   limits: ex.data.limits,
   ceilings: ex.data.ceilings,
   timelines: ex.data.timelines,
+  races: ex.data.races,
   robotics: ex.data.robotics,
   whatYouWouldHaveToBelieve: ex.data.whatYouWouldHaveToBelieve,
   defaultRun: ex.data.defaultRun,
@@ -146,14 +147,14 @@ const data = clean({
 write('data.json', JSON.stringify(data, null, 1));
 
 const names = D.sectors.map((s) => s.name);
-const csvHead = ['year', 'useful_ai_work', 'ai_capability', 'gdp_vs_no_further_ai', 'useful_output_vs_no_further_ai', 'capital_boost', 'essential_sectors', 'flexible_sectors', 'gdp_index', 'gdp_index_without_further_ai', 'tasks_done_with_ai'].concat(names.flatMap((n) => [`${n}: useful output per worker`, `${n}: share of workers`, `${n}: spending share`]));
+const csvHead = ['year', 'useful_ai_work', 'ai_capability', 'gdp_vs_no_further_ai', 'useful_output_vs_no_further_ai', 'capital_boost', 'essential_sectors', 'flexible_sectors', 'gdp_index', 'gdp_index_without_further_ai', 'tasks_done_with_ai'].concat(names.flatMap((n) => [`${n}: useful output per worker`, `${n}: defence spending`, `${n}: human-by-choice work replaced`, `${n}: spending share`]));
 const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-const csv = [csvHead.map(q).join(',')].concat(ex.data.defaultRun.map((r) => [r.year, r.usefulAIWork, r.capability, r.gdpVsNoFurtherAI, r.usefulOutputVsNoFurtherAI, r.capitalBoost, r.essentialSectors, r.flexibleSectors, r.gdpIndex, r.gdpIndexWithoutFurtherAI, r.tasksDoneWithAI].concat(r.sectors.flatMap((s) => [s.usefulOutputPerWorker, s.workersShare, s.spendingShare])).map((v) => round(v)).join(','))).join('\n');
+const csv = [csvHead.map(q).join(',')].concat(ex.data.defaultRun.map((r) => [r.year, r.usefulAIWork, r.capability, r.gdpVsNoFurtherAI, r.usefulOutputVsNoFurtherAI, r.capitalBoost, r.essentialSectors, r.flexibleSectors, r.gdpIndex, r.gdpIndexWithoutFurtherAI, r.tasksDoneWithAI].concat(r.sectors.flatMap((s) => [s.usefulOutputPerWorker, s.defenceSpending, s.humanByChoiceWorkReplaced, s.spendingShare])).map((v) => round(v)).join(','))).join('\n');
 write('data.csv', csv + '\n');
 
 const model = clean({
   name: 'AI Transformation Model: settings, evidence and sources', url: `${SITE}/`, generated: today,
-  dials: Object.fromEntries(['agiYear', 'r0', 'adoptSpeed', 'hLoop', 'Nmax'].map((k) => [k, { default: D[k], evidence: M.GLOBAL_EVIDENCE[k] }])),
+  dials: Object.fromEntries(['agiYear', 'r0', 'adoptSpeed', 'hLoop', 'Nmax', 'coord'].map((k) => [k, { default: D[k], evidence: M.GLOBAL_EVIDENCE[k] }])),
   sectors: D.sectors.map((s) => ({ name: s.name, group: s.tier === 'core' ? 'essential' : 'flexible', covers: s.basis, settings: { shareOfGDPPct: s.weight, workAICanSpeedUpTodayPct: s.f, workAICouldEverSpeedUpPct: s.fmax, newWealthVsArmsRacePct: s.p, checkingCostsOutOf10: s.eta, fraudAndAttackExposureOutOf10: s.gamma, rebuildingCeilingPct: s.gmax, rebuildingMidpointTimesTodaysAI: s.Tcrit, rebuildingSpeedPctOfGapPerYear: s.alpha }, evidence: s.evidence })),
   fixedAssumptions: Object.fromEntries(Object.keys(M.FIXED_INFO).map((k) => [k, M.FIXED_INFO[k]])),
   sources: M.SOURCES,
@@ -186,13 +187,17 @@ ${g}
 
 ${lim}
 
+## Growth you can measure vs growth you'd choose (2050)
+
+${ex.data.races.map((r) => `- ${r.scenario}: GDP ${fx(r.gdp2050)}, useful output ${fx(r.usefulOutput2050)}; ${pc(r.gap)} of GDP is racing or lost value`).join('\n')}
+
 ## AGI timelines
 
 ${tl}
 
 ## Pages
 
-- [Model](${SITE}/): six dials, sector settings with evidence, charts, uncertainty band, year-by-year table.
+- [Model](${SITE}/): seven dials, sector settings with evidence, charts, uncertainty band, year-by-year table.
 - [Explainer: Capability compounds. Value doesn't.](${SITE}/why): why the model never goes exponential, the limits that matter, robotics, and AI risk.
 
 ## Data
@@ -206,14 +211,17 @@ ${tl}
 
 - Each sector: work AI can do f* = f0 + (fmax − f0)·c, where capability c reaches 0.9 in the AGI year. Work done with AI a ≤ f* (S-curve adoption); a share g of it is rebuilt to run without people directing it.
 - Time per unit of work τ = (1 − a) + a(1 − g)(ĥ + (1 − ĥ)/(Â·E)) + a·g/(Â·E) + κ̂·a, where E is useful AI work per dollar, ĥ = h·(1 − 0.75·c) people's share of AI-assisted work (h = 25% today, falling as capability c rises), and κ̂ people's time checking AI's work. Rebuilding becomes worth doing once AI is cheap enough or capable enough. Speedup S = τ0/τ.
-- Fraud and attack take a bounded share L of output, rising as AI gets cheaper and partly offset by defensive AI. GDP per worker = S(1 − L); useful output per worker = (1 + p(S − 1))(1 − L), where p is the share of the speedup that creates real wealth rather than feeding an arms race.
-- Economy: essential sectors are near-perfect complements (σ ≈ 0.2), flexible sectors partial substitutes (σ = 1.5), the two groups complements (σ ≈ 0.67); plus AI-native products; times capital k^0.35, with k catching up with output at 5% a year. Workers move toward the best allocation at 20% of the gap a year.
-- AI progress: E grows at r0·F·E^−0.22 (capped at 200% a year), where F = V_R&D^0.4 · V_ess^0.5 · Y^0.5 feeds back the AI research sector, essential sectors (in both directions) and output. Capability c advances with F and reaches 0.9 in the AGI year.
+- Fraud and attack pressure G rises as AI gets cheaper; defensive AI removes up to half of it as capability rises, leaving loss L and costing defence spending d (half the loss it averts).
+- Races: p is the share of a speedup that creates real wealth rather than feeding a race. It is fixed by default, because race spending has held a steady share of GDP for decades (advertising about 2% for 90 years); in the "Races deepen" scenario it halves as capability reaches 1. Coordination C (the dial × 0.5, since half leaks into other channels) recovers part of the rest.
+- Human by choice: 15% of the work out of AI's reach is human by preference and can be competed away, half of it once AI is about 20× cheaper (less with coordination). Replacing it loses half its value to people.
+- GDP per worker = S(1 − L); useful output per worker = (1 + p̃(S − 1))(1 − L − d)(1 − 0.5·e·a/f*).
+- Economy: essential sectors are near-perfect complements (σ ≈ 0.2), flexible sectors partial substitutes (σ = 1.5), the two groups complements (σ ≈ 0.67); plus AI-native products; times capital k^0.35, with k catching up with output at 5% a year; minus the cost of the rules that hold races back (up to 2% of output at full coordination, building up over decades).
+- AI progress: E grows at r0·F·E^−0.22, where F = V_R&D^0.4 · Y^0.5 feeds back the AI research sector and output. Capability c advances with F and reaches 0.9 in the AGI year.
 - Ceilings on what AI can do, rebuilding and new products are fixed by design, to show which limits capability alone does not remove.
 
 ## Limitations
 
-A sketch, not a forecast; sized like the US, not a world model; robotics only partly included; ceilings fixed on purpose; capital and workers treated simply; jobs, wages and catastrophic risk not modelled.
+A sketch, not a forecast; sized like the US, not a world model; robotics only partly included; ceilings fixed on purpose; capital and workers treated simply, and who earns the gains not modelled; races, human-by-choice work and coordination rest on thin evidence; jobs, wages and catastrophic risk not modelled.
 `;
 write('llms.txt', llms);
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);

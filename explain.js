@@ -36,7 +36,7 @@
       AU26: pc(at(2027).automationFixed), HCAP: fx(1 / (D().hLoop / 100)),
       K50: pc(at(2050).capMult - 1),
     });
-    data.defaultRun = run.map((r) => ({ year: r.year, usefulAIWork: r.T, capability: r.c, gdpVsNoFurtherAI: r.Vmacro, usefulOutputVsNoFurtherAI: r.Vuseful, capitalBoost: r.capMult, essentialSectors: r.Vcore, flexibleSectors: r.Vflex, gdpIndex: r.gdp, gdpIndexWithoutFurtherAI: r.gdpNoAI, tasksDoneWithAI: r.automationFixed, sectors: r.sectors.map((s, i) => ({ name: M.defaultState().sectors[i].name, usefulOutputPerWorker: s.V, measuredOutputPerWorker: s.Vm, speedup: s.S, workDoneWithAI: s.f, rebuilt: s.g, fraudLoss: s.loss, workersShare: r.labour[i], spendingShare: r.shares[i] })) }));
+    data.defaultRun = run.map((r) => ({ year: r.year, usefulAIWork: r.T, capability: r.c, gdpVsNoFurtherAI: r.Vmacro, usefulOutputVsNoFurtherAI: r.Vuseful, capitalBoost: r.capMult, essentialSectors: r.Vcore, flexibleSectors: r.Vflex, gdpIndex: r.gdp, gdpIndexWithoutFurtherAI: r.gdpNoAI, tasksDoneWithAI: r.automationFixed, sectors: r.sectors.map((s, i) => ({ name: M.defaultState().sectors[i].name, usefulOutputPerWorker: s.V, measuredOutputPerWorker: s.Vm, speedup: s.S, workDoneWithAI: s.f, rebuilt: s.g, fraudLoss: s.loss, defenceSpending: s.defence, humanByChoiceWorkReplaced: s.eroded, spendingShare: r.shares[i] })) }));
     data.peak = { growthAIAdds: pk[0], year: pk[1] };
 
     // ---------- growth-rate table ----------
@@ -53,8 +53,7 @@
     N.A5060 = pc(g(2050, 2060, long), 1); N.A6074 = pc(g(2060, 2074, long), 1); N.T74 = fx(yr(long, 2074).T);
 
     // ---------- spending shares ----------
-    Object.assign(N, { H26: pc(at(2027).shares[2]), H41: pc(at(2041).shares[2]), B26: pc(at(2027).shares[1]), B41: pc(at(2041).shares[1]), SW26: pc(at(2027).shares[4]), SW50: pc(at(2050).shares[4]),
-      L26: pc(at(2027).labour[2]), L50: pc(at(2050).labour[2]) });
+    Object.assign(N, { H26: pc(at(2027).shares[2]), H41: pc(at(2041).shares[2]), B26: pc(at(2027).shares[1]), B41: pc(at(2041).shares[1]), SW26: pc(at(2027).shares[4]), SW50: pc(at(2050).shares[4]) });
 
     // ---------- arms race example (2050, default run) ----------
     const s50 = at(2050).sectors;
@@ -65,7 +64,7 @@
 
     // ---------- cyber-attack scenario ----------
     const cy = (() => { const s = DK(); s.sectors[3].gamma = 40; return sim(s, 14); })();
-    Object.assign(N, { ESS41: fx(at(2041).Vcore), CYflex: fx(yr(cy, 2041).Vflex), CYcore: fx(yr(cy, 2041).Vcore), CYV: fx(yr(cy, 2041).Vmacro), CYT: fx(yr(cy, 2041).T), CYL: pc(yr(cy, 2041).sectors[3].loss) });
+    Object.assign(N, { CYDROP: pc(1 - yr(cy, 2041).Vcore / at(2041).Vcore, 1), ESS41: fx(at(2041).Vcore), CYflex: fx(yr(cy, 2041).Vflex), CYcore: fx(yr(cy, 2041).Vcore), CYV: fx(yr(cy, 2041).Vmacro), CYT: fx(yr(cy, 2041).T), CYL: pc(yr(cy, 2041).sectors[3].loss) });
 
     // ---------- AI research feedback ----------
     const rsi0 = yr(sim(Object.assign(DK(), { phi: 0 })), 2050), rsi1 = yr(sim(Object.assign(DK(), { phi: 1 })), 2050);
@@ -88,7 +87,7 @@
     // catching up with today's AI, no further progress
     const ohState = D();
     const Ps = ohState.sectors.map((s) => M.sectorParams(s));
-    N.OH = fx(M.snapshot(ohState, 1, { c: 0, gs: Ps.map((P) => P.gmax), labour: 'optimal', capital: 'longrun' }).Vmacro);
+    N.OH = fx(M.snapshot(ohState, 1, { c: 0, gs: Ps.map((P) => P.gmax), capital: 'longrun' }).Vmacro);
 
     // ---------- what you'd have to believe ----------
     function ceilingWith(e) {
@@ -147,12 +146,12 @@
       ['No arms races (all activity creates wealth)', (s) => { s.sectors.forEach((x) => { x.p = 100; }); return s; }],
       ['AI can eventually do 95% of every sector’s work', (s) => { s.sectors.forEach((x) => { x.fmax = 95; x.gmax = 90; }); return s; }],
       ['AI-native products grow to half of today’s economy', (s) => Object.assign(s, { Nmax: 50 })],
-      ['No diminishing returns or speed limit on AI progress', (s) => Object.assign(s, { theta: 0, growthCap: 100000 })],
+      ['No diminishing returns in AI progress', (s) => Object.assign(s, { theta: 0 })],
       ['Sectors substitute freely for each other', (s) => Object.assign(s, { fragility: 1.05, cfx: 1.05 })],
       ['Defensive AI stops all attack losses', (s) => Object.assign(s, { defence: 100 })],
-      ['Workers never move between sectors', (s) => Object.assign(s, { labourMob: 0 })],
       ['Capital never builds up', (s) => Object.assign(s, { capShare: 0 })],
-      ['All the limits above the line removed together', (s) => { s.sectors.forEach((x) => { x.eta = 0; x.gamma = 0; x.p = 100; x.fmax = 95; x.gmax = 90; }); return Object.assign(s, { Nmax: 50, theta: 0, growthCap: 100000, fragility: 1.05, cfx: 1.05 }); }],
+      ['Human-by-choice work is never competed away', (s) => Object.assign(s, { prefErode: 0 })],
+      ['All the limits above the line removed together', (s) => { s.sectors.forEach((x) => { x.eta = 0; x.gamma = 0; x.p = 100; x.fmax = 95; x.gmax = 90; }); return Object.assign(s, { Nmax: 50, theta: 0, fragility: 1.05, cfx: 1.05 }); }],
     ];
     t = '<thead><tr><th scope="col">Change to the model</th><th scope="col">GDP vs no further AI, 2050</th><th scope="col">Useful output, 2050</th><th scope="col">Peak growth AI adds</th><th scope="col">Ceiling with unlimited AI</th></tr></thead><tbody>';
     data.limits = [];
@@ -160,14 +159,41 @@
       const s = f(DK());
       const r = sim(s), p = peakOf(r), c = M.ceiling(s);
       data.limits.push({ change: lab, gdp2050: yr(r, 2050).Vmacro, usefulOutput2050: yr(r, 2050).Vuseful, peakGrowthAIAdds: p[0], peakYear: p[1], ceiling: c.Vmacro });
-      const cls = i === 0 ? ' class="hl"' : i === brakes.length - 1 ? ' class="hl sep"' : i === 9 ? ' class="sep"' : '';
+      const cls = i === 0 ? ' class="hl"' : i === brakes.length - 1 ? ' class="hl sep"' : lab === 'Capital never builds up' ? ' class="sep"' : '';
       t += `<tr${cls}><th scope="row" class="txt">${lab}</th><td>${fx(yr(r, 2050).Vmacro)}</td><td>${fx(yr(r, 2050).Vuseful)}</td><td>${pc(p[0], 1)} (${p[1]})</td><td>${fx(c.Vmacro)}</td></tr>`;
     });
     T.tBrakes = t + '</tbody>';
     const L = data.limits;
-    Object.assign(N, { BR_ALL: fx(L[L.length - 1].gdp2050), BR_ALLC: fx(L[L.length - 1].ceiling), BR_ALLP: pc(L[L.length - 1].peakGrowthAIAdds, 1), BR_SUB: fx(L[7].gdp2050), BR_NOK: fx(L[10].gdp2050), BR_NOL: fx(L[9].gdp2050), BR_DEF: fx(L[8].gdp2050), BR_RD: fx(L[6].gdp2050), BR_FIT: fx(L[4].gdp2050), BR_FITC: fx(L[4].ceiling) });
+    Object.assign(N, { BR_ALL: fx(L[L.length - 1].gdp2050), BR_ALLC: fx(L[L.length - 1].ceiling), BR_ALLP: pc(L[L.length - 1].peakGrowthAIAdds, 1), BR_FIT: fx(L[4].gdp2050), BR_FITC: fx(L[4].ceiling) });
 
-    const CAP = {"tRate": "Growth AI adds each year, by period, default scenario", "tCeil": "Ceilings with unlimited AI, by sector", "tBelieve": "Output ceiling as the share of work out of AI’s reach shrinks", "tRobot": "Default settings compared with a robotics breakthrough", "tPeak": "Peak growth and GDP under four AGI timelines", "tBrakes": "Effect of removing each limit in the model, one at a time"};
+    // ---------- growth you can measure vs growth you'd choose ----------
+    const avg = (row, f) => row.sectors.reduce((a, x, i) => a + row.shares0[i] * f(x), 0);
+    const races = [
+      ['Today’s rules (default)', () => DK()],
+      ['Races deepen as AI improves', () => Object.assign(DK(), { raceDrift: 0.5 })],
+      ['Human service fully protected', () => Object.assign(DK(), { prefErode: 0 })],
+      ['Strong coordination against races', () => Object.assign(DK(), { coord: 100 })],
+      ['Races deepen, with strong coordination', () => Object.assign(DK(), { raceDrift: 0.5, coord: 100 })],
+      ['AI lab leaders’ timeline', () => Object.assign(D(), { agiYear: 2028, r0: 60, phi: 0.8 })],
+      ['Lab leaders’ timeline, races deepen', () => Object.assign(D(), { agiYear: 2028, r0: 60, phi: 0.8, raceDrift: 0.5 })],
+    ];
+    t = '<thead><tr><th scope="col">Scenario</th><th scope="col">GDP vs no further AI, 2050</th><th scope="col">Useful output, 2050</th><th scope="col">Share of GDP that is racing or lost value</th><th scope="col">Human-by-choice work replaced</th></tr></thead><tbody>';
+    data.races = [];
+    const RC = races.map(([lab, mk], i) => {
+      const r = sim(mk()), x = yr(r, 2050);
+      const o = { scenario: lab, gdp2050: x.Vmacro, usefulOutput2050: x.Vuseful, gap: 1 - x.Vuseful / x.Vmacro, humanByChoiceReplaced: avg(x, (z) => z.eroded * Math.min(1, z.f / Math.max(z.fAvail, 1e-9))), defenceSpending: avg(x, (z) => z.defence), costOfRules: x.rent };
+      data.races.push(o);
+      t += `<tr${i === 0 ? ' class="hl"' : ''}><th scope="row" class="txt">${lab}</th><td>${fx(o.gdp2050)}</td><td>${fx(o.usefulOutput2050)}</td><td>${pc(o.gap)}</td><td>${pc(o.humanByChoiceReplaced, 1)} of all work</td></tr>`;
+      return o;
+    });
+    T.tRace = t + '</tbody>';
+    Object.assign(N, { RC_G0: fx(RC[0].gdp2050), RC_U0: fx(RC[0].usefulOutput2050), RC_GAP0: pc(RC[0].gap), RC_U1: fx(RC[1].usefulOutput2050), RC_GAP1: pc(RC[1].gap),
+      RC_GP: fx(RC[2].gdp2050), RC_UP: fx(RC[2].usefulOutput2050), RC_ERO: pc(RC[0].humanByChoiceReplaced, 1),
+      RC_GC: fx(RC[3].gdp2050), RC_UC: fx(RC[3].usefulOutput2050), RC_GAPC: pc(RC[3].gap), RC_RENT: pc(RC[3].costOfRules, 1), RC_GAPDC: pc(RC[4].gap),
+      RC_GL: fx(RC[5].gdp2050), RC_UL: fx(RC[5].usefulOutput2050), RC_GLD: fx(RC[6].gdp2050), RC_ULD: fx(RC[6].usefulOutput2050), RC_GAPLD: pc(RC[6].gap),
+      DEFSP: pc(RC[0].defenceSpending, 1) });
+
+    const CAP = {"tRate": "Growth AI adds each year, by period, default scenario", "tCeil": "Ceilings with unlimited AI, by sector", "tBelieve": "Output ceiling as the share of work out of AI’s reach shrinks", "tRobot": "Default settings compared with a robotics breakthrough", "tPeak": "Peak growth and GDP under four AGI timelines", "tBrakes": "Effect of removing each limit in the model, one at a time", "tRace": "GDP and useful output under races, protection and coordination"};
     Object.keys(T).forEach((id) => { if (CAP[id]) T[id] = `<caption class="sr">${CAP[id]}</caption>` + T[id]; });
     return { N, T, data, run, fx, pc };
   }
@@ -178,8 +204,8 @@
     const src = (keys) => (keys || []).map((k) => (M.SOURCES[k] ? `<a href="${M.SOURCES[k].u}" rel="noopener">${esc(M.SOURCES[k].t.split(/[,:(]/)[0].trim())}</a>` : '')).filter(Boolean).join(', ');
     const D = M.defaultState();
     const G = M.GLOBAL_EVIDENCE;
-    const dials = [['AGI year', D.agiYear, 'agiYear', ''], ['Speed of AI progress', D.r0, 'r0', '%/yr'], ['Adoption speed', D.adoptSpeed, 'adoptSpeed', '%/yr'], ['Human-in-the-loop share before rebuilding', D.hLoop, 'hLoop', '%'], ['AI-native products, mature size', D.Nmax, 'Nmax', '% of today’s economy']];
-    let h = '<h3>The six dials</h3><div class="tbl-wrap"><table><caption class="sr">Economy-wide dials, defaults and evidence</caption><thead><tr><th scope="col">Dial</th><th scope="col">Default</th><th scope="col">Plausible range</th><th scope="col">Evidence</th></tr></thead><tbody>';
+    const dials = [['AGI year', D.agiYear, 'agiYear', ''], ['Speed of AI progress', D.r0, 'r0', '%/yr'], ['Adoption speed', D.adoptSpeed, 'adoptSpeed', '%/yr'], ['Human-in-the-loop share before rebuilding', D.hLoop, 'hLoop', '%'], ['AI-native products, mature size', D.Nmax, 'Nmax', '% of today’s economy'], ['Coordination against races', D.coord, 'coord', '% more than today']];
+    let h = '<h3>The dials</h3><div class="tbl-wrap"><table><caption class="sr">Economy-wide dials, defaults and evidence</caption><thead><tr><th scope="col">Dial</th><th scope="col">Default</th><th scope="col">Plausible range</th><th scope="col">Evidence</th></tr></thead><tbody>';
     dials.forEach(([lab, v, k, u]) => { const e = G[k]; h += `<tr><th scope="row" class="txt">${lab}</th><td>${v}${u}</td><td>${e ? `${e.lo}–${e.hi}${u}` : ''}</td><td class="txt">${e ? `${esc(e.note)} ${src(e.src)}` : ''}</td></tr>`; });
     h += '</tbody></table></div>';
     const cols = [['weight', 'Share of GDP', '%'], ['f', 'Work AI can speed up today', '%'], ['fmax', 'Work AI could ever speed up', '%'], ['p', 'New wealth vs arms race', '%'], ['eta', 'Checking costs', '/10'], ['gamma', 'Fraud and attack exposure', '/10'], ['gmax', 'Rebuilding ceiling', '%'], ['Tcrit', 'Rebuilding midpoint', '×'], ['alpha', 'Rebuilding speed', '%/yr']];

@@ -3,7 +3,7 @@
   'use strict';
   const M = window.AIModel;
   const $ = (id) => document.getElementById(id);
-  const STORE_KEY = 'ai-transformation-model:v18';
+  const STORE_KEY = 'ai-transformation-model:v19';
   const MAX_SECTORS = 8;
   const defaultState = () => M.defaultState();
 
@@ -15,6 +15,8 @@
     { id: 'dyn-labs', label: 'Lab leaders (AGI ~2028)', apply: (s) => Object.assign(s, { agiYear: 2028, r0: 60, phi: 0.8 }) },
     { id: 'dyn-robotics', label: 'Robotics breakthrough', apply: (s) => M.applyRobotics(s) },
     { id: 'dyn-cyber', label: 'Sustained cyber-attack on finance', apply: (s) => { s.sectors[3].gamma = 40; return s; } },
+    { id: 'dyn-races', label: 'Races deepen as AI improves', apply: (s) => Object.assign(s, { raceDrift: 0.5 }) },
+    { id: 'dyn-coord', label: 'Strong coordination against races', apply: (s) => Object.assign(s, { coord: 100 }) },
     { id: 'dyn-slow', label: 'Slow institutions', apply: (s) => { s.sectors.forEach((x) => { x.alpha = Math.max(5, Math.round(x.alpha / 2)); x.Tcrit = Math.min(30, x.Tcrit * 2 + 1); }); return s; } },
   ];
 
@@ -44,7 +46,7 @@
   function touched() { state.preset = null; markPresets(); update(); }
 
   // evidence line under a slider: plausible range, confidence, note and linked sources
-  const EV_UNIT = { weight: '% of GDP', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', agiYear: '', r0: '%/yr', hLoop: '%', adoptSpeed: '%/yr', Nmax: '%' };
+  const EV_UNIT = { weight: '% of GDP', f: '%', fmax: '%', p: '%', eta: ' / 10', gamma: ' / 10', gmax: '%', Tcrit: '×', alpha: '%/yr', agiYear: '', r0: '%/yr', hLoop: '%', adoptSpeed: '%/yr', Nmax: '%', coord: '%' };
   const srcShort = (k) => (M.SOURCES[k] ? M.SOURCES[k].t.split(/[,:(]/)[0].trim() : k);
   const srcLinks = (src) => src.map((k) => (M.SOURCES[k] ? `<a href="${M.SOURCES[k].u}" target="_blank" rel="noopener" title="${esc(M.SOURCES[k].t)}">${esc(srcShort(k))}</a>` : '')).filter(Boolean).join(', ');
   function evidenceHTML(key, ev) {
@@ -119,7 +121,8 @@
       slider({ ev: E.r0, evKey: 'r0', id: 'g-r0', label: 'Speed of AI progress', min: 5, max: 60, step: 1, get: () => state.r0, set: (v) => (state.r0 = v), fmt: (v) => `${v}%/yr`, hint: 'Yearly growth at the start in useful AI work: verified work AI does per dollar.' }),
       slider({ ev: E.adoptSpeed, evKey: 'adoptSpeed', id: 'g-adoptspeed', label: 'Adoption speed', min: 5, max: 60, step: 1, get: () => state.adoptSpeed, set: (v) => (state.adoptSpeed = v), fmt: (v) => `${v}%/yr`, hint: 'How fast use of what AI can already do spreads. It speeds up as AI’s advantage grows.' }),
       slider({ ev: E.hLoop, evKey: 'hLoop', id: 'g-hloop', label: 'Human-in-the-loop share before rebuilding', min: 5, max: 60, step: 5, get: () => state.hLoop, set: (v) => (state.hLoop = v), fmt: (v) => `${v}%`, hint: 'With today’s AI, people still direct and check AI-assisted work, so it gets at most 1 ÷ this share faster (4× at 25%). The share falls as AI becomes more capable, and rebuilt work needs no direction.' }),
-      slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}%`, hint: 'Goods and services that don’t exist yet, as a share of today’s economy.' })
+      slider({ ev: E.Nmax, evKey: 'Nmax', id: 'g-nmax', label: 'AI-native products, mature size', min: 0, max: 50, step: 1, get: () => state.Nmax, set: (v) => (state.Nmax = v), fmt: (v) => `${v}%`, hint: 'Goods and services that don’t exist yet, as a share of today’s economy.' }),
+      slider({ ev: E.coord, evKey: 'coord', id: 'g-coord', label: 'Coordination against races', min: 0, max: 100, step: 5, get: () => state.coord || 0, set: (v) => (state.coord = v), fmt: (v) => (v ? `${v}%` : 'today’s rules'), hint: 'Rules, standards and agreements that stop competition turning into races, and protect human service people want. Part of it leaks into other channels, and the rules cost something themselves.' })
     );
     const fixed = group(host, 'Fixed assumptions', false, 'Held constant, with the evidence behind each. They are still varied in the uncertainty band.');
     const list = document.createElement('dl');
@@ -435,9 +438,9 @@
       : `adds ${(annual * 100).toFixed(1)}% a year · ${mcPending()}`;
     $('kpis').innerHTML =
       kpi(`GDP vs no further AI, ${last.year}`, fx(head), econSub, head >= 1 ? 'good' : 'bad') +
-      kpi(`Useful output vs no further AI`, fx(mc ? mc.Vuseful.p50[L] : last.Vuseful), 'GDP minus arms-race activity', (mc ? mc.Vuseful.p50[L] : last.Vuseful) >= 1 ? 'good' : 'bad') +
+      kpi(`Useful output vs no further AI`, fx(mc ? mc.Vuseful.p50[L] : last.Vuseful), `${pc(1 - last.Vuseful / last.Vmacro)} of GDP is racing or lost value`, (mc ? mc.Vuseful.p50[L] : last.Vuseful) >= 1 ? 'good' : 'bad') +
       kpi(`Useful AI work, ${last.year}`, fx(mc ? mc.T.p50[L] : last.T), `times end-2026 · growing ${(last.growth * 100).toFixed(0)}% a year`) +
-      kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off: slowing AI progress' : 'Better off: speeding AI progress', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
+      kpi('Essential sectors', fx(last.Vcore), !last.hasC ? 'None set' : last.Vcore < 1 ? 'Worse off than without further AI' : 'Better off than without further AI', !last.hasC || last.Vcore >= 1 ? 'good' : 'bad') +
       kpi('Weakest sector', fx(worst.s.V), esc(state.sectors[worst.i].name), worst.s.V >= 1 ? '' : 'bad') +
       kpi('Tasks done with AI', pc(last.automationFixed), `up from ${pc(rows[0].automationFixed)} in ${startY}`);
 
@@ -448,11 +451,11 @@
     const midU = mc ? mc.Vuseful.p50 : rows.map((r) => r.Vuseful);
     const ser = [
       { name: 'GDP with AI', label: 'GDP with AI', color: c, ys: mid.map((v, i) => v * tr[i]), width: 3 },
-      { name: 'Useful output with AI (GDP minus arms races)', label: 'Useful output', color: css('--s3'), ys: midU.map((v, i) => v * tr[i]), width: 2, dash: '3 3' },
+      { name: 'Useful output with AI (GDP minus races and lost value)', label: 'Useful output', color: css('--s3'), ys: midU.map((v, i) => v * tr[i]), width: 2, dash: '3 3' },
       { name: 'Without further AI', label: 'No further AI', color: css('--ink-2'), ys: tr.slice(), width: 2, dash: '6 4' },
     ];
     const band = mc ? { lo: mc.Vmacro.p10.map((v, i) => v * tr[i]), hi: mc.Vmacro.p90.map((v, i) => v * tr[i]), color: c, name: 'Likely range' } : null;
-    $('c1-sub').textContent = `${startY} = 1. All lines include ${tg.toFixed(1)}% a year of growth from everything except AI, the current average for advanced economies. Useful output leaves out activity that is only an arms race, which GDP counts.`;
+    $('c1-sub').textContent = `${startY} = 1. All lines include ${tg.toFixed(1)}% a year of growth from everything except AI, the current average for advanced economies. Useful output leaves out races, defence spending and the value lost when human service people preferred is replaced, all of which GDP misses or counts as output.`;
     legend($('c1-legend'), ser.concat(band ? [{ name: 'Likely range (80% of runs)', color: c, band: true }] : []));
     lineChart($('c1'), {
       xs, series: ser, band, xFmt: yrFmt, yFmt: (v, t) => (t ? fx(v) : v.toFixed(v < 10 ? 1 : 0) + '×'), baseline: 1, baselineLabel: `${startY} level`,
@@ -507,6 +510,7 @@
     const fitTxt = s.fAvail - s.f > 0.005 ? `AI used for ${pc(s.f)} of the ${pc(s.fAvail)} it can do` : `AI used for ${pc(s.f)}`;
     pills.push(`<span class="pill info">${when}: useful output per worker ${fx(s.V)} · work ${fx(s.S)} faster · ${fitTxt} · ${pc(s.g)} of it rebuilt</span>`);
     if (s.checkShare > 0.1) pills.push(`<span class="pill warn">Checking AI's work takes ${pc(s.checkShare)} of the time</span>`);
+    if (s.eroded > 0.02) pills.push(`<span class="pill warn">${pc(s.eroded)} of its work no longer human by choice</span>`);
     if (s.loss > 0.03) pills.push(`<span class="pill warn">${pc(s.loss, 1)} of output lost to fraud and attack</span>`);
     if (s.V < 1) pills.push(`<span class="pill crit">Below baseline</span>`);
     else if (s.V >= 2) pills.push(`<span class="pill good">More than doubled</span>`);
@@ -530,8 +534,8 @@
   function toCSV() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
     const n = (v) => (typeof v === 'number' ? +v.toPrecision(6) : v);
-    const head = ['year', 'useful_ai_work', 'ai_capability_closure', 'gdp_vs_no_further_ai', 'useful_output_vs_no_further_ai', 'capital_boost', 'essential_sectors', 'flexible_sectors', 'new_products', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`useful_output_per_worker ${s.name}`, `measured_output_per_worker ${s.name}`, `speedup ${s.name}`, `ai_in_use ${s.name}`, `rebuilt ${s.name}`, `fraud_loss ${s.name}`, `workers_share ${s.name}`, `spending_share ${s.name}`]));
-    const lines = lastRows.map((r) => [r.year, r.T, r.c, r.Vmacro, r.Vuseful, r.capMult, r.Vcore, r.Vflex, r.newGoods, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.Vm, s.S, s.f, s.g, s.loss, r.labour[i], r.shares[i]])).map(n).join(','));
+    const head = ['year', 'useful_ai_work', 'ai_capability_closure', 'gdp_vs_no_further_ai', 'useful_output_vs_no_further_ai', 'capital_boost', 'essential_sectors', 'flexible_sectors', 'new_products', 'gdp_with_ai', 'gdp_without_further_ai', 'tasks_done_with_ai'].concat(state.sectors.flatMap((s) => [`useful_output_per_worker ${s.name}`, `measured_output_per_worker ${s.name}`, `speedup ${s.name}`, `ai_in_use ${s.name}`, `rebuilt ${s.name}`, `fraud_loss ${s.name}`, `defence_spending ${s.name}`, `human_by_choice_replaced ${s.name}`, `spending_share ${s.name}`]));
+    const lines = lastRows.map((r) => [r.year, r.T, r.c, r.Vmacro, r.Vuseful, r.capMult, r.Vcore, r.Vflex, r.newGoods, r.gdp, r.gdpNoAI, r.automationFixed].concat(r.sectors.flatMap((s, i) => [s.V, s.Vm, s.S, s.f, s.g, s.loss, s.defence, s.eroded, r.shares[i]])).map(n).join(','));
     return [head.map(q).join(',')].concat(lines).join('\n');
   }
   $('copy-csv').addEventListener('click', () => {
